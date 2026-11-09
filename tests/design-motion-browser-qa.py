@@ -14,7 +14,19 @@ ROOT = Path(__file__).resolve().parents[1]
 CSS = (ROOT / 'src/styles.css').read_text(encoding='utf-8')
 HTML = r'''<!doctype html><html lang="en" data-theme="dark" data-motion="on" data-motion-override="on" data-quality="full" data-pointer="fine"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
 <div class="site-shell"><main class="page-width">
-  <section class="hero-section"><div class="hero-content"><p class="hero-pretitle" data-hero-sequence="eyebrow">FIELD NOTES / 001</p><h1 class="hero-title" aria-label="From a question to working systems."><span class="title-line" data-hero-line aria-hidden="true">From a question</span><span class="title-line" data-hero-line aria-hidden="true">to working</span><span class="title-line" data-hero-line aria-hidden="true">systems.</span></h1><p data-hero-sequence="description">Hero description</p><div data-hero-sequence="actions"><button>Explore</button></div></div><div class="hero-visual motion-active" data-motion-zone><div class="visual-plate"></div></div></section>
+  <section class="hero-section"><div class="hero-content"><p class="hero-pretitle" data-hero-sequence="eyebrow">FIELD NOTES / 001</p><h1 class="hero-title" aria-label="From a question to working systems."><span class="title-line" data-hero-line aria-hidden="true">From a question</span><span class="title-line" data-hero-line aria-hidden="true">to working</span><span class="title-line" data-hero-line aria-hidden="true">systems.</span></h1><p data-hero-sequence="description">Hero description</p><div data-hero-sequence="actions"><button>Explore</button></div></div><div class="hero-visual motion-active" data-motion-zone><div class="visual-plate">
+    <div class="systems-orbit" id="systems-orbit" role="group" aria-label="Interactive areas of interest: software, data, embedded systems, and creative technology">
+      <div class="orbit-grid" aria-hidden="true"></div>
+      <div class="orbit-ring ring-outer" aria-hidden="true"></div><div class="orbit-ring ring-middle" aria-hidden="true"></div><div class="orbit-ring ring-inner" aria-hidden="true"></div>
+      <div class="orbit-center" aria-hidden="true"><span class="orbit-monogram">KA</span><small>IDEAS → SYSTEMS</small></div>
+      <button type="button" class="orbit-node node-web" data-category="Software" aria-label="Explore software projects"><span aria-hidden="true">⌘</span><small>SOFTWARE</small></button>
+      <button type="button" class="orbit-node node-data" data-category="Data &amp; Systems" aria-label="Explore data and systems projects"><span aria-hidden="true">▤</span><small>DATA</small></button>
+      <button type="button" class="orbit-node node-embedded" data-category="Embedded" aria-label="Explore embedded projects"><span aria-hidden="true">▦</span><small>EMBEDDED</small></button>
+      <button type="button" class="orbit-node node-creative" data-category="Creative" aria-label="Explore creative projects"><span aria-hidden="true">◉</span><small>CREATIVE</small></button>
+      <div class="orbit-satellite satellite-one" aria-hidden="true"></div><div class="orbit-satellite satellite-two" aria-hidden="true"></div>
+      <div class="orbit-coordinate coord-a" aria-hidden="true">14°40' N<br/>121°02' E</div><div class="orbit-coordinate coord-b" aria-hidden="true">FIELD NOTES / 2026</div>
+    </div>
+  </div></div></section>
   <div class="timeline motion-active"><article class="timeline-item"><span class="timeline-marker"></span></article></div>
   <section class="recruiter-view" data-recruiter-motion-ready="true"><div class="recruiter-timeline motion-active"><article class="recruiter-experience-card is-in-view"><span class="recruiter-timeline-marker"></span><div><span>2026</span><h3>Experience</h3></div><div><p>Technical support and project work.</p></div></article></div><article class="recruiter-education-item is-in-view"><span>2026</span><div><h3>Education</h3></div></article><div class="recruiter-project-card"><div class="recruiter-project-art"><i></i></div></div></section>
   <div class="network-path motion-active"><div class="network-link is-traversed"><i></i></div><button class="network-node active">Selected</button><div class="network-node-detail" aria-live="polite">Selected node details</div></div>
@@ -49,6 +61,55 @@ def main() -> None:
         check(all(size >= 10 for size in metadata_sizes), 'Project metadata, feature labels, and footer microcopy stay at or above 10px')
         recruiter_meta = page.locator('.recruiter-experience-card > div > span').first.evaluate('(e)=>Number.parseFloat(getComputedStyle(e).fontSize)')
         check(recruiter_meta >= 10, 'Recruiter timeline metadata follows the same legible minimum')
+        orbit = page.locator('#systems-orbit')
+        check(orbit.count() == 1 and orbit.locator('.orbit-node').count() == 4, 'Interactive systems orbit renders all four category controls')
+        page.evaluate("""() => {
+          window.__orbitSelections = []
+          document.querySelectorAll('#systems-orbit .orbit-node').forEach((button) => {
+            button.addEventListener('click', () => window.__orbitSelections.push(button.dataset.category))
+          })
+        }""")
+        for category in ['Software', 'Data & Systems', 'Embedded', 'Creative']:
+            orbit.locator(f'.orbit-node[data-category="{category}"]').click()
+        selected_categories = page.evaluate('window.__orbitSelections')
+        check(selected_categories == ['Software', 'Data & Systems', 'Embedded', 'Creative'], 'Each orbit node remains independently clickable and maps to its intended category')
+        def inspect_orbit_geometry(width: int, height: int) -> dict:
+            page.set_viewport_size({'width': width, 'height': height})
+            page.wait_for_timeout(80)
+            return orbit.evaluate("""(root) => {
+              const rect = (element) => {
+                const r = element.getBoundingClientRect()
+                return {left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height,
+                  cx:r.left+r.width/2, cy:r.top+r.height/2}
+              }
+              const frame = rect(root)
+              const rings = [...root.querySelectorAll('.orbit-ring')].map((element) => {
+                const r = rect(element)
+                return {dx:Math.abs(r.cx-frame.cx), dy:Math.abs(r.cy-frame.cy)}
+              })
+              const center = root.querySelector('.orbit-center')
+              const centerRect = rect(center)
+              const captionRect = rect(center.querySelector('small'))
+              const nodes = [...root.querySelectorAll('.orbit-node')].map((element) => {
+                const r = rect(element)
+                const overlapX = Math.max(0, Math.min(r.right, centerRect.right)-Math.max(r.left, centerRect.left))
+                const overlapY = Math.max(0, Math.min(r.bottom, centerRect.bottom)-Math.max(r.top, centerRect.top))
+                const target = rect(element.querySelector('span'))
+                return {name:element.dataset.category, inside:r.left >= frame.left-1 && r.right <= frame.right+1 &&
+                  r.top >= frame.top-1 && r.bottom <= frame.bottom+1,
+                  overlap:overlapX*overlapY, targetWidth:target.width, targetHeight:target.height}
+              })
+              return {width:frame.width, rings, centerContainsCaption:captionRect.left >= centerRect.left-1 &&
+                captionRect.right <= centerRect.right+1, centerWidth:centerRect.width, nodes}
+            }""")
+        desktop_orbit = inspect_orbit_geometry(1440, 950)
+        check(all(ring['dx'] <= 1.5 and ring['dy'] <= 1.5 for ring in desktop_orbit['rings']), 'All rotating orbit rings remain concentric at desktop size')
+        check(desktop_orbit['centerContainsCaption'] and all(node['inside'] and node['overlap'] <= 1 for node in desktop_orbit['nodes']), 'Desktop orbit keeps its center caption contained and nodes clear of the center tile')
+        mobile_orbit = inspect_orbit_geometry(320, 780)
+        check(all(ring['dx'] <= 1.5 and ring['dy'] <= 1.5 for ring in mobile_orbit['rings']), 'All rotating orbit rings remain concentric at 320px')
+        check(mobile_orbit['centerContainsCaption'], 'Mobile orbit center caption stays inside its tile without horizontal spill')
+        check(all(node['inside'] and node['overlap'] <= 1 for node in mobile_orbit['nodes']), 'Mobile orbit nodes stay inside the diagram and clear of the center tile')
+        check(all(node['targetWidth'] >= 44 and node['targetHeight'] >= 44 for node in mobile_orbit['nodes']), 'Mobile orbit icon hit areas meet the 44px touch-target size')
         contrast = page.evaluate("""() => {
           const root = getComputedStyle(document.documentElement)
           const rgb = (value) => {
