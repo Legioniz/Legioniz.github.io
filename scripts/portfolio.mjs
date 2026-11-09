@@ -27,7 +27,7 @@ const expectedFiles = [
   'tests/recruiter-view-browser-qa.py', 'tests/comments-browser-qa.py', 'tests/layout_integrity_browser_qa.py', 'tests/interaction-fixture.html',
   '.github/workflows/deploy.yml', '.github/dependabot.yml',
   'README.md', 'SOURCES.md', 'BACKEND-SETUP.md', 'CONTENT-CHECKLIST.md', 'PRODUCTION-QUALITY.md', 'RECRUITER-VIEW.md',
-  'UI-MOTION-DESIGN.md', 'VISUAL-DESIGN-SYSTEM.md', 'VIEW-TRANSITION-LIFECYCLE.md',
+  'UI-MOTION-DESIGN.md', 'VISUAL-DESIGN-SYSTEM.md', 'VIEW-TRANSITION-LIFECYCLE.md', 'UX-ACCESSIBILITY-PLAYBOOK.md',
   'CHANGELOG.md',
 ]
 const excludedSnapshotNames = new Set(['.git', 'node_modules', 'dist', '.portfolio-backups', '.lighthouseci', 'coverage', 'playwright-report', 'test-results', '__pycache__', '.qa-build', '.vite', '_site', '.jekyll-cache', '.bundle'])
@@ -117,7 +117,7 @@ async function check() {
   log(features.includes('192.0.2.10') && features.includes('198.51.100.20') && features.includes('203.0.113.15') && !features.includes('fetch('), 'Network Lab uses fictional documentation addresses without network requests')
   log(features.includes('Northstar Tools') && features.includes('fictional') && features.includes('private-data collection'), 'OSINT journal uses a fictional scenario with explicit safety boundaries')
   log(features.includes('URL.createObjectURL(file)') && features.includes('URL.revokeObjectURL(url)') && features.includes('48 * 1024 * 1024') && features.includes('45_000_000'), 'Photo workspace is local-only with image and memory limits')
-  log(chrome.includes("localStorage.getItem('legion-portfolio-motion-v7')") && chrome.includes("if (savedMotion === 'off') return false") && chrome.includes("return true"), 'Intro sequence follows the shared default-on motion preference and explicit visitor pause')
+  log(chrome.includes("document.documentElement.dataset.motion === 'off'") && chrome.includes("return true"), 'Intro sequence follows the shared default-on motion preference and explicit visitor pause')
   log(features.includes("animationPlayState: fanSpeed === 0 ? 'paused' : 'running'"), 'Hardware fan simulation pauses at zero output')
   const backendClient = await read('src/backend.ts')
   log(backendClient.includes('VITE_SUPABASE_ANON_KEY') && !backendClient.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Frontend backend client uses only public credentials')
@@ -134,7 +134,7 @@ async function check() {
   log(edge.includes('PORTFOLIO_ALLOWED_ORIGIN') && edge.includes('verifyTurnstile') && edge.includes('consume_portfolio_quota') && edge.includes('payload.website.trim()'), 'Submission Edge Function includes origin, CAPTCHA, quota, and honeypot controls')
   const serviceWorker = await read('public/sw.js')
   log(['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'].every((prefix) => serviceWorker.includes(prefix)), 'Service worker excludes backend API paths from caching')
-  log(serviceWorker.includes("legion-portfolio-shell-v16") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
+  log(serviceWorker.includes("legion-portfolio-shell-v17") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
 
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')
@@ -158,12 +158,16 @@ async function check() {
   log(reveal.includes('showEverything') && reveal.includes('data-reveal-ready') && reveal.includes('!enabled') && reveal.includes('typeof MutationObserver'), 'Reveal controller preserves readable content when motion is disabled or observer APIs are unavailable')
   log(reveal.includes('INITIAL_CALLBACK_FALLBACK_MS') && reveal.includes('receivedInitialBatch'), 'Reveal controller has a timeout fallback if an observer fails to dispatch')
   log(app.includes('education-history') && app.includes('achievement-summary') && app.includes('skill-disclosure-panel'), 'Skills, academic history, achievements, work history, and extracurriculars use consistent native disclosures')
-  log(app.includes('legion-portfolio-motion-v7') && !app.includes('legion-portfolio-motion-v6') && !app.includes('updateScrollReveals'), 'Versioned motion preference defaults on and preserves an explicit visitor pause')
+  log(app.includes('legion-portfolio-motion-v8') && app.includes("type MotionPreference = 'system' | 'on' | 'off'") && !app.includes('updateScrollReveals'), 'Versioned motion preference defaults on and preserves an explicit visitor pause')
   log(app.includes("headerHidden && !mobileOpen") && app.includes('mobile-nav-active'), 'Mobile navigation keeps the masthead visible while open')
-  log(app.includes('const motionIsPaused') && app.includes('setMotionPreference(next)') && app.includes("useState<'on' | 'off'>") && app.includes("const motionEnabled = motionPreference === 'on'"), 'Decorative motion defaults on and can be explicitly paused or resumed')
+  log(app.includes('const motionIsPaused') && app.includes('setMotionPreference(next)') && app.includes('readMotionPreference') && app.includes("motionPreference === 'system' && !systemReducedMotion"), 'Decorative motion defaults on and can be explicitly paused or resumed')
   log(app.includes('installInteractionSounds') && app.includes('legion-portfolio-sound-v2') && app.includes('soundEnabledRef'), 'Global interaction sound manager is mounted and uses a versioned visitor preference')
   log(app.includes('role="button"') && app.includes('aria-haspopup="dialog"') && app.includes('onKeyDown={handleKeyDown}'), 'Project cards are clickable, keyboard-operable project launch surfaces')
   log(app.includes('className="project-peek"') && app.includes('CLICK OR PRESS ENTER TO OPEN'), 'Project cards include a quick-view pop-out that previews the project before opening it')
+  log(app.includes('aria-labelledby="palette-title"') && app.includes('onCloseRef.current()') && app.includes('previousFocus?.focus()') && app.includes('getFocusable'), 'Command palette has labelled modal semantics, focus containment, Escape dismissal, and focus restoration')
+  const featureTabs = await read('src/PortfolioFeatures.tsx')
+  log(['ArrowRight', 'ArrowLeft', "'Home'", "'End'", 'aria-controls="lab-panel-exposure"', 'aria-labelledby="lab-tab-energy"', 'tabIndex={labTab'].every(value => featureTabs.includes(value)), 'Project laboratory tabs implement APG keyboard and tab-panel relationships')
+  log(app.includes("localStorage.getItem('legion-portfolio-sound-v2') === 'on'"), 'Interface sound is opt-in instead of default-on for first-time visitors')
   const sound = await read('src/sound.ts')
   for (const cue of ['hover', 'hover-nav', 'hover-link', 'hover-project', 'hover-control', 'hover-disclosure', 'focus', 'click', 'navigate', 'toggle', 'open', 'close', 'filter', 'download', 'copy', 'input', 'select', 'submit', 'success']) {
     const property = /^[a-z]+$/.test(cue) ? `${cue}: { notes:` : `'${cue}': { notes:`
@@ -221,7 +225,7 @@ async function check() {
 
   const html = await read('index.html')
   log(html.includes('id="root"') && html.includes('boot-fallback') && html.includes('<noscript>'), 'Boot and no-JavaScript fallbacks exist')
-  log(html.includes("localStorage.getItem('legion-portfolio-motion-v7')") && html.includes("const motionOverride = savedMotion === 'off' ? 'off' : 'on'") && html.includes("const motionEnabled = savedMotion !== 'off'") && html.includes('dataset.motionOverride'), 'Early boot script enables motion by default and applies an explicit saved visitor pause before paint')
+  log(html.includes("localStorage.getItem('legion-portfolio-motion-v8')") && html.includes("savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'") && html.includes("motionOverride === 'system' && !systemReducedMotion") && html.includes('dataset.motionOverride'), 'Early boot script enables motion by default and applies an explicit saved visitor pause before paint')
   log(html.includes('/King-Art-Pacumberto-Resume.pdf'), 'Original resume is available before React starts and without JavaScript')
   log(html.includes('/favicon.svg?v=20261109-4') && html.includes('/favicon-32.png?v=20261109-4') && html.includes('/favicon.ico?v=20261109-4'), 'Cache-busted SVG, PNG, and ICO favicon fallbacks are linked from the HTML shell')
   const faviconPng = await readFile(path.join(ROOT, 'public', 'favicon-32.png'))
