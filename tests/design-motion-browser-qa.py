@@ -49,6 +49,42 @@ def main() -> None:
         check(all(size >= 10 for size in metadata_sizes), 'Project metadata, feature labels, and footer microcopy stay at or above 10px')
         recruiter_meta = page.locator('.recruiter-experience-card > div > span').first.evaluate('(e)=>Number.parseFloat(getComputedStyle(e).fontSize)')
         check(recruiter_meta >= 10, 'Recruiter timeline metadata follows the same legible minimum')
+        contrast = page.evaluate("""() => {
+          const root = getComputedStyle(document.documentElement)
+          const rgb = (value) => {
+            const hex = value.trim().replace('#', '')
+            return [0, 2, 4].map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255)
+              .map((value) => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4)
+          }
+          const luminance = (value) => {
+            const [r, g, b] = rgb(value)
+            return .2126 * r + .7152 * g + .0722 * b
+          }
+          const ratio = (a, b) => {
+            const x = luminance(a), y = luminance(b)
+            return (Math.max(x, y) + .05) / (Math.min(x, y) + .05)
+          }
+          return { body: ratio(root.getPropertyValue('--text'), root.getPropertyValue('--bg')),
+            muted: ratio(root.getPropertyValue('--muted'), root.getPropertyValue('--bg')),
+            accent: ratio(root.getPropertyValue('--accent'), root.getPropertyValue('--bg')) }
+        }""")
+        check(all(value >= 4.5 for value in contrast.values()), 'Dark-theme body, muted, and accent colors meet WCAG AA contrast')
+        page.evaluate("document.documentElement.dataset.theme='light'")
+        light_contrast = page.evaluate("""() => {
+          const root = getComputedStyle(document.documentElement)
+          const rgb = (value) => {
+            const hex = value.trim().replace('#', '')
+            return [0, 2, 4].map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255)
+              .map((value) => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4)
+          }
+          const luminance = (value) => { const [r,g,b] = rgb(value); return .2126*r + .7152*g + .0722*b }
+          const ratio = (a,b) => { const x=luminance(a), y=luminance(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05) }
+          return { body: ratio(root.getPropertyValue('--text'), root.getPropertyValue('--bg')),
+            muted: ratio(root.getPropertyValue('--muted'), root.getPropertyValue('--bg')),
+            accent: ratio(root.getPropertyValue('--accent'), root.getPropertyValue('--bg')) }
+        }""")
+        check(all(value >= 4.5 for value in light_contrast.values()), 'Light-theme body, muted, and accent colors meet WCAG AA contrast')
+        page.evaluate("document.documentElement.dataset.theme='dark'")
         check(page.locator('.hero-title .title-line[data-reveal]').count() == 0 and page.locator('.hero-title[aria-label="From a question to working systems."]').count() == 1, 'Critical headline is independent of the scroll observer and has a complete accessible sentence')
         check(page.locator('.hero-section [data-hero-sequence][data-reveal]').count() == 0, 'Hero support copy uses the dedicated fail-open sequence instead of global reveal hiding')
         hero_animation = page.locator('.hero-title .title-line').first.evaluate('(e)=>getComputedStyle(e).animationName')
