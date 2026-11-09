@@ -28,7 +28,24 @@ Browser verification added for:
 - Updated README, the release preflight inventory, and cross-file integrity checks to use CHANGELOG.md as the sole release-history record.
 - Kept the actual test suite, design documentation, deployment guide, backend setup guide, source files, configuration, assets, PDFs, and release workflow. No working application feature or verification script was removed.
 
-The orbit repair is included in the current repository change. Its final verification and deployment status is recorded below after the matching GitHub Actions run completes.
+The orbit repair was verified and deployed on November 9, 2026.
+
+Final release verification on commit `4808dff329a276debf90146c9b849be629638c26`:
+
+- Cross-file integrity: **40/40 passed**.
+- Feature/security checks: **59/59 passed**.
+- Production-source checks: **76/76 passed**.
+- CSS/design browser suite: **41/41 passed**, with no browser runtime errors.
+- Orbit-specific browser checks: all four category buttons receive their own pointer hit point and activate the intended category; all three rings stay concentric; desktop and 320px mobile keep the center tile and caption within the inner ring; no center/node overlap; mobile icon hit areas are at least 44px.
+- Recruiter browser suite: **41/41 passed**.
+- Strict TypeScript check and production Vite build: **passed**.
+- Lighthouse CI audits for the full portfolio and recruiter view: **passed**.
+- Production Pages artifact checks: **passed**, including compiled JS/CSS references, all favicon formats, PDFs, and the `.nojekyll` marker.
+- GitHub Pages deployment: **reported success** at https://legioniz.github.io/.
+
+GitHub Actions: [run #115 — successful verification and deployment](https://github.com/Legioniz/Legioniz.github.io/actions/runs/42553256251).
+
+These are the verified results for this release commit.
 
 ## 2026-11-09 — Last deployed baseline
 
