@@ -13,7 +13,7 @@
     <script>
       (() => {
         const root = document.documentElement
-        root.dataset.motionOverride = 'on'
+        root.dataset.motionOverride = 'system'
         root.dataset.motion = 'on'
         try {
           const savedTheme = localStorage.getItem('legion-portfolio-theme')
@@ -29,10 +29,12 @@
           document.documentElement.dataset.quality = reducedGraphics ? 'economy' : (coarsePointer ? 'balanced' : 'full')
           document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
 
-          const savedMotion = localStorage.getItem('legion-portfolio-motion-v5')
-          const motionOverride = savedMotion === 'off' ? 'off' : 'on'
+          const savedMotion = localStorage.getItem('legion-portfolio-motion-v6')
+          const systemPrefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+          const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
+          const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemPrefersReducedMotion)
           root.dataset.motionOverride = motionOverride
-          root.dataset.motion = motionOverride
+          root.dataset.motion = motionEnabled ? 'on' : 'off'
         } catch {
           // Theme and motion preferences remain usable when storage is unavailable.
         }
@@ -53,10 +55,11 @@
     <meta name="twitter:title" content="King Art D. Pacumberto — Field Notes & Portfolio" />
     <meta name="twitter:description" content="BSIT student building software, data, and embedded projects." />
     <meta name="twitter:image" content="https://legioniz.github.io/og-card.png" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261109-1" sizes="any" />
-    <link rel="icon" type="image/png" href="/favicon-32.png?v=20261109-1" sizes="32x32" />
-    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=20261109-1" />
-    <link rel="mask-icon" href="/favicon.svg?v=20261109-1" color="#e87961" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20261109-2" sizes="16x16 32x32" />
+    <link rel="icon" type="image/png" href="/favicon-32.png?v=20261109-2" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261109-2" sizes="any" />
+    <link rel="shortcut icon" href="/favicon.ico?v=20261109-2" />
+    <link rel="mask-icon" href="/favicon.svg?v=20261109-2" color="#e87961" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
