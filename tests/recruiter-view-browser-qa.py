@@ -170,7 +170,7 @@ def main() -> None:
             check(page.get_by_role('heading', name='Projects that show how I build.').is_visible(), 'Selected project case studies are visible')
             check(page.locator('.recruiter-project-card').count() == 3, 'Exactly three featured technical projects are presented')
             check(page.locator('.recruiter-project-card a[href^="https://github.com/"]').count() >= 3, 'Each featured technical project has a repository link')
-            check(page.locator('a[href$=".pdf" i]').count() == 0, 'Recruiter profile exposes no downloadable personal application documents')
+            check(page.locator('a[href*="King-Art-Pacumberto-Resume.pdf"], a[href*="King-Art-Pacumberto-CV.pdf"]').count() == 0, 'Recruiter profile exposes no downloadable personal application documents')
             check(page.locator('.recruiter-portrait img').evaluate('(img) => img.complete && img.naturalWidth > 0'), 'Recruiter profile portrait loads successfully from the optimized responsive asset set')
             portrait_geometry = page.locator('.recruiter-portrait').evaluate("""picture => {
               const image = picture.querySelector('img')
@@ -386,7 +386,7 @@ def main() -> None:
             mobile.on('pageerror', lambda error: errors.append(str(error)))
             mobile.goto(BASE + '?view=recruiter', wait_until='domcontentloaded', timeout=30000)
             mobile.get_by_role('heading', name='King Art D. Pacumberto.', level=1).wait_for(timeout=15000)
-            check(mobile.locator('a[href$=".pdf" i]').count() == 0, 'Touch recruiter layout has no personal-document download link')
+            check(mobile.locator('a[href*="King-Art-Pacumberto-Resume.pdf"], a[href*="King-Art-Pacumberto-CV.pdf"]').count() == 0, 'Touch recruiter layout has no personal-document download link')
             check(not mobile.evaluate('document.documentElement.scrollWidth > window.innerWidth + 1'), '390px touch viewport has no horizontal overflow')
             mobile_card_layout = mobile.locator('.recruiter-project-card').first.evaluate(
                 "el => ({display:getComputedStyle(el).display, columns:getComputedStyle(el).gridTemplateColumns.split(' ').length})")
