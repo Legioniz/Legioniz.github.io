@@ -210,7 +210,8 @@ button, input, select, textarea { font: inherit; }
 }
 .orbit-node {
   max-width: 34%;
-  min-width: 0;
+  min-width: 44px;
+  min-height: 44px;
 }
 .orbit-node > span {
   width: 47px;
