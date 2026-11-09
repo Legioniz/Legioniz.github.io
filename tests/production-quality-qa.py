@@ -212,6 +212,10 @@ check("localStorage.getItem('legion-portfolio-sound-v2') === 'on'" in motion_app
       'Interface audio is opt-in instead of playing unexpectedly for first-time visitors')
 check('aria-labelledby="palette-title"' in motion_app and 'onCloseRef.current()' in motion_app and 'previousFocus?.focus()' in motion_app and 'getFocusable' in motion_app,
       'Command palette is a labelled, keyboard-contained dialog that restores focus')
+check("document.body.style.overflow = 'hidden'" in motion_app and "document.body.style.overflow = previousOverflow" in motion_app,
+      'Command palette prevents background scrolling and restores the previous overflow state')
+check('mobileMenuButtonRef.current?.focus()' in motion_app and 'const restoreMobileFocus = mobileOpen' in motion_app,
+      'Mobile navigation returns focus to its trigger after Escape or destination selection')
 check('ArrowRight' in features and 'ArrowLeft' in features and "'Home'" in features and "'End'" in features and 'aria-controls="lab-panel-exposure"' in features and 'aria-labelledby="lab-tab-energy"' in features,
       'Project Laboratory tabs implement expected arrow/Home/End navigation and explicit panel relationships')
 check('@media (forced-colors: active)' in layout_css and 'outline: 2px solid Highlight' in layout_css and 'textarea' in layout_css,
