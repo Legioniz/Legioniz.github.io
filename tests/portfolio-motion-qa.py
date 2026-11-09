@@ -142,7 +142,7 @@ with sync_playwright() as p:
     # The app's production markup is checked at source level; this fixture verifies the intended control contract.
     motion_markup = re.search(r'<button[\s\S]*?className="icon-button motion-toggle"[\s\S]*?</button>', APP)
     motion_markup = motion_markup.group(0) if motion_markup else ''
-    control_contract = {'disabled': bool(re.search(r'\bdisabled(?:\s|=|>)', motion_markup)), 'toggle': 'onClick={toggleMotion}' in motion_markup, 'versioned': 'legion-portfolio-motion-v6' in APP}
+    control_contract = {'disabled': bool(re.search(r'\bdisabled(?:\s|=|>)', motion_markup)), 'toggle': 'onClick={toggleMotion}' in motion_markup, 'versioned': 'legion-portfolio-motion-v7' in APP}
     assert not control_contract['disabled'] and control_contract['toggle'] and control_contract['versioned'], control_contract
 
     print('QA:dynamic project', flush=True)
@@ -314,7 +314,7 @@ with sync_playwright() as p:
     inline_scripts=re.findall(r'<script>(.*?)</script>', INDEX, flags=re.S)
     assert inline_scripts, 'index.html must have an early preference bootstrap script'
     pref_page.evaluate('''() => {
-      const store = {'legion-portfolio-motion': 'off', 'legion-portfolio-motion-v2': 'off', 'legion-portfolio-motion-v3': 'off', 'legion-portfolio-motion-v4': 'off', 'legion-portfolio-motion-v5': 'off'};
+      const store = {'legion-portfolio-motion': 'off', 'legion-portfolio-motion-v2': 'off', 'legion-portfolio-motion-v3': 'off', 'legion-portfolio-motion-v4': 'off', 'legion-portfolio-motion-v5': 'off', 'legion-portfolio-motion-v6': 'off'};
       Object.defineProperty(window, 'localStorage', { configurable: true, value: {
         getItem: (key) => Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null,
         setItem: (key, value) => { store[key] = String(value); },
@@ -346,7 +346,7 @@ print(json.dumps({
   'disclosures':disclosure_results,
   'KA_responsive':brand_metrics,
   'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
-  'preferenceMigration':'old v1-v5 keys ignored; motion defaults on across system profiles; v6 stores explicit visitor choices',
+  'preferenceMigration':'old v1-v6 keys ignored; motion defaults on across system profiles; v7 stores explicit visitor choices',
   'integration':'App uses real IntersectionObserver reveals and the separately browser-tested production masthead controller',
   'browserErrors':errors,
   'result':'PASS'
