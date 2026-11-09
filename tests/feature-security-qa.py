@@ -107,7 +107,7 @@ check("message.length < 10 || message.length > 5000" in edge and "body.length < 
 check('crypto.subtle.importKey' in edge and 'HMAC' in edge and 'raw address is neither stored nor logged' in edge, 'Rate-limit network identifier is HMAC-derived rather than stored raw')
 check('readLimitedBody' in edge and 'Array.isArray(parsed)' in edge and 'JSON.parse(rawBody)' in edge, 'Edge Function bounds streamed request bodies and rejects non-object JSON')
 check("'/rest/v1/'" in sw and "'/auth/v1/'" in sw and "'/functions/v1/'" in sw and "'/storage/v1/'" in sw, 'Service worker explicitly bypasses database, auth, function, and storage APIs')
-check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v17' in sw and "'/og-card.png?v=20261109-4'" in sw and "'/favicon.ico?v=20261109-4'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the palette asset release')
+check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v17' in sw and "'/og-card.png?v=20261109-5'" in sw and "'/favicon.ico?v=20261109-5'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the palette asset release')
 check("const isSoundToggle = interactive.classList.contains('sound-toggle')" in sound and '!isSoundToggle && now - lastActionAt < 35' in sound, 'Sound mute confirmation bypasses rapid-action debounce so the final cue is not lost')
 
 failures = [label for ok, label in checks if not ok]
