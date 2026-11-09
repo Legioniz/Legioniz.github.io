@@ -66,9 +66,9 @@ check(parser.metas.get('referrer') == 'strict-origin-when-cross-origin', 'Extern
 check(parser.metas.get('og:url') == 'https://legioniz.github.io/', 'Open Graph canonical URL is absolute and stable')
 check(parser.metas.get('twitter:card') == 'summary_large_image' and parser.metas.get('og:image', '').endswith('/og-card.png') and parser.metas.get('og:image:type') == 'image/png', 'Social sharing metadata uses a crawler-compatible PNG preview')
 check(any(link.get('rel') == 'canonical' and link.get('href') == 'https://legioniz.github.io/' for link in parser.links), 'Canonical URL is linked in document head')
-check(any(link.get('rel') == 'icon' and link.get('type') == 'image/x-icon' and 'favicon.ico?v=20261109-3' in link.get('href', '') for link in parser.links), 'Browser-first ICO favicon is linked with a fresh cache key')
-check(any(link.get('rel') == 'icon' and link.get('type') == 'image/png' and 'favicon-32.png?v=20261109-3' in link.get('href', '') for link in parser.links), '32px PNG favicon fallback is linked')
-check(any(link.get('rel') == 'icon' and link.get('type') == 'image/svg+xml' and 'favicon.svg?v=20261109-3' in link.get('href', '') for link in parser.links), 'Scalable SVG favicon is linked')
+check(any(link.get('rel') == 'icon' and link.get('type') == 'image/x-icon' and 'favicon.ico?v=20261109-4' in link.get('href', '') for link in parser.links), 'Browser-first ICO favicon is linked with a fresh cache key')
+check(any(link.get('rel') == 'icon' and link.get('type') == 'image/png' and 'favicon-32.png?v=20261109-4' in link.get('href', '') for link in parser.links), '32px PNG favicon fallback is linked')
+check(any(link.get('rel') == 'icon' and link.get('type') == 'image/svg+xml' and 'favicon.svg?v=20261109-4' in link.get('href', '') for link in parser.links), 'Scalable SVG favicon is linked')
 try:
     structured = json.loads(parser.jsonld)
     check(structured.get('@type') == 'Person' and structured.get('name') == 'King Art D. Pacumberto', 'Person structured data is valid JSON-LD and identifies the site owner')
