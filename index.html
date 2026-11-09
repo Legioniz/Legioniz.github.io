@@ -17,7 +17,7 @@
         // Resolve reduced motion before any other setup or first paint.
         root.dataset.motionOverride = 'system'
         let systemReducedMotion = false
-        try { systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false } catch { /* Motion defaults to static if the preference cannot be read. */ }
+        try { systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false } catch { systemReducedMotion = true /* Motion defaults to static if the preference cannot be read. */ }
         root.dataset.motion = systemReducedMotion ? 'off' : 'on'
         try {
           const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
