@@ -1,174 +1,741 @@
-/* Shared layout integrity layer — imported after styles.css by main.tsx. */
+/* Global layout contract.
+   This file is imported after styles.css and owns shared geometry, spacing,
+   breakpoints, overflow safety, and responsive composition. */
 :root {
   --layout-max: 1240px;
-  --layout-gutter: clamp(16px, 3.2vw, 42px);
-  --layout-section: clamp(64px, 8vw, 112px);
-  --layout-gap: clamp(16px, 2vw, 26px);
+  --layout-gutter: clamp(17px, 3.2vw, 42px);
+  --layout-section: clamp(64px, 7.4vw, 108px);
+  --layout-gap: clamp(16px, 1.9vw, 26px);
   --layout-column-gap: clamp(24px, 4vw, 56px);
   --layout-header-height: 68px;
+  --layout-copy-measure: 66ch;
 }
+
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-padding-top: calc(var(--layout-header-height) + 24px); }
-body { min-width: 320px; overflow-x: clip; }
-#root, main, section, article, aside, header, footer, nav, form, fieldset, figure, picture { min-width: 0; }
-img, video, canvas, svg, iframe { max-width: 100%; }
+
+html {
+  scroll-padding-top: calc(var(--layout-header-height) + 24px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: clip;
+}
+
+#root, .site-shell, .recruiter-view {
+  width: 100%;
+  min-width: 320px;
+  max-width: 100%;
+}
+
+.site-shell { min-height: 100svh; min-height: 100dvh; }
+
+:where(.site-shell, .recruiter-view) :where(
+  main, section, article, aside, header, footer, nav, form, fieldset,
+  figure, picture, .page-width, .section-heading, .hero-copy, .hero-visual,
+  .visual-plate, .project-card, .project-card-content, .project-title-row,
+  .project-stack, .about-main, .about-aside, .skill-groups, .skill-group,
+  .journey-column, .journey-side, .timeline, .timeline-item, .timeline-content,
+  .contact-content, .contact-aside, .recruiter-main, .recruiter-hero,
+  .recruiter-hero-copy, .recruiter-snapshot, .recruiter-project-card,
+  .recruiter-project-body, .recruiter-skill-card, .recruiter-experience-card,
+  .recruiter-contact, .recruiter-contact-actions
+) { min-width: 0; }
+
+img, video, canvas, iframe { max-width: 100%; }
 img, video { height: auto; }
-h1, h2, h3, h4, p, li, dd, dt, blockquote { min-width: 0; overflow-wrap: anywhere; }
-button, a, input, select, textarea { min-width: 0; }
-button, a { max-width: 100%; }
-.page-width { width: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter))); margin-inline: auto; }
+h1, h2, h3, h4, p, li, dd, dt, blockquote { min-width: 0; overflow-wrap: break-word; }
+button, a, input, select, textarea { min-width: 0; max-width: 100%; }
+button, input, select, textarea { font: inherit; }
+
+.page-width {
+  width: min(var(--layout-max), calc(100% - var(--layout-gutter) - var(--layout-gutter)));
+  max-width: var(--layout-max);
+  margin-inline: auto;
+}
+
 .section-pad { padding-block: var(--layout-section); }
-.section-pad, .recruiter-section { scroll-margin-top: calc(var(--layout-header-height) + 26px); }
-.section-heading { width: min(100%, 760px); margin-bottom: clamp(30px, 4.2vw, 56px); }
-.section-heading > p, .hero-description, .contact-content > p { max-width: min(100%, 64ch); }
+.section-pad, .feature-section, .recruiter-section {
+  scroll-margin-top: calc(var(--layout-header-height) + 26px);
+}
+
+.section-heading {
+  width: min(100%, 760px);
+  max-width: 760px;
+  margin: 0 0 clamp(30px, 4.2vw, 56px);
+}
+.section-heading h2, .recruiter-section-heading h2, .feature-header h2 {
+  max-width: 100%;
+  text-wrap: balance;
+}
+.section-heading > p, .hero-description, .contact-content > p,
+.recruiter-intro, .recruiter-section-heading > p, .feature-header > p {
+  max-width: min(100%, var(--layout-copy-measure));
+  line-height: 1.75;
+}
+
+/* Masthead: one bounded row, with the dropdown attached to the same control. */
 .site-header {
-  width: min(1320px, calc(100% - 2 * clamp(10px, 1.8vw, 22px)));
-  height: var(--layout-header-height); min-width: 0; padding-inline: clamp(10px, 1.6vw, 22px);
-  gap: clamp(10px, 1.4vw, 20px); isolation: isolate;
+  width: min(1320px, calc(100% - clamp(20px, 3.6vw, 44px)));
+  height: var(--layout-header-height);
+  min-height: var(--layout-header-height);
+  padding-inline: clamp(10px, 1.6vw, 22px);
+  gap: clamp(10px, 1.4vw, 20px);
+  isolation: isolate;
 }
 .brand, .brand-copy, .main-nav, .header-tools, .command-trigger { min-width: 0; }
-.brand { flex: 0 1 auto; gap: clamp(8px, 1vw, 13px); }
-.brand-copy strong, .brand-copy small { max-width: 100%; overflow-wrap: normal; }
-.main-nav { flex: 1 1 auto; justify-content: flex-end; gap: clamp(8px, .9vw, 14px); margin-inline: clamp(8px, 1.1vw, 16px); }
-.main-nav > a { flex: 0 0 auto; white-space: nowrap; font-size: clamp(9px, .76vw, 10px); }
-.header-tools { flex: 0 0 auto; gap: clamp(5px, .6vw, 8px); }
+.brand {
+  flex: 0 1 190px;
+  gap: clamp(8px, 1vw, 13px);
+}
+.brand-copy strong, .brand-copy small {
+  max-width: 100%;
+  overflow-wrap: normal;
+}
+.main-nav {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+  gap: clamp(7px, .85vw, 13px);
+  margin-inline: clamp(7px, 1vw, 15px);
+}
+.main-nav > a {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: clamp(9px, .76vw, 10px);
+}
+.header-tools {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: clamp(5px, .6vw, 8px);
+}
 .icon-button { flex: 0 0 36px; }
-.hero-section { height: auto; min-height: min(820px, 100svh); padding-block: clamp(118px, 14vh, 154px) 54px; }
-.hero-content { width: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter))); margin-inline: auto; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: var(--layout-column-gap); padding-top: 0; }
+.mobile-menu-button { display: none; }
+
+.main-nav.nav-open {
+  display: flex;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  z-index: 65;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(72svh, 560px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 14px;
+}
+.main-nav.nav-open > a {
+  width: 100%;
+  min-height: 38px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Hero and practice map: flexible height, bounded type, and no intrinsic-width traps. */
+.hero-section {
+  height: auto;
+  min-height: min(820px, 100svh);
+  min-height: min(820px, 100dvh);
+  padding-block: clamp(118px, 14vh, 154px) 54px;
+}
+.hero-content {
+  width: min(var(--layout-max), calc(100% - var(--layout-gutter) - var(--layout-gutter)));
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  align-items: center;
+  gap: var(--layout-column-gap);
+  padding-top: 0;
+}
 .hero-copy, .hero-visual, .visual-plate { min-width: 0; max-width: 100%; }
-.hero-title, .hero-title .title-line { max-width: 100%; }
-.availability-line, .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.about-layout { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: var(--layout-column-gap); }
-.about-main, .about-aside, .aside-card, .about-signature, .skill-groups, .skill-group, .skill-group-head, .skill-group-copy { min-width: 0; }
-.about-aside { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); }
-.skills-layout { grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); gap: var(--layout-column-gap); }
-.skill-group-head { display: flex; flex-wrap: wrap; gap: 8px 14px; }
-.skill-pills, .project-stack, .recruiter-tags { min-width: 0; }
-.journey-layout { grid-template-columns: minmax(0, 1fr) minmax(0, .94fr); gap: var(--layout-column-gap); }
-.journey-column, .journey-side, .timeline, .timeline-item, .timeline-summary, .timeline-content { min-width: 0; }
-.timeline-summary { display: flex; flex-wrap: wrap; gap: 6px 12px; }
-.project-toolbar, .project-filters { min-width: 0; display: flex; flex-wrap: wrap; gap: 12px 18px; }
-.project-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--layout-gap); }
-.project-card, .project-card-content, .project-title-row, .project-title-row h3, .project-meta, .project-stack, .project-detail-link { min-width: 0; max-width: 100%; }
+.hero-copy { padding-top: 0; }
+.availability-line, .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 12px;
+}
+.availability-line { line-height: 1.55; }
+.hero-title, .hero-title .title-line {
+  max-width: 100%;
+}
+.hero-title {
+  font-size: clamp(38px, 5.2vw, 84px);
+  line-height: .98;
+  text-wrap: balance;
+}
+.hero-title .title-line {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.hero-description { max-width: min(100%, 64ch); }
+.hero-visual {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 0;
+}
+.visual-plate { width: min(100%, 535px); margin-inline: auto; }
+.visual-plate-head, .visual-plate-foot {
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+}
+.visual-plate-head span, .visual-plate-foot span { min-width: 0; }
+.systems-orbit {
+  position: relative;
+  width: min(100%, 455px);
+  max-width: 100%;
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.orbit-center {
+  width: clamp(108px, 34%, 156px);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.orbit-center small {
+  max-width: 100%;
+  font-size: clamp(8px, .72vw, 10px);
+  line-height: 1.4;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.orbit-node {
+  max-width: 34%;
+  min-width: 0;
+}
+.orbit-node > span {
+  width: 47px;
+  height: 47px;
+  flex: 0 0 auto;
+}
+.orbit-node small {
+  max-width: 100%;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+}
+.orbit-coordinate { max-width: 27%; line-height: 1.45; }
+
+/* Primary content grids use shrink-safe tracks and a shared spacing scale. */
+.about-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: var(--layout-column-gap);
+}
+.about-main, .about-aside, .aside-card, .about-signature,
+.skill-groups, .skill-group, .skill-group-head, .skill-group-copy { min-width: 0; }
+.about-aside {
+  grid-template-columns: minmax(0, 1fr) minmax(0, .9fr);
+  gap: var(--layout-gap);
+}
+.skills-layout {
+  grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+  gap: var(--layout-column-gap);
+}
+.skill-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.skill-group-copy { flex: 1 1 180px; }
+.skill-pills, .project-stack, .recruiter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 7px;
+}
+.skill-pills > span, .project-stack > span, .recruiter-tags > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.journey-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(0, .94fr);
+  gap: var(--layout-column-gap);
+}
+.journey-column, .journey-side, .timeline, .timeline-item,
+.timeline-summary, .timeline-content { min-width: 0; }
+.timeline-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.timeline-title { min-width: 0; overflow-wrap: anywhere; }
+
+.project-toolbar, .project-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: 10px 16px;
+}
+.project-toolbar { justify-content: space-between; }
+.project-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--layout-gap);
+}
+.project-card, .project-card-content, .project-title-row,
+.project-title-row h3, .project-meta, .project-stack, .project-detail-link {
+  min-width: 0;
+  max-width: 100%;
+}
+.project-card { min-height: 0; }
 .project-card-content { padding: clamp(17px, 2vw, 25px); }
-.project-title-row { display: flex; align-items: flex-start; gap: 12px; }
-.project-title-row h3 { flex: 1 1 auto; overflow-wrap: anywhere; }
+.project-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.project-title-row h3 {
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
 .project-title-row .round-arrow { flex: 0 0 auto; }
-.project-stack { display: flex; flex-wrap: wrap; }
-.project-stack > span { max-width: 100%; overflow-wrap: anywhere; }
-.project-toki { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
-.project-toki .project-art { min-width: 0; }
+.project-stack { align-items: flex-start; }
+.project-stack > span { white-space: normal; }
+
 .contact-section { padding-block: var(--layout-section); }
-.contact-frame { min-height: 0; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); }
-.contact-content { min-width: 0; padding: clamp(24px, 4.5vw, 58px); }
-.contact-content h2 { max-width: 15ch; overflow-wrap: normal; }
-.contact-aside { min-width: 0; margin: clamp(12px, 1.5vw, 20px); }
+.contact-frame {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+  gap: var(--layout-gap);
+}
+.contact-content {
+  min-width: 0;
+  padding: clamp(24px, 4.5vw, 58px);
+}
+.contact-content h2 {
+  max-width: 15ch;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.contact-aside {
+  min-width: 0;
+  margin: clamp(12px, 1.5vw, 20px);
+}
 .contact-aside > * { max-width: 100%; }
-.site-footer { min-width: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px 24px; padding-block: 22px; }
+.site-footer {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  padding-block: 22px;
+}
 .footer-copy { min-width: min(100%, 240px); }
 .footer-copy small { overflow-wrap: anywhere; }
-.footer-links { min-width: 0; display: flex; flex-wrap: wrap; gap: 10px 16px; }
-.footer-links a, .footer-links button { min-height: 34px; white-space: normal; }
-/* Recruiter view uses the same container and spacing scale. */
-.recruiter-view { --recruiter-content: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter))); }
-.recruiter-main { width: var(--recruiter-content); max-width: var(--layout-max); margin-inline: auto; min-width: 0; }
-.recruiter-topbar { min-height: var(--layout-header-height); padding-inline: var(--layout-gutter); gap: 12px clamp(12px, 2vw, 24px); }
+.footer-links {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.footer-links a, .footer-links button {
+  min-height: 34px;
+  white-space: normal;
+}
+
+/* Interactive labs and supporting panels share the same grid contract. */
+.portfolio-intro, .portfolio-features, .feature-section, .feature-header,
+.lab-shell, .lab-shell-head, .lab-shell-foot, .lab-tabs,
+.exposure-workspace, .energy-workspace, .exposure-controls,
+.energy-controls, .exposure-result, .energy-result, .skill-map-shell,
+.skill-map-list, .skill-map-detail, .photo-archive-shell, .photo-archive-head,
+.photo-archive-filters, .photo-grid, .network-lab-shell, .network-topology,
+.network-controls, .network-path, .osint-shell, .osint-scenario,
+.osint-checklist, .hardware-shell, .hardware-visual, .hardware-controls,
+.notebook-shell, .notebook-toolbar, .notebook-entries, .building-grid,
+.project-compare, .compare-grid, .inquiry-suite, .comments-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+.feature-section { padding-block: var(--layout-section); }
+.feature-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 28px;
+  margin-bottom: clamp(26px, 3.5vw, 42px);
+}
+.feature-header > * { min-width: 0; }
+.lab-shell { width: 100%; }
+.lab-shell-head, .lab-shell-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+}
+.lab-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.exposure-workspace, .energy-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--layout-gap);
+}
+.exposure-controls, .energy-controls, .exposure-result, .energy-result { min-width: 0; }
+.skill-map-shell {
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+}
+.skill-map-list { min-width: 0; }
+.skill-map-detail { min-width: 0; }
+.photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--layout-gap); }
+.photo-tile { min-width: 0; }
+.network-lab-shell, .osint-shell, .hardware-shell {
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  align-items: stretch;
+}
+.network-topology, .network-controls, .osint-scenario, .osint-checklist,
+.hardware-visual, .hardware-controls { min-width: 0; }
+.network-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.network-node-wrap { min-width: 0; }
+.notebook-entries { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.notebook-entry { min-width: 0; }
+.building-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--layout-gap); }
+.project-compare { min-width: 0; }
+.compare-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.compare-row, .compare-project-head { min-width: 0; }
+.inquiry-suite { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: var(--layout-column-gap); }
+.inquiry-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.inquiry-form input, .inquiry-form textarea, .comment-form input, .comment-form textarea { width: 100%; }
+
+/* Recruiter profile follows the same max-width, rhythm, and shrink rules. */
+.recruiter-view { --recruiter-content: min(var(--layout-max), calc(100% - var(--layout-gutter) - var(--layout-gutter))); }
+.recruiter-topbar {
+  min-height: var(--layout-header-height);
+  padding-inline: var(--layout-gutter);
+  gap: 12px clamp(12px, 2vw, 24px);
+}
 .recruiter-brand, .recruiter-actions, .recruiter-jumps { min-width: 0; }
-.recruiter-actions { flex: 0 1 auto; }
-.recruiter-hero { grid-template-columns: minmax(0, 1.45fr) minmax(250px, .7fr); gap: var(--layout-column-gap); }
-.recruiter-hero-copy, .recruiter-snapshot, .recruiter-snapshot > div, .recruiter-project-card, .recruiter-project-body, .recruiter-skill-card, .recruiter-experience-card, .recruiter-two-column > *, .recruiter-contact > * { min-width: 0; }
+.recruiter-brand { flex: 0 0 auto; }
+.recruiter-jumps {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px clamp(10px, 1.6vw, 20px);
+}
+.recruiter-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+.recruiter-main {
+  width: var(--recruiter-content);
+  max-width: var(--layout-max);
+  margin-inline: auto;
+  min-width: 0;
+}
+.recruiter-hero {
+  grid-template-columns: minmax(0, 1.45fr) minmax(240px, .7fr);
+  align-items: center;
+  gap: var(--layout-column-gap);
+}
+.recruiter-hero-copy, .recruiter-snapshot, .recruiter-snapshot > div,
+.recruiter-project-card, .recruiter-project-body, .recruiter-skill-card,
+.recruiter-experience-card, .recruiter-two-column > *,
+.recruiter-contact > * { min-width: 0; }
+.recruiter-hero h1, .recruiter-section-heading h2 { max-width: 100%; text-wrap: balance; }
+.recruiter-intro { max-width: 66ch; }
 .recruiter-project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--layout-gap); }
+.recruiter-project-card { min-height: 0; }
 .recruiter-project-body { min-height: 0; padding: clamp(16px, 2vw, 24px); }
-.recruiter-experience-card { grid-template-columns: minmax(160px, .58fr) minmax(0, 1fr); gap: clamp(14px, 2vw, 24px); }
-.recruiter-two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-column-gap); }
-.recruiter-contact { grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: var(--layout-column-gap); }
-.recruiter-footer { display: flex; flex-wrap: wrap; gap: 12px 20px; }
-/* Fixed utilities use distinct corners on desktop and reflow on compact screens. */
-.privacy-notice, .service-update-notice { max-width: calc(100vw - 28px); min-width: 0; }
-.privacy-notice { left: auto; right: 14px; bottom: 14px; }
-.service-update-notice { top: calc(12px + var(--layout-header-height) + 10px); right: 14px; bottom: auto; }
+.recruiter-project-body h3 { overflow-wrap: anywhere; }
+.recruiter-project-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px 14px; }
+.recruiter-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-gap); }
+.recruiter-experience-card {
+  grid-template-columns: minmax(160px, .58fr) minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 24px);
+}
+.recruiter-two-column {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--layout-column-gap);
+}
+.recruiter-leadership-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-gap); }
+.recruiter-contact {
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr);
+  align-items: center;
+  gap: var(--layout-column-gap);
+}
+.recruiter-contact-actions { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.recruiter-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+/* Floating utilities and overlays stay within the viewport and out of each other's way. */
+.privacy-notice, .service-update-notice {
+  max-width: calc(100vw - 28px);
+  min-width: 0;
+}
+.privacy-notice {
+  left: auto;
+  right: 14px;
+  bottom: 14px;
+}
+.service-update-notice {
+  top: calc(var(--layout-header-height) + 22px);
+  right: 14px;
+  bottom: auto;
+}
 .privacy-notice > *, .service-update-notice > * { min-width: 0; }
 .privacy-notice p, .service-update-notice small { overflow-wrap: anywhere; }
+.privacy-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .modal-backdrop, .palette-backdrop, .photo-lightbox { padding: clamp(10px, 2vw, 24px); }
-.project-modal, .command-palette, .photo-lightbox-panel { width: min(100%, 820px); max-height: min(90svh, 920px); min-width: 0; overflow: auto; overscroll-behavior: contain; }
+.project-modal, .command-palette, .photo-lightbox-panel {
+  width: min(100%, 820px);
+  max-height: min(90svh, 920px);
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 .modal-body { padding: clamp(18px, 4vw, 36px); }
 .modal-grid, .capability-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .admin-panel { width: min(620px, 100%); max-width: 100%; }
+
+/* Intermediate widths: compress secondary navigation before changing composition. */
 @media (max-width: 1200px) {
-  .main-nav { gap: 8px; margin-inline: 8px; }
+  .main-nav { gap: 7px; margin-inline: 7px; }
   .main-nav > a { font-size: 9px; }
-  .hero-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; }
-  .hero-section { min-height: 760px; }
-  .project-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .hero-content { gap: clamp(24px, 3vw, 36px); }
   .recruiter-project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .building-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
 @media (max-width: 1100px) {
-  .site-header { left: 50%; right: auto; transform: translate3d(-50%, 0, 0); }
   .main-nav { display: none; }
-  .nav-open .main-nav { display: flex; position: absolute; top: calc(100% + 8px); right: 0; flex-direction: column; align-items: stretch; width: min(320px, calc(100vw - 24px)); margin: 0; padding: 14px; }
-  .nav-open .main-nav > a { width: 100%; white-space: normal; }
-  .hero-content { gap: 28px; }
-  .hero-title { font-size: clamp(40px, 6vw, 68px); }
-  .hero-section { min-height: auto; }
-  .project-card:nth-child(n) { grid-column: span 6; }
-  .project-card:nth-child(5) { grid-column: span 12; }
-  .contact-frame { grid-template-columns: minmax(0, 1.2fr) minmax(240px, .8fr); }
-  .recruiter-hero { gap: 28px; }
-  .recruiter-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mobile-menu-button { display: inline-grid; }
+  .hero-section { min-height: 0; }
+  .hero-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .hero-title { font-size: clamp(40px, 5.8vw, 68px); }
+  .recruiter-jumps { justify-content: flex-end; }
+  .recruiter-project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .exposure-workspace, .energy-workspace { gap: 14px; }
 }
+
 @media (max-width: 900px) {
-  .project-toki { grid-template-columns: minmax(0, 1fr); }
-  .project-toki .project-art { min-height: 250px; border-right: 0; border-bottom: 1px solid var(--line-strong); }
-  .recruiter-hero { grid-template-columns: minmax(0, 1fr); }
+  .hero-section {
+    display: block;
+    height: auto;
+    min-height: 0;
+    padding-block: 126px 40px;
+  }
+  .hero-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+  }
+  .hero-copy { max-width: 720px; }
+  .hero-title { font-size: clamp(46px, 8.2vw, 76px); }
+  .hero-visual { width: min(100%, 590px); justify-self: center; }
+  .visual-plate { width: min(100%, 540px); }
+  .systems-orbit { width: min(78vw, 430px); }
+  .hero-bottomline {
+    position: relative;
+    height: auto;
+    min-height: 42px;
+    margin-top: 28px;
+    padding: 12px var(--layout-gutter);
+    white-space: normal;
+    flex-wrap: wrap;
+    gap: 8px 13px;
+  }
+  .about-layout, .skills-layout, .journey-layout, .contact-frame,
+  .recruiter-hero, .recruiter-contact {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .about-aside { grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); }
   .recruiter-snapshot { max-width: 620px; }
-  .recruiter-contact { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-contact { align-items: start; }
+  .skill-map-shell { grid-template-columns: minmax(0, 1fr); }
+  .network-lab-shell, .osint-shell, .hardware-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .network-topology, .osint-scenario, .hardware-visual {
+    border-right: 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .inquiry-suite { grid-template-columns: minmax(0, 1fr); }
+  .comments-panel { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); padding-top: 22px; }
 }
+
 @media (max-width: 760px) {
-  :root { --layout-gutter: 19px; --layout-section: clamp(58px, 10vw, 78px); }
-  .site-header { top: 9px; height: 62px; width: calc(100% - 18px); padding-inline: 11px; }
-  .brand-mark { flex-basis: 35px; width: 35px; height: 35px; }
+  :root {
+    --layout-gutter: 19px;
+    --layout-section: clamp(58px, 9vw, 78px);
+    --layout-gap: 15px;
+    --layout-column-gap: 28px;
+    --layout-header-height: 62px;
+  }
+  .site-header {
+    width: calc(100% - 18px);
+    height: 62px;
+    min-height: 62px;
+    padding-inline: 11px;
+    gap: 7px;
+  }
+  .brand { flex: 0 1 auto; gap: 8px; }
+  .brand-mark { width: 35px; height: 35px; flex-basis: 35px; }
   .header-tools { gap: 5px; }
-  .icon-button, .command-trigger { flex-basis: 33px; width: 33px; height: 33px; }
-  .hero-section { padding: 108px 0 38px; }
-  .hero-content, .about-layout, .skills-layout, .journey-layout, .contact-frame { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-  .hero-content { width: calc(100% - 38px); }
-  .hero-title { font-size: clamp(38px, 10.5vw, 62px); }
-  .hero-description { font-size: 13px; line-height: 1.75; }
+  .icon-button, .command-trigger {
+    width: 33px;
+    height: 33px;
+    flex-basis: 33px;
+  }
+  .hero-section { padding-block: 108px 34px; }
+  .hero-content {
+    width: calc(100% - 38px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 27px;
+  }
+  .hero-title { font-size: clamp(38px, 9.8vw, 62px); }
+  .hero-description { font-size: 13px; line-height: 1.72; }
+  .hero-actions { gap: 8px; }
+  .hero-actions .button { max-width: 100%; }
+  .hero-visual { padding: 0; }
+  .visual-plate { padding: 12px 8px 10px; }
+  .visual-plate-head, .visual-plate-foot { font-size: 7px; }
+  .systems-orbit { width: min(82vw, 370px); }
+  .orbit-node > span { width: 44px; height: 44px; }
+  .orbit-node small { font-size: 7px; }
+  .orbit-coordinate { font-size: 6px; }
+  .orbit-center small { font-size: 9px; letter-spacing: .025em; }
+  .about-layout, .skills-layout, .journey-layout, .contact-frame { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .about-aside { grid-template-columns: minmax(0, 1fr); }
+  .project-toolbar { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .project-filters { gap: 6px; }
   .project-grid { grid-template-columns: minmax(0, 1fr); gap: 15px; }
   .project-card:nth-child(n) { grid-column: 1 / -1; }
   .project-card .project-art { height: clamp(190px, 54vw, 270px); min-height: 190px; }
-  .about-aside { grid-template-columns: minmax(0, 1fr); }
-  .journey-side { grid-template-columns: minmax(0, 1fr); }
+  .project-toki { grid-template-columns: minmax(0, 1fr); }
+  .project-toki .project-art {
+    min-height: 220px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .project-card-content { padding: clamp(15px, 4vw, 21px); }
+  .skill-group-head { gap: 8px 10px; }
+  .skill-group-copy { flex-basis: 150px; }
+  .timeline-summary { align-items: flex-start; }
   .contact-content { padding: 23px; }
   .contact-aside { margin: 12px; }
   .footer-links { width: 100%; justify-content: flex-start; }
+
+  .feature-section { padding-block: var(--layout-section); }
+  .feature-header { align-items: flex-start; margin-bottom: 28px; }
+  .exposure-workspace, .energy-workspace { grid-template-columns: minmax(0, 1fr); padding: 19px; }
+  .exposure-controls, .energy-controls {
+    padding: 19px 0;
+    border-inline: 0;
+    border-block: 1px solid var(--line);
+  }
+  .exposure-result, .energy-result { grid-column: auto; }
+  .skill-map-shell { grid-template-columns: minmax(0, 1fr); }
+  .skill-map-list { border-right: 0; border-bottom: 1px solid var(--line); padding: 14px; }
+  .skill-map-detail { min-height: 240px; padding: 20px; }
+  .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .notebook-entries { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notebook-entry:nth-child(3n) { border-right: 1px solid var(--line); }
+  .notebook-entry:nth-child(2n) { border-right: 0; }
+  .building-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inquiry-suite { grid-template-columns: minmax(0, 1fr); gap: 27px; padding: 18px; }
+  .comments-panel { padding: 22px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+  .modal-grid, .capability-list { grid-template-columns: minmax(0, 1fr); }
+
   .recruiter-main { width: calc(100% - 38px); }
   .recruiter-topbar { padding-inline: 19px; flex-wrap: wrap; }
+  .recruiter-jumps { flex: 1 1 100%; justify-content: flex-start; }
+  .recruiter-actions { flex: 1 1 100%; width: 100%; justify-content: flex-start; }
+  .recruiter-preferences { margin-left: auto; }
   .recruiter-hero { padding-block: 48px 42px; }
-  .recruiter-project-grid, .recruiter-skill-grid, .recruiter-two-column, .recruiter-leadership-grid { grid-template-columns: minmax(0, 1fr); }
-  .recruiter-project-card { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-project-grid, .recruiter-skill-grid, .recruiter-two-column,
+  .recruiter-leadership-grid { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-project-card {
+    display: grid !important;
+    grid-template-columns: minmax(90px, .32fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .recruiter-project-art {
+    min-width: 0;
+    min-height: 100%;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+  }
+  .recruiter-project-body { min-height: 0; padding: clamp(12px, 3.5vw, 17px); }
   .recruiter-experience-card { grid-template-columns: minmax(0, 1fr); gap: 9px; }
   .recruiter-contact { margin-block: 34px 26px; padding: 20px; }
   .recruiter-footer { padding-inline: 19px; }
-  .privacy-notice { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; flex-direction: column; align-items: flex-start; }
-  .privacy-actions { align-self: stretch; justify-self: start; }
-  .service-update-notice { left: 12px; right: 12px; width: auto; max-width: none; flex-wrap: wrap; }
-  .modal-grid, .capability-list { grid-template-columns: minmax(0, 1fr); }
+
+  .privacy-notice {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    max-width: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .privacy-actions { align-self: stretch; }
+  .privacy-actions button { flex: 1 1 auto; }
+  .service-update-notice {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    flex-wrap: wrap;
+  }
+  .admin-panel { padding: 18px; }
+  .admin-export-row { margin: 18px -18px -18px; padding-inline: 18px; }
 }
+
 @media (max-width: 520px) {
   :root { --layout-gutter: 17px; }
   .hero-content { width: calc(100% - 34px); }
-  .hero-title { font-size: clamp(36px, 10.2vw, 51px); letter-spacing: -.07em; }
+  .hero-title { font-size: clamp(36px, 10.2vw, 51px); letter-spacing: -.065em; }
   .availability-line { align-items: flex-start; font-size: 7px; }
+  .hero-actions .button { min-height: 42px; padding-inline: 10px; font-size: 9px; }
   .section-heading h2 { font-size: clamp(34px, 9vw, 46px); }
+  .about-section { padding-block: 64px; }
+  .contact-content { padding: 20px; }
+  .contact-content h2 { font-size: clamp(34px, 9vw, 46px); }
+  .systems-orbit { width: min(82vw, 340px); }
+  .orbit-node { gap: 5px; }
+  .orbit-node > span { width: 44px; height: 44px; }
+  .orbit-node small { font-size: 6px; letter-spacing: .06em; }
+  .orbit-coordinate { font-size: 5.5px; }
+  .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .building-grid { grid-template-columns: minmax(0, 1fr); }
   .recruiter-topbar { padding-inline: 17px; }
   .recruiter-main { width: calc(100% - 34px); }
-  .recruiter-snapshot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 15px; }
-  .recruiter-project-card { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-project-card { grid-template-columns: 76px minmax(0, 1fr); }
+  .recruiter-project-body { padding: 12px; }
+  .recruiter-project-body h3 { font-size: 16px; }
+  .recruiter-preferences { gap: 4px; }
+  .recruiter-preference-toggle { min-height: 40px; padding-inline: 8px; font-size: 10px; }
   .privacy-notice { gap: 10px; padding: 12px; }
 }
+
 @media (max-width: 360px) {
-  .site-header { width: calc(100% - 14px); padding-inline: 8px; gap: 7px; }
+  .site-header { width: calc(100% - 14px); padding-inline: 8px; gap: 6px; }
   .brand { gap: 6px; }
   .brand-mark { width: 32px; height: 32px; flex-basis: 32px; }
   .brand-copy strong { font-size: 8px; }
@@ -176,23 +743,9 @@ button, a { max-width: 100%; }
   .header-tools { gap: 3px; }
   .icon-button, .command-trigger { width: 30px; height: 30px; flex-basis: 30px; }
   .hero-title { font-size: 35px; }
-  .hero-actions .button { padding-inline: 9px; font-size: 9px; }
+  .hero-actions .button { padding-inline: 8px; font-size: 8px; }
+  .systems-orbit { width: min(82vw, 300px); }
   .recruiter-main { width: calc(100% - 30px); }
+  .recruiter-project-card { grid-template-columns: 64px minmax(0, 1fr); }
   .recruiter-actions a, .recruiter-actions button { font-size: 8px; padding-inline: 7px; }
 }
-/* Keep the expanded mobile navigation attached to its own control row. */
-.main-nav.nav-open {
-  display: flex;
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  flex-direction: column;
-  align-items: stretch;
-  width: min(320px, calc(100vw - 24px));
-  margin: 0;
-  padding: 14px;
-}
-.main-nav.nav-open > a { width: 100%; white-space: normal; }
-/* Large displays use a deliberately bounded title measure, not viewport-sized lettering. */
-.hero-title { font-size: clamp(38px, 5.2vw, 84px); }
-.hero-title .title-line { max-width: 100%; }
