@@ -15,11 +15,10 @@ const featureSections = [
 export function IntroSequence() {
   const [visible, setVisible] = useState(() => {
     if (typeof window === 'undefined') return false
+    if (document.documentElement.dataset.motion === 'off') return false
     try {
       if (sessionStorage.getItem('legion-intro-seen-v1') === 'yes') return false
-      if (document.documentElement.dataset.motion === 'off') return false
-      return true
-    } catch { /* Storage may be unavailable; keep the default introduction enabled. */ }
+    } catch { /* Storage may be unavailable; the intro remains optional. */ }
     return true
   })
 
