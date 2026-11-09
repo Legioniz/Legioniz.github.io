@@ -1,7 +1,4 @@
-/**
- * Public-facing portfolio settings. Review the contact and resume fields before
- * deploying: the downloadable PDF contains the contact details shown on the CV.
- */
+/** Public-facing identity and contact settings for the portfolio. */
 export const siteConfig = {
   fullName: 'King Art D. Pacumberto',
   firstName: 'King Art',
@@ -11,9 +8,5 @@ export const siteConfig = {
   github: 'https://github.com/Legioniz',
   email: 'kingartriez@gmail.com',
   linkedin: 'https://www.linkedin.com/in/king-art-pacumberto-6003b2353',
-  // Exact owner-supplied resume PDF (includes the phone number shown in the uploaded file).
-  resumeOriginalPath: '/King-Art-Pacumberto-Resume.pdf',
-  // Public-safe CV PDF omits the personal phone number.
-  resumePdfPath: '/King-Art-Pacumberto-CV.pdf',
   availabilityNote: 'Open to internships, collaboration, and entry-level opportunities',
 }
