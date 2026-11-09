@@ -145,6 +145,14 @@ def main() -> None:
                 page.wait_for_timeout(50)
             check(len(comment_reads) >= 2, "Manual refresh issues a fresh uncached approved-comment request")
 
+            reads_before_focus = len(comment_reads)
+            page.evaluate("window.dispatchEvent(new Event('focus'))")
+            deadline = time.time() + 5
+            while len(comment_reads) <= reads_before_focus and time.time() < deadline:
+                page.wait_for_timeout(50)
+            check(len(comment_reads) > reads_before_focus,
+                  "Returning focus automatically refreshes the public feed without a manual click")
+
             page.locator("#public-note-name").fill("QA Visitor")
             page.locator("#public-note-body").fill("The public comment form submits through the moderation endpoint.")
             submit = page.locator(".comment-submit")

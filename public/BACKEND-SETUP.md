@@ -82,7 +82,7 @@ The dashboard does not grant access because of a hidden URL, local-storage flag,
 3. The Edge Function checks the exact production Origin, request size, honeypot, per-network quota, optional Turnstile verification, and field lengths. It inserts the comment with `status = 'pending'`.
 4. The owner opens **ADMIN → COMMENTS**, reviews the pending queue, and uses **APPROVE / PUBLISH** to make a note public. Editing, hiding, archiving, exporting, and deletion are also available.
 5. Anonymous feed reads are restricted twice: PostgREST requests ask for `status=approved`, and the database RLS policy independently permits anonymous SELECT only for approved rows. Pending submissions never appear in the visitor feed.
-6. Visitors can press **REFRESH** to request the latest approved notes. If there are no approved notes, the empty feed is a normal state; it does not disable the composer.
+6. The feed loads approved notes on entry, refreshes when the visitor returns to the tab, and silently checks for new approvals every 30 seconds while visible. Visitors can still press **REFRESH** for an immediate request. If there are no approved notes, the empty feed is a normal state; it does not disable the composer.
 
 The repository includes a production-build browser test for the composer, approved-feed rendering, refresh request, publishable-key headers, and pending-submission confirmation. The deployment workflow also checks the live Edge Function's CORS preflight and a safe honeypot POST that intentionally creates no record.
 

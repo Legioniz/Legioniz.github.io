@@ -102,25 +102,47 @@ export function InquiryAndComments() {
   const [comments, setComments] = useState<PortfolioComment[]>([])
   const [commentsLoading, setCommentsLoading] = useState(backendConfig.configured)
   const [commentsError, setCommentsError] = useState('')
+  const commentsRequestInFlight = useRef(false)
 
-  const refreshComments = useCallback(async () => {
+  const refreshComments = useCallback(async (silent = false) => {
     if (!backendConfig.configured) {
       setComments([])
       setCommentsLoading(false)
       return
     }
-    setCommentsLoading(true)
+    // Prevent overlapping refresh, focus, and polling requests from racing.
+    if (commentsRequestInFlight.current) return
+    commentsRequestInFlight.current = true
+    if (!silent) setCommentsLoading(true)
     setCommentsError('')
     try {
       setComments(await fetchApprovedComments())
     } catch (error) {
       setCommentsError(error instanceof Error ? error.message : 'The public notes could not be loaded.')
     } finally {
-      setCommentsLoading(false)
+      commentsRequestInFlight.current = false
+      if (!silent) setCommentsLoading(false)
     }
   }, [])
 
-  useEffect(() => { void refreshComments() }, [refreshComments])
+  useEffect(() => {
+    void refreshComments()
+    if (!backendConfig.configured) return
+
+    // Keep the moderated feed current without requiring visitors to press Refresh.
+    // Refresh on tab return and every 30 seconds while the page is visible.
+    const refreshWhenVisible = () => {
+      if (!document.hidden) void refreshComments(true)
+    }
+    const intervalId = window.setInterval(refreshWhenVisible, 30_000)
+    window.addEventListener('focus', refreshWhenVisible)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', refreshWhenVisible)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
+  }, [refreshComments])
 
   async function handleInquiry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -202,9 +224,9 @@ export function InquiryAndComments() {
           <p>Comments are reviewed before publication. No email address or contact details are requested for public notes.</p>
         </header>
 
-        <section className="comments-feed" aria-label="Approved public notes">
+        <section className="comments-feed" aria-label="Approved public notes" aria-live="polite" aria-busy={commentsLoading}>
           <div className="comments-feed-toolbar">
-            <span><i className="comments-live-dot"/> COMMUNITY NOTES / {String(comments.length).padStart(2, '0')}</span>
+            <span><i className="comments-live-dot"/> COMMUNITY NOTES / {String(comments.length).padStart(2, '0')} <small>· AUTO-REFRESH 30S</small></span>
             <button type="button" onClick={() => void refreshComments()} disabled={!backendConfig.configured || commentsLoading} aria-label="Refresh public notes">
               {commentsLoading ? 'LOADING…' : '↻ REFRESH'}
             </button>
@@ -219,7 +241,7 @@ export function InquiryAndComments() {
             <div className="comments-loading" role="status" aria-label="Loading approved public notes">
               <span/><span/><span/>
             </div>
-          ) : commentsError ? (
+          ) : commentsError && comments.length === 0 ? (
             <div className="comments-empty comments-system-state" role="status">
               <strong>Could not load public notes.</strong>
               <p>{commentsError}</p>
