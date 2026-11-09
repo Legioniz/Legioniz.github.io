@@ -104,8 +104,9 @@ The two PDF downloads are integrated into the site header, hero actions, contact
 
 The frontend forms and owner-console interface are included. A secure Supabase schema and Edge Function are also included under `supabase/`, but the live backend remains **unconfigured** until the owner creates a Supabase project, applies the migration, deploys the function, adds the administrator allowlist row, and supplies the public frontend values. No live database, credentials, administrator account, or external service has been fabricated.
 
-- When no backend is configured, the inquiry form opens a prefilled email as a fallback; it does not claim to save a record. Comments remain disabled.
-- With the backend configured, inquiries are inserted through a server-side function and remain private. Public comments are pending until an administrator approves them.
+- When no backend is configured, the inquiry form opens a prefilled email as a fallback; it does not claim to save a record. Public-note submission remains disabled and clearly shows that no browser-side storage is being used.
+- With the backend configured, visitors submit public notes using a display name and comment only; every submission is validated server-side and enters the `pending` queue. The public feed can read approved notes only.
+- The owner console provides searchable moderation queues for pending, approved, hidden, and archived comments, with edit, approve/publish, hide, archive, export, and permanent delete actions.
 - The owner console uses Supabase Auth plus an explicit database allowlist. Row Level Security is the enforcement boundary for private inquiries, comments, the allowlist, page views, and admin activity.
 - Analytics are off by default and require visitor consent. The minimal record contains a random session UUID, page path, and timestamp. The submission function derives a short-lived HMAC rate-limit bucket; it does not store raw IP addresses.
 - Cloudflare Turnstile is optional but recommended. Its site key is public; its secret belongs only in Supabase Function secrets.
