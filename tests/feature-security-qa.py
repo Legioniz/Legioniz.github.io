@@ -17,6 +17,7 @@ backend = (ROOT / 'src/backend.ts').read_text(encoding='utf-8')
 sql = (ROOT / 'supabase/migrations/202611090001_portfolio_backend.sql').read_text(encoding='utf-8')
 edge = (ROOT / 'supabase/functions/portfolio-submit/index.ts').read_text(encoding='utf-8')
 sw = (ROOT / 'public/sw.js').read_text(encoding='utf-8')
+deploy = (ROOT / '.github/workflows/deploy.yml').read_text(encoding='utf-8')
 sound = (ROOT / 'src/sound.ts').read_text(encoding='utf-8')
 
 # Core user-facing experience.
@@ -49,6 +50,7 @@ check('.quick-navigator.is-expanded .quick-navigator-links' in (ROOT / 'src/styl
 
 # Backend frontend contract.
 check("VITE_SUPABASE_URL" in backend and "VITE_SUPABASE_ANON_KEY" in backend, 'Frontend backend configuration uses only public Supabase URL and anon key')
+check(all(name in deploy for name in ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_TURNSTILE_SITE_KEY']) and 'vars.VITE_SUPABASE_URL' in deploy and 'secrets.VITE_SUPABASE_URL' in deploy, 'GitHub Pages build passes only the documented public Vite backend settings into the production bundle')
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'No Supabase service-role key or privileged credential is included in frontend backend client')
 check('sessionStorage' in backend and 'legion-portfolio-admin-session-v1' in backend, 'Admin session persistence is tab-scoped')
 check('mailto:' in backend_ui and 'No message is stored by the website' in backend_ui, 'Unconfigured inquiry form has an honest email fallback')
