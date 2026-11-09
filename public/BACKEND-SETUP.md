@@ -1,6 +1,6 @@
 # Secure portfolio backend setup
 
-The frontend now contains inquiry and moderated-comment forms, an owner dashboard, and an opt-in analytics view. The backend is deliberately **inactive until configured**. This repository contains the schema and Edge Function, but it does not contain credentials, an administrator account, or a deployed Supabase project.
+The frontend contains private inquiry and public-note forms, a moderated comment feed, an owner dashboard, and an opt-in analytics view. The comments workflow supports the complete lifecycle: visitors create pending notes; the public feed reads approved notes only; the owner can review, edit, approve, hide, archive, export, or permanently delete records. The backend is deliberately **inactive until configured**. This repository contains the database migration and Edge Function, but it does not contain Supabase credentials, an administrator account, or a deployed Supabase project.
 
 ## Architecture
 
@@ -80,7 +80,9 @@ The footer's **ADMIN** link or the command palette's “Open admin console” op
 
 - Administrator sign-in and database allowlist validation.
 - Inquiry review, status changes, editing of submitted content and private notes, archival, JSON export, and permanent deletion.
-- Comment review, editing, approval, hiding, archival, export, and permanent deletion.
+- Comment moderation with status queues for pending, approved, hidden, and archived notes.
+- Comment search by display name or text, direct status changes, editing the display name/body, approval/publication, hiding, archival, JSON export, and permanent deletion.
+- Public Create is rate-limited and server-validated, and always inserts with `status = 'pending'`. Public Read is restricted by RLS to `status = 'approved'`. Update/Delete are available only to an authenticated allowlisted administrator.
 - Opt-in page-view summaries and the administrator activity log.
 
 The dashboard does not grant access because of a hidden URL, local-storage flag, or client-side role. It is only a user interface; RLS remains the real security boundary.
@@ -97,4 +99,4 @@ The current analytics are deliberately minimal and approximate. A visitor may bl
 
 ## Unconfigured state
 
-The source distribution has no Supabase URL, keys, deployed function, or allowlisted owner ID. Until you provide and configure those values, the inquiry form uses a mailto fallback, public comments remain disabled, analytics remain off, and the admin panel shows setup instructions. This is intentional and safer than pretending that client-side storage is a secure database.
+The source distribution has no Supabase URL, keys, deployed function, or allowlisted owner ID. Until a Supabase project is created, the migration is applied, the Edge Function is deployed with server-only secrets, an owner is allowlisted, and the public Vite values are added to the GitHub Pages build, the public-notes composer stays disabled and shows a backend-offline state; no comment is stored in browser storage. The inquiry form uses its honest mailto fallback, analytics remain off, and the admin panel shows setup instructions. This is intentional: the browser must never simulate a database or moderation queue.
