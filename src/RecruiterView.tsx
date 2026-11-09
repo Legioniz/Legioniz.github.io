@@ -138,13 +138,13 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
           <div className="recruiter-preferences" role="group" aria-label="Display and sound preferences">
             <button type="button" className="recruiter-preference-toggle motion-toggle" data-sfx="toggle"
               onClick={onToggleMotion} aria-pressed={motionEnabled}
-              aria-label={motionEnabled ? 'Pause decorative motion' : 'Resume decorative motion'}
+              aria-label={motionEnabled ? 'Motion On — pause decorative motion' : 'Motion Off — resume decorative motion'}
               title={motionEnabled ? 'Pause decorative motion' : 'Resume decorative motion'}>
               <span aria-hidden="true">◈</span><span>Motion {motionEnabled ? 'On' : 'Off'}</span>
             </button>
             <button type="button" className="recruiter-preference-toggle sound-toggle" data-sfx="toggle"
               onClick={onToggleSound} aria-pressed={soundEnabled}
-              aria-label={soundEnabled ? 'Turn interface sounds off' : 'Turn interface sounds on'}
+              aria-label={soundEnabled ? 'Sound On — turn interface sounds off' : 'Sound Off — turn interface sounds on'}
               title={soundEnabled ? 'Turn interface sounds off' : 'Turn interface sounds on'}>
               <span aria-hidden="true">♪</span><span>Sound {soundEnabled ? 'On' : 'Off'}</span>
             </button>
