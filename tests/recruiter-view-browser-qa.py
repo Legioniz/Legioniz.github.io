@@ -198,8 +198,11 @@ def main() -> None:
             first_card = page.locator('.recruiter-project-card').first
             fine_pointer = page.evaluate("window.matchMedia('(hover: hover) and (pointer: fine)').matches")
             if fine_pointer:
-                first_card.evaluate("""el => {
-                    const bounds = el.getBoundingClientRect()
+                first_art.evaluate("""el => {
+                    const card = el.closest('.recruiter-project-card')
+                    const bounds = card.getBoundingClientRect()
+                    // Dispatch from a nested art element to verify delegated bubbling,
+                    // matching the actual pointer target during normal use.
                     el.dispatchEvent(new PointerEvent('pointermove', {
                         bubbles: true,
                         pointerType: 'mouse',
@@ -207,10 +210,16 @@ def main() -> None:
                         clientY: bounds.top + 28
                     }))
                 }""")
-                spotlight = first_card.get_attribute('data-spotlight')
-                spotlight_opacity = first_card.evaluate("(el) => getComputedStyle(el, '::before').opacity")
-                check(spotlight == 'active' and float(spotlight_opacity) > 0,
-                      'Fine-pointer movement activates the project-card spotlight without a separate stale script')
+                spotlight_state = first_card.evaluate("""el => ({
+                    state: el.getAttribute('data-spotlight'),
+                    opacity: getComputedStyle(el, '::before').opacity,
+                    x: el.style.getPropertyValue('--recruiter-spot-x'),
+                    y: el.style.getPropertyValue('--recruiter-spot-y')
+                })""")
+                check(spotlight_state['state'] == 'active'
+                      and float(spotlight_state['opacity']) > 0
+                      and bool(spotlight_state['x']) and bool(spotlight_state['y']),
+                      f'Fine-pointer movement activates the visible project-card spotlight from a nested target ({spotlight_state})')
             else:
                 check(first_card.get_attribute('data-spotlight') is None,
                       'Project-card spotlight remains disabled when the browser reports no fine-pointer hover input')
