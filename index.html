@@ -30,7 +30,7 @@
           document.documentElement.dataset.quality = reducedGraphics ? 'economy' : (coarsePointer ? 'balanced' : 'full')
           document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
 
-          const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v6') } catch { return null } })()
+          const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v7') } catch { return null } })()
           const motionOverride = savedMotion === 'off' ? 'off' : 'on'
           const motionEnabled = savedMotion !== 'off'
           root.dataset.motionOverride = motionOverride
