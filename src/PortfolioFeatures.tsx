@@ -22,9 +22,12 @@ export function IntroSequence() {
     if (typeof window === 'undefined') return false
     try {
       if (sessionStorage.getItem('legion-intro-seen-v1') === 'yes') return false
-      return localStorage.getItem('legion-portfolio-motion-v5') !== 'off'
-    } catch { /* Storage may be unavailable; motion remains enabled by default. */ }
-    return true
+      const savedMotion = localStorage.getItem('legion-portfolio-motion-v6')
+      if (savedMotion === 'on') return true
+      if (savedMotion === 'off') return false
+      return !(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
+    } catch { /* Storage may be unavailable; follow the system preference. */ }
+    return !(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
   })
 
   useEffect(() => {
