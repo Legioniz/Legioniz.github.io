@@ -220,7 +220,6 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
           <a href="#recruiter-contact" data-sfx="navigate" onClick={() => activateSectionLink('recruiter-contact')}>Contact</a>
         </nav>
         <div className="recruiter-actions">
-          <a className="recruiter-download" data-sfx="download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF <span aria-hidden="true">↗</span></a>
           <button type="button" className="recruiter-exit" data-sfx="navigate" onClick={onExit}>Full portfolio <span aria-hidden="true">↗</span></button>
           <div className="recruiter-preferences" role="group" aria-label="Display and sound preferences">
             <button type="button" className="recruiter-preference-toggle motion-toggle" data-sfx="toggle"
@@ -247,7 +246,6 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
             <p className="recruiter-role">BSIT STUDENT · ASPIRING IT PROFESSIONAL</p>
             <p className="recruiter-intro">I build and explore practical software, data-oriented applications, and embedded systems. My experience also includes computer support, programming instruction, technical operations, event coordination, and collaborative school activities.</p>
             <div className="recruiter-hero-links">
-              <a className="recruiter-primary-link" data-sfx="download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download public CV (PDF) <span aria-hidden="true">↓</span></a>
               <a data-sfx="open" href={`mailto:${siteConfig.email}`}>Email <span aria-hidden="true">↗</span></a>
               <a data-sfx="open" href={siteConfig.github} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
               {siteConfig.linkedin && <a data-sfx="open" href={siteConfig.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>}
@@ -346,7 +344,6 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
             <a data-sfx="open" href={`mailto:${siteConfig.email}`}>{siteConfig.email} ↗</a>
             <a data-sfx="open" href={siteConfig.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
             {siteConfig.linkedin && <a data-sfx="open" href={siteConfig.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>}
-            <a className="recruiter-download" data-sfx="download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF ↓</a>
           </div>
         </section>
       </main>

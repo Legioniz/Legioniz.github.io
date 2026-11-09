@@ -54,7 +54,7 @@ The public URLs are `https://legioniz.github.io/` (full portfolio) and `https://
 
 ## Recruiter view and production checks
 
-Open the concise, shareable recruiter profile with `/?view=recruiter`. It reuses the same project, skills, experience, education, achievements, and contact data as the full site, exposes the public-safe CV PDF only, and can hand visitors into the full project case studies.
+Open the concise, shareable recruiter profile with `/?view=recruiter`. It reuses the same project, skills, experience, education, achievements, and contact data as the full site, presents concise professional information and direct contact links, and can hand visitors into the full project case studies.
 
 The production workflow includes source-level SEO, privacy, responsive, accessibility, and security checks; a compiled asset and bundle-size audit; Lighthouse CI against both the full portfolio and recruiter view; and Chromium browser checks for recruiter routes, keyboard behavior, print styling, and narrow-screen overflow. Lighthouse HTML/JSON reports are written to `.lighthouseci/reports` in CI rather than uploaded to public temporary storage. Passing these checks is a release gate, not a claim of live deployment or full WCAG certification.
 
@@ -90,16 +90,11 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Responsive profile portrait with WebP/JPEG source sets, intrinsic dimensions, lazy loading, and initials fallback
 - Versioned, opt-in service-worker updates and a same-origin static-asset cache; form, auth, database, and storage API traffic is excluded from caching
 - Dedicated OSINT and defensive network-practice note with explicit authorized-lab scope
-- Direct GitHub, LinkedIn, and email links; PDF-only downloads for the exact owner-supplied resume and redesigned public-safe CV, integrated into the header, hero, contact section, and progressive fallbacks
+- Direct GitHub, LinkedIn, and email links across the full portfolio, recruiter profile, and progressive fallbacks
 
 ## CV and privacy
 
-The portfolio exposes PDF downloads only. The editable Word/DOCX version has been removed from the public interface and release assets.
-
-- `public/King-Art-Pacumberto-Resume.pdf` is the exact original resume PDF supplied by the owner. It contains the phone number printed on that resume. Publishing the site makes this file publicly downloadable, so replace it with a redacted PDF before deployment if the phone number should remain private.
-- `public/King-Art-Pacumberto-CV.pdf` is the redesigned public-safe CV PDF and omits the phone number.
-
-The two PDF downloads are integrated into the site header, hero actions, contact section, and progressive fallbacks. Do not add private application documents to the public repository.
+The portfolio intentionally does not publish downloadable resumes, CVs, or other personal application documents. Visitors can review the information presented directly in the Full Portfolio and Recruiter View, then use the contact links to get in touch.
 
 ## Inquiries, moderated comments, analytics, and owner administration
 
@@ -121,13 +116,13 @@ CSS owns the layout through fluid sizing, breakpoints, orientation rules, dynami
 
 ## Interaction sounds and project previews
 
-The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close, downloads, and copy actions have distinct action cues. Sound is off for first-time visitors and is enabled only after an explicit choice; browsers still require a real user gesture before Web Audio can play. The speaker control persists the preference under `legion-portfolio-sound-v2`.
+The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close and copy actions have distinct action cues. Sound is off for first-time visitors and is enabled only after an explicit choice; browsers still require a real user gesture before Web Audio can play. The speaker control persists the preference under `legion-portfolio-sound-v2`.
 
 On fine-pointer desktop layouts, hovering or keyboard-focusing a project card slides a quick-view panel in from the right. Clicking anywhere on the card, or pressing Enter/Space while focused, opens the complete project introduction. Touch layouts skip the hover-only panel and open the same introduction on tap. Projects without a live demo only expose the documented overview and repository link; no fake launch destinations are shown.
 
 ## Content maintenance
 
-- `src/config.ts`: name, public contact links, location, exact original resume PDF path, and public-safe CV PDF path.
+- `src/config.ts`: name, public contact links, location, and availability note.
 - `src/data.ts`: projects, core skills (including OSINT/security foundations), experience, education, achievements, and activities. Project-specific technologies stay in each project's stack rather than being presented as self-rated proficiency.
 - `src/App.tsx`: page structure, shareable project case studies, project launch cards, modal introductions, and adaptive UI hooks.
 - `src/PortfolioFeatures.tsx`: learning labs, skill map, local photography workspace, fictional Network Lab, OSINT workflow, hardware model, developer notes, current work, quick navigator, and service-worker update notice.
@@ -181,4 +176,4 @@ The shared `src/layout-integrity.css` layer is imported directly by `src/main.ts
 
 ## Public Markdown references
 
-The public site also serves [llms.txt](https://legioniz.github.io/llms.txt), a short discovery index for text-first clients, with separate [profile](https://legioniz.github.io/profile.md), [project](https://legioniz.github.io/projects.md), and [experience](https://legioniz.github.io/experience.md) summaries. These files are maintained alongside the React source and are included in the sitemap. They link to the public-safe CV only; the original resume is not listed.
+The public site also serves [llms.txt](https://legioniz.github.io/llms.txt), a short discovery index for text-first clients, with separate [profile](https://legioniz.github.io/profile.md), [project](https://legioniz.github.io/projects.md), and [experience](https://legioniz.github.io/experience.md) summaries. These files are maintained alongside the React source and are included in the sitemap. They provide text-first profile information and direct contact links; no personal documents are distributed.
