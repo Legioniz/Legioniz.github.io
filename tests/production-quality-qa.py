@@ -143,6 +143,15 @@ for theme, block in [('dark', root_css), ('light', light_css)]:
     if accent and foreground and hover:
         colors[theme] = (foreground.group(1), accent.group(1), hover.group(1))
 check(set(colors) == {'dark', 'light'} and all(contrast_ratio(fg, bg) >= 4.5 and contrast_ratio(fg, hover) >= 4.5 for fg, bg, hover in colors.values()), 'Primary accent buttons maintain WCAG AA text contrast in dark and light themes')
+for theme, block in [('dark', root_css), ('light', light_css)]:
+    background = re.search(r'--bg:\\s*(#[0-9a-fA-F]{6})', block)
+    foreground = re.search(r'--text:\\s*(#[0-9a-fA-F]{6})', block)
+    muted = re.search(r'--muted:\\s*(#[0-9a-fA-F]{6})', block)
+    muted_secondary = re.search(r'--muted-2:\\s*(#[0-9a-fA-F]{6})', block)
+    check(bool(background and foreground and muted and muted_secondary) and all(
+        contrast_ratio(color.group(1), background.group(1)) >= 4.5
+        for color in (foreground, muted, muted_secondary)
+    ), f'{theme.title()} theme body and muted text tokens meet WCAG AA contrast')
 check('color: var(--on-accent)' in css, 'Primary and recruiter download buttons share the theme-aware accessible foreground token')
 
 check('loading="lazy"' in app and 'decoding="async"' in app, 'Profile imagery is deferred and decoded asynchronously')
