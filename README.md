@@ -63,14 +63,14 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Responsive technical-field-journal art direction with warm paper/ink surfaces, signal-coral accents, annotated geometry, and dark/light themes
 - Annotated geometric practice map and lightweight Canvas particle visualization
 - Project category filters, right-side quick-view pop-outs on desktop hover, and detailed project case-study dialogs opened by click/tap/Enter/Space; each project can be opened directly with `?project=project-id`, shared by copying its URL, and closed with browser back/forward navigation
-- Keyboard command palette (`Ctrl+K` / `Cmd+K`) with shortcuts to the labs, photography workspace, network simulation, OSINT journal, activity record, and owner console
+- Keyboard command palette (`Ctrl+K` / `Cmd+K`) with labelled modal semantics, focus containment and restoration, Escape-to-close, live no-results feedback, and shortcuts to the labs, photography workspace, network simulation, OSINT journal, activity record, and owner console
 - Scroll progress and bidirectional section reveals driven by IntersectionObserver: content eases in when entering the reading area and eases out when leaving, then re-enters when scrolling back
 - Direction-aware floating masthead: hides after deliberate downward scroll and reappears on upward scroll; stays available near the page top, while the mobile menu is open, and during keyboard focus
 - Adaptive Canvas particle field (maximum 42 fine-pointer desktop / 18 coarse-pointer particles; downshifts to 12 on constrained devices and 0 for Save-Data or an explicit motion pause; 24 fps cap and adaptive pixel ratio)
 - Collapsible skill categories, work-history entries, extracurricular details, and project-scope notes using native keyboard-accessible disclosures
 - Progressive disclosure animation where supported; native open/close behavior remains available as a lightweight fallback
 - Decorative orbit, project-art, and skills animations pause outside the viewport and resume near view; the capability strip stays static for readability
-- Decorative motion is enabled by default, including when the OS requests reduced motion. Visitors can pause/resume it from the header; an explicit preference is stored under the versioned `legion-portfolio-motion-v5` key.
+- Motion follows the operating-system reduced-motion setting until a visitor explicitly chooses Motion On or Motion Off. The choice is stored under `legion-portfolio-motion-v8`; older explicit v7 choices are migrated. The intro sequence is skipped when motion is reduced.
 - Asymmetric 12-column project case-study board with a dedicated horizontal treatment for the photography project
 - Side-by-side project comparison for purpose, contribution, status, stack, and documented capabilities
 - Project Laboratory with an exposure-triangle / EV100 calculator and a user-adjustable appliance-energy estimator; both are explicitly labelled local teaching models
@@ -82,10 +82,11 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Developer Notebook and a clearly qualified “Currently Building” board
 - Persistent section quick navigator, active-section tracking, existing scroll progress, and responsive, keyboard-accessible navigation
 - Project cards behave as full keyboard-operable launch surfaces; desktop hover reveals a right-side quick-view panel, while click/tap/Enter/Space opens the full project introduction with role, overview, technology, project scope, and repository link where available
-- Project dialogs animate into view, manage focus, support Escape-to-close, and restore focus to the project card
-- Visible keyboard focus states in both themes, a skip-to-content link, and explicit light-theme contrast tuning
+- Project dialogs animate into view, expose an accessible title and description, manage focus, support Escape-to-close, and restore focus to the project card
+- Project Laboratory tabs use roving tab stops, Left/Right Arrow navigation, Home/End navigation, and explicit tab-to-panel relationships
+- Visible keyboard focus states in both themes and forced-colors mode, a skip-to-content link, WCAG AA palette checks, and 44px minimum coarse-pointer controls
 - One-line `KA` monogram lockup with nowrap layout rules and a responsive brand header
-- Synthesized, target-specific interface sounds for navigation and link hover, project hover, controls, disclosures, keyboard focus, form fields, submits, project open/close, downloads, and copy; enabled by default on this release, persistent sound toggle in the header, no audio assets
+- Synthesized, target-specific interface sounds for navigation, project hover, controls, disclosures, keyboard focus, forms, downloads, and copy; sound is off until a visitor explicitly enables it with the persistent header toggle, with no audio assets
 - Responsive profile portrait with WebP/JPEG source sets, intrinsic dimensions, lazy loading, and initials fallback
 - Versioned, opt-in service-worker updates and a same-origin static-asset cache; form, auth, database, and storage API traffic is excluded from caching
 - Dedicated OSINT and defensive network-practice note with explicit authorized-lab scope
@@ -144,6 +145,7 @@ On fine-pointer desktop layouts, hovering or keyboard-focusing a project card sl
 - `tests/interactions-browser-qa.py` and `tests/interaction-fixture.html`: optional browser tests against the exact compiled sound module and shipped stylesheet, covering hover pop-out, project click/keyboard opening, touch behavior, motion pause, target-specific hover sounds, keyboard focus, text/select/submit cues, and disclosure feedback; requires Python Playwright and a Chromium-family browser.
 - `tests/portfolio-motion-qa.py`: Chromium/Playwright test that compiles and loads the exact production reveal and masthead controllers, verifies section enter/exit/re-entry, dynamic project insertion, skill/education/achievement disclosure open-close transitions, motion-on-by-default behavior, explicit visitor pause, header movement by scroll direction, fallback behavior, and the one-line `KA` lockup at seven viewport widths. Requires global TypeScript (`tsc`), Python Playwright, and Chromium outside the deployed runtime. Run it with `npm run test:motion`.
 - `SOURCES.md`: evidence and editorial notes for public-facing claims.
+- `UX-ACCESSIBILITY-PLAYBOOK.md`: the sourced design, accessibility, interaction, performance, SEO, and security standards used to review and maintain the site.
 
 Smart Electrical Monitoring is described as a local demonstration using synthetic data, not a live utility integration. The TIMO award links to its published ranking. The current education and experience details follow the latest supplied resume. The OSINT and security-practice descriptions are owner-reported, self-directed experience and are labeled foundational; the named Medusa tool is described only in an authorized authentication-audit lab context. The uploaded profile image is stored as responsive, optimized WebP/JPEG derivatives under `public/profile/`, not as a large original PNG. Leadership responsibilities and event-production details are included from the owner's direct confirmation; no missing dates or titles have been invented. The light-theme coral and secondary metadata tokens have been darkened to maintain contrast on the warm paper background. The adaptive effect key intentionally ignores one-pixel layout changes so CSS/ResizeObserver can handle geometry without repeatedly rebuilding optional effects.
 
