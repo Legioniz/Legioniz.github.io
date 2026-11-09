@@ -11,7 +11,7 @@ import shutil
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-CSS = (ROOT / 'src/styles.css').read_text(encoding='utf-8')
+CSS = (ROOT / 'src/styles.css').read_text(encoding='utf-8') + '\\n' + (ROOT / 'src/layout-integrity.css').read_text(encoding='utf-8')
 HTML = r'''<!doctype html><html lang="en" data-theme="dark" data-motion="on" data-motion-override="on" data-quality="full" data-pointer="fine"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
 <div class="site-shell"><main class="page-width">
   <section class="hero-section"><div class="hero-content"><div class="hero-copy"><p class="hero-pretitle" data-hero-sequence="eyebrow">FIELD NOTES / 001</p><h1 class="hero-title" aria-label="From a question to working systems."><span class="title-line" data-hero-line aria-hidden="true">From a question</span><span class="title-line" data-hero-line aria-hidden="true">to working</span><span class="title-line" data-hero-line aria-hidden="true">systems.</span></h1><p data-hero-sequence="description">Hero description</p><div data-hero-sequence="actions"><button>Explore</button></div></div><div class="hero-visual motion-active" data-motion-zone><div class="visual-plate">
