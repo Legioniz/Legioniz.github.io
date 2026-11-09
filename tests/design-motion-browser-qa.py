@@ -108,10 +108,11 @@ def main() -> None:
                 const r = rect(element)
                 const overlapX = Math.max(0, Math.min(r.right, centerRect.right)-Math.max(r.left, centerRect.left))
                 const overlapY = Math.max(0, Math.min(r.bottom, centerRect.bottom)-Math.max(r.top, centerRect.top))
-                const target = rect(element.querySelector('span'))
+                // The button itself is the hit area; its icon span is only visual content.
+                const hitArea = rect(element)
                 return {name:element.dataset.category, inside:r.left >= frame.left-1 && r.right <= frame.right+1 &&
                   r.top >= frame.top-1 && r.bottom <= frame.bottom+1,
-                  overlap:overlapX*overlapY, targetWidth:target.width, targetHeight:target.height}
+                  overlap:overlapX*overlapY, hitAreaWidth:hitArea.width, hitAreaHeight:hitArea.height}
               })
               return {width:frame.width, rings, centerContainsCaption:captionRect.left >= centerRect.left+2 &&
                 captionRect.right <= centerRect.right-2 && captionRect.top >= centerRect.top &&
@@ -126,7 +127,7 @@ def main() -> None:
         check(all(ring['dx'] <= 1.5 and ring['dy'] <= 1.5 for ring in mobile_orbit['rings']), 'All rotating orbit rings remain concentric at 320px')
         check(mobile_orbit['centerContainsCaption'] and mobile_orbit['centerFitsInnerRing'], 'Mobile orbit center caption stays inside its tile and the tile fits within the inner ring')
         check(all(node['inside'] and node['overlap'] <= 1 for node in mobile_orbit['nodes']), 'Mobile orbit nodes stay inside the diagram and clear of the center tile')
-        check(all(node['targetWidth'] >= 44 and node['targetHeight'] >= 44 for node in mobile_orbit['nodes']), 'Mobile orbit icon hit areas meet the 44px touch-target size')
+        check(all(node['hitAreaWidth'] >= 44 and node['hitAreaHeight'] >= 44 for node in mobile_orbit['nodes']), 'Mobile orbit buttons provide at least 44px by 44px clickable hit areas')
         contrast = page.evaluate("""() => {
           const root = getComputedStyle(document.documentElement)
           const rgb = (value) => {
