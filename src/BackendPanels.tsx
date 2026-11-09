@@ -165,7 +165,6 @@ export function InquiryAndComments() {
     try {
       await submitPublicRecord('comment', { display_name: commentName.trim(), body: commentBody.trim(), website: commentHoneypot, turnstileToken: commentCaptcha })
       setCommentName(''); setCommentBody(''); setCommentHoneypot(''); setCommentCaptcha('')
-      setCommentCaptchaReset((value) => value + 1)
       setCommentStatus('Your note is in the moderation queue. It will appear publicly after approval.')
     } catch (error) {
       setCommentStatus(error instanceof Error ? error.message : 'The comment could not be submitted.')
