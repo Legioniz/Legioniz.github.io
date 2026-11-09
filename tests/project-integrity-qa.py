@@ -131,7 +131,7 @@ check("legion-portfolio-motion-v7" in html_shell and "const motionOverride = sav
       "Early boot enables motion by default and applies only an explicit saved visitor pause")
 app_source = read("src/App.tsx")
 intro_source = read("src/PortfolioFeatures.tsx")
-check("return localStorage.getItem('legion-portfolio-motion-v6') === 'off' ? 'off' : 'on'" in app_source and "const motionEnabled = motionPreference === 'on'" in app_source,
+check("return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app_source and "const motionEnabled = motionPreference === 'on'" in app_source,
       "React motion controls default to on and preserve an explicit visitor pause")
 check("if (savedMotion === 'off') return false" in intro_source and "return true" in intro_source,
       "The intro sequence follows the same default-on visitor motion preference")
