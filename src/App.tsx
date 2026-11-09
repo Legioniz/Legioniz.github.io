@@ -570,15 +570,15 @@ function SectionHeading({ index, kicker, title, accent, description }: { index: 
 function SystemsOrbit({ onSelectCategory }: { onSelectCategory: (category: ProjectCategory) => void }) {
   return (
     <div className="systems-orbit" role="group" aria-label="Interactive areas of interest: software, data, embedded systems, and creative technology">
-      <div className="orbit-grid"/>
-      <div className="orbit-ring ring-outer"/><div className="orbit-ring ring-middle"/><div className="orbit-ring ring-inner"/>
-      <div className="orbit-center"><span className="orbit-monogram">KA</span><small>IDEAS → SYSTEMS</small></div>
-      <button className="orbit-node node-web" data-sfx="filter" onClick={() => onSelectCategory('Software')} aria-label="Explore software projects"><span><Icon name="code" size={17}/></span><small>SOFTWARE</small></button>
-      <button className="orbit-node node-data" data-sfx="filter" onClick={() => onSelectCategory('Data & Systems')} aria-label="Explore data and systems projects"><span><Icon name="database" size={17}/></span><small>DATA</small></button>
-      <button className="orbit-node node-embedded" data-sfx="filter" onClick={() => onSelectCategory('Embedded')} aria-label="Explore embedded projects"><span><Icon name="cpu" size={17}/></span><small>EMBEDDED</small></button>
-      <button className="orbit-node node-creative" data-sfx="filter" onClick={() => onSelectCategory('Creative')} aria-label="Explore creative projects"><span><Icon name="camera" size={17}/></span><small>CREATIVE</small></button>
-      <div className="orbit-satellite satellite-one"/><div className="orbit-satellite satellite-two"/>
-      <div className="orbit-coordinate coord-a">14°40' N<br/>121°02' E</div><div className="orbit-coordinate coord-b">FIELD NOTES / 2026</div>
+      <div className="orbit-grid" aria-hidden="true"/>
+      <div className="orbit-ring ring-outer" aria-hidden="true"/><div className="orbit-ring ring-middle" aria-hidden="true"/><div className="orbit-ring ring-inner" aria-hidden="true"/>
+      <div className="orbit-center" aria-hidden="true"><span className="orbit-monogram">KA</span><small>IDEAS → SYSTEMS</small></div>
+      <button type="button" className="orbit-node node-web" data-sfx="filter" onClick={() => onSelectCategory('Software')} aria-label="Explore software projects"><span aria-hidden="true"><Icon name="code" size={17}/></span><small>SOFTWARE</small></button>
+      <button type="button" className="orbit-node node-data" data-sfx="filter" onClick={() => onSelectCategory('Data & Systems')} aria-label="Explore data and systems projects"><span aria-hidden="true"><Icon name="database" size={17}/></span><small>DATA</small></button>
+      <button type="button" className="orbit-node node-embedded" data-sfx="filter" onClick={() => onSelectCategory('Embedded')} aria-label="Explore embedded projects"><span aria-hidden="true"><Icon name="cpu" size={17}/></span><small>EMBEDDED</small></button>
+      <button type="button" className="orbit-node node-creative" data-sfx="filter" onClick={() => onSelectCategory('Creative')} aria-label="Explore creative projects"><span aria-hidden="true"><Icon name="camera" size={17}/></span><small>CREATIVE</small></button>
+      <div className="orbit-satellite satellite-one" aria-hidden="true"/><div className="orbit-satellite satellite-two" aria-hidden="true"/>
+      <div className="orbit-coordinate coord-a" aria-hidden="true">14°40' N<br/>121°02' E</div><div className="orbit-coordinate coord-b" aria-hidden="true">FIELD NOTES / 2026</div>
     </div>
   )
 }
