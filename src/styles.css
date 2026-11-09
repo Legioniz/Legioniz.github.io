@@ -575,7 +575,9 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; padding: 3px 5
 .palette-label { padding: 14px 18px 8px; color: var(--muted-2); font: 8px var(--font-mono); letter-spacing: .15em; }
 .palette-results { padding: 0 8px 10px; max-height: 350px; overflow: auto; }
 .palette-item { width: 100%; padding: 11px 10px; display: flex; align-items: center; gap: 12px; border: 1px solid transparent; border-radius: 4px; background: transparent; text-align: left; color: var(--muted); cursor: pointer; transition: background .2s ease, border .2s ease, color .2s ease; }
-.palette-item:hover { color: var(--text); background: var(--surface-2); border-color: var(--line); }
+.palette-item:hover, .palette-item[data-active='true'] { color: var(--text); background: var(--surface-2); border-color: var(--line); }
+.palette-item[data-active='true'] { box-shadow: inset 2px 0 0 var(--accent); }
+.palette-item:focus-visible { outline-offset: -2px; }
 .palette-item > svg { margin-left: auto; color: var(--muted-2); }
 .palette-index { color: var(--accent); font: 9px var(--font-mono); }
 .palette-item-copy { display: flex; flex-direction: column; gap: 3px; }
@@ -4236,3 +4238,7 @@ body {
 }
 .admin-auth-link:hover { color: var(--text-strong); }
 .admin-auth-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+
+/* ARIA tab panels remain mounted so every tab's aria-controls target exists. */
+.lab-shell [role="tabpanel"][hidden] { display: none !important; }

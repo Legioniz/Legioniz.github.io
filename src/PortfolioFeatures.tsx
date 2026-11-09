@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent, CSSProperties } from 'react'
+import type { ChangeEvent, CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { projects } from './data'
 import type { Project } from './data'
 
@@ -17,6 +17,19 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
   const exposureValue = Math.log2((aperture * aperture / shutter) * (100 / iso))
   const baselineEv = Math.log2((5.6 * 5.6 / (1 / 125)) * (100 / 100))
   const relativeExposure = Math.pow(2, baselineEv - exposureValue)
+  const handleLabTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    const tabs: FeatureTab[] = ['exposure', 'energy']
+    let nextIndex = tabs.indexOf(labTab)
+    if (event.key === 'ArrowRight') nextIndex = (nextIndex + 1) % tabs.length
+    else if (event.key === 'ArrowLeft') nextIndex = (nextIndex - 1 + tabs.length) % tabs.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = tabs.length - 1
+    else return
+    event.preventDefault()
+    const nextTab = tabs[nextIndex]!
+    setLabTab(nextTab)
+    window.requestAnimationFrame(() => document.getElementById(`lab-tab-${nextTab}`)?.focus())
+  }
 
   const [watts, setWatts] = useState(90)
   const [hours, setHours] = useState(6)
@@ -202,11 +215,11 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
         <div className="lab-shell" data-reveal>
           <div className="lab-shell-head"><span><i className="live-dot"/> INTERACTIVE WORKSPACE</span><span>LOCAL SIMULATION / NO EXTERNAL DATA</span></div>
           <div className="lab-tabs" role="tablist" aria-label="Project laboratory demonstrations">
-            <button role="tab" aria-selected={labTab === 'exposure'} className={labTab === 'exposure' ? 'is-selected' : ''} onClick={() => setLabTab('exposure')}>01 / EXPOSURE MODEL</button>
-            <button role="tab" aria-selected={labTab === 'energy'} className={labTab === 'energy' ? 'is-selected' : ''} onClick={() => setLabTab('energy')}>02 / ENERGY ESTIMATOR</button>
+            <button id="lab-tab-exposure" type="button" role="tab" aria-selected={labTab === 'exposure'} aria-controls="lab-panel-exposure" tabIndex={labTab === 'exposure' ? 0 : -1} className={labTab === 'exposure' ? 'is-selected' : ''} onClick={() => setLabTab('exposure')} onKeyDown={handleLabTabKeyDown}>01 / EXPOSURE MODEL</button>
+            <button id="lab-tab-energy" type="button" role="tab" aria-selected={labTab === 'energy'} aria-controls="lab-panel-energy" tabIndex={labTab === 'energy' ? 0 : -1} className={labTab === 'energy' ? 'is-selected' : ''} onClick={() => setLabTab('energy')} onKeyDown={handleLabTabKeyDown}>02 / ENERGY ESTIMATOR</button>
           </div>
-          {labTab === 'exposure' ? (
-            <div className="exposure-workspace" role="tabpanel">
+          <>
+            <div id="lab-panel-exposure" aria-labelledby="lab-tab-exposure" className="exposure-workspace" role="tabpanel" tabIndex={0} hidden={labTab !== 'exposure'}>
               <div className="lab-description"><span className="feature-code">LENS LAB / EXPOSURE TRIANGLE</span><h3>Three controls. <em>One exposure.</em></h3><p>Adjust ISO, aperture, and shutter speed to see how their light contribution changes relative to a fixed baseline of f/5.6, 1/125 s, ISO 100.</p><button className="feature-text-button" onClick={() => { setIso(400); setAperture(5.6); setShutterIndex(2) }}>Reset example ↺</button></div>
               <div className="exposure-controls">
                 <RangeControl label="ISO" value={iso} min={100} max={6400} step={100} output={String(iso)} onChange={setIso}/>
@@ -215,8 +228,7 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
               </div>
               <div className="exposure-result"><span className="feature-code">CALCULATED RESULT / EV100</span><strong>{exposureValue.toFixed(2)}<small> EV</small></strong><div className="exposure-meter"><i style={{ width: `${Math.max(2, Math.min(100, relativeExposure / 4 * 100))}%` }}/></div><p><b>{relativeExposure.toFixed(2)}×</b> relative exposure compared with the baseline. This is a mathematical teaching aid, not a rendered camera preview.</p></div>
             </div>
-          ) : (
-            <div className="energy-workspace" role="tabpanel">
+            <div id="lab-panel-energy" aria-labelledby="lab-tab-energy" className="energy-workspace" role="tabpanel" tabIndex={0} hidden={labTab !== 'energy'}>
               <div className="lab-description"><span className="feature-code">SMART ELECTRICAL MONITORING / ESTIMATE</span><h3>Put usage into <em>monthly context.</em></h3><p>Change the sample appliance assumptions. The calculator estimates energy use from rated watts × daily hours × 30 days.</p><button className="feature-text-button" onClick={() => { setWatts(90); setHours(6); setRate(12) }}>Reset assumptions ↺</button></div>
               <div className="energy-controls">
                 <RangeControl label="APPLIANCE POWER" value={watts} min={5} max={2000} step={5} output={`${watts} W`} onChange={setWatts}/>
@@ -225,7 +237,7 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
               </div>
               <div className="energy-result"><span className="feature-code">ESTIMATED MONTHLY COST</span><strong>₱{monthlyCost.toLocaleString('en-PH', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</strong><div className="energy-result-stats"><span><small>MONTHLY ENERGY</small><b>{monthlyKwh.toFixed(2)} kWh</b></span><span><small>DAILY ENERGY</small><b>{(watts * hours / 1000).toFixed(2)} kWh</b></span></div><p>The ₱/kWh rate is an editable example assumption, not a current utility tariff or actual bill calculation.</p></div>
             </div>
-          )}
+          </>
           <div className="lab-shell-foot"><span>FORMULA-LED / CLIENT-SIDE ONLY</span><span>INPUTS RESET ON PAGE RELOAD</span></div>
         </div>
         <div className="feature-side-note"><span>RELATED BUILD</span><button onClick={() => onOpenProject(projects[0]!)}>LensLab <b>↗</b></button><button onClick={() => onOpenProject(projects[1]!)}>Smart Electrical Monitoring <b>↗</b></button></div>
@@ -246,7 +258,7 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
         <div className="photo-archive-shell" data-reveal>
           <div className="photo-archive-head"><div><span className="feature-code">LOCAL SESSION / NO SERVER UPLOADS</span><h3>Your <em>photo workspace</em></h3></div><button className="feature-button" onClick={() => fileInput.current?.click()}>＋ ADD PHOTOS</button><input ref={fileInput} className="visually-hidden" type="file" aria-label="Add photos" accept="image/*" multiple onChange={handlePhotoFiles}/></div>
           <div className="photo-archive-filters" role="group" aria-label="Filter photos by aspect ratio">{(['all', 'portrait', 'landscape', 'square'] as const).map((item) => <button key={item} className={photoFilter === item ? 'active' : ''} onClick={() => setPhotoFilter(item)} aria-pressed={photoFilter === item}>{item.toUpperCase()}</button>)}<span>{filteredPhotos.length} / {photos.length} FRAMES</span></div>
-          {photos.length === 0 ? <div className="photo-empty"><div className="photo-empty-icon">⌗</div><strong>Your archive starts with a frame.</strong><p>No sample photography is included yet. Add JPG, PNG, or WebP images from your device to create a temporary gallery preview.</p><button className="feature-text-button" onClick={() => fileInput.current?.click()}>Choose images from this device ↗</button></div> : filteredPhotos.length ? <div className="photo-grid">{filteredPhotos.map((photo) => <button className="photo-tile" key={photo.id} onClick={() => { setViewerId(photo.id); setSplit(52) }}><img src={photo.url} alt={photo.name} loading="lazy"/><span><b>{photo.name}</b><small>{photo.width} × {photo.height} · {(photo.bytes / 1024).toFixed(0)} KB</small></span><i>OPEN ↗</i></button>)}</div> : <div className="photo-empty compact">No images in this aspect-ratio category. Choose another filter.</div>}
+          {photos.length === 0 ? <div className="photo-empty"><div className="photo-empty-icon">⌗</div><strong>Your archive starts with a frame.</strong><p>No sample photography is included yet. Add JPG, PNG, WebP, AVIF, GIF, or BMP images from your device to create a temporary gallery preview.</p><button className="feature-text-button" onClick={() => fileInput.current?.click()}>Choose images from this device ↗</button></div> : filteredPhotos.length ? <div className="photo-grid">{filteredPhotos.map((photo) => <button className="photo-tile" key={photo.id} onClick={() => { setViewerId(photo.id); setSplit(52) }}><img src={photo.url} alt={photo.name} loading="lazy"/><span><b>{photo.name}</b><small>{photo.width} × {photo.height} · {(photo.bytes / 1024).toFixed(0)} KB</small></span><i>OPEN ↗</i></button>)}</div> : <div className="photo-empty compact">No images in this aspect-ratio category. Choose another filter.</div>}
           {uploadMessage && <p className="photo-local-note" role="status">{uploadMessage}</p>}
           {photos.length > 0 && <button className="feature-text-button remove-photos" onClick={() => { photos.forEach((photo) => URL.revokeObjectURL(photo.url)); photoUrls.current = []; setPhotos([]); setViewerId(null); setUploadMessage('Local image previews cleared.') }}>Clear local image previews ×</button>}
         </div>
@@ -301,7 +313,7 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
         </div>
       </section>
 
-      {viewerPhoto && <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label={`Viewing ${viewerPhoto.name}`} onMouseDown={(event) => { if (event.target === event.currentTarget) setViewerId(null) }}><div className="photo-lightbox-panel" tabIndex={-1}><div className="photo-lightbox-head"><div><span>LOCAL PREVIEW / BEFORE & AFTER</span><strong>{viewerPhoto.name}</strong></div><div className="photo-lightbox-actions"><button type="button" className="photo-viewer-nav" onClick={() => moveViewer(-1)} disabled={filteredPhotos.length < 2} aria-label="Previous photo">←</button><span className="photo-viewer-count">{Math.max(1, filteredPhotos.findIndex((photo) => photo.id === viewerPhoto.id) + 1)} / {filteredPhotos.length}</span><button type="button" className="photo-viewer-nav" onClick={() => moveViewer(1)} disabled={filteredPhotos.length < 2} aria-label="Next photo">→</button><button className="feature-close" onClick={() => setViewerId(null)} aria-label="Close image viewer">×</button></div></div><div className="photo-comparison" onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null }} onTouchEnd={(event) => { const start = touchStartX.current; const end = event.changedTouches[0]?.clientX; touchStartX.current = null; if (start !== null && typeof end === 'number' && Math.abs(end - start) > 58) moveViewer(end < start ? 1 : -1) }}><img src={viewerPhoto.url} alt={`${viewerPhoto.name}, original`} className="photo-before"/><div className="photo-after-clip" style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}><img src={viewerPhoto.url} alt="Styled preview" className="photo-after"/></div><span className="photo-before-label">ORIGINAL</span><span className="photo-after-label">PREVIEW</span><div className="photo-split-line" style={{ left: `${split}%` }}/></div><label className="photo-split-control">PREVIEW REVEAL <input type="range" min="0" max="100" value={split} onChange={(event) => setSplit(Number(event.target.value))}/><output>{split}%</output></label><p className="photo-editor-note">The right side applies a restrained browser-only treatment (contrast, saturation, and warmth). Your source image remains unchanged.</p></div></div>}
+      {viewerPhoto && <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label={`Viewing ${viewerPhoto.name}`} onMouseDown={(event) => { if (event.target === event.currentTarget) setViewerId(null) }}><div className="photo-lightbox-panel" tabIndex={-1}><div className="photo-lightbox-head"><div><span>LOCAL PREVIEW / BEFORE & AFTER</span><strong>{viewerPhoto.name}</strong></div><div className="photo-lightbox-actions"><button type="button" className="photo-viewer-nav" onClick={() => moveViewer(-1)} disabled={filteredPhotos.length < 2} aria-label="Previous photo">←</button><span className="photo-viewer-count">{Math.max(1, filteredPhotos.findIndex((photo) => photo.id === viewerPhoto.id) + 1)} / {filteredPhotos.length}</span><button type="button" className="photo-viewer-nav" onClick={() => moveViewer(1)} disabled={filteredPhotos.length < 2} aria-label="Next photo">→</button><button className="feature-close" onClick={() => setViewerId(null)} aria-label="Close image viewer">×</button></div></div><div className="photo-comparison" onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null }} onTouchEnd={(event) => { const start = touchStartX.current; const end = event.changedTouches[0]?.clientX; touchStartX.current = null; if (start !== null && typeof end === 'number' && Math.abs(end - start) > 58) moveViewer(end < start ? 1 : -1) }}><img src={viewerPhoto.url} alt={`${viewerPhoto.name}, original`} className="photo-before"/><div className="photo-after-clip" style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}><img src={viewerPhoto.url} alt={`${viewerPhoto.name}, styled preview`} className="photo-after"/></div><span className="photo-before-label">ORIGINAL</span><span className="photo-after-label">PREVIEW</span><div className="photo-split-line" style={{ left: `${split}%` }}/></div><label className="photo-split-control">PREVIEW REVEAL <input type="range" min="0" max="100" value={split} onChange={(event) => setSplit(Number(event.target.value))}/><output>{split}%</output></label><p className="photo-editor-note">The right side applies a restrained browser-only treatment (contrast, saturation, and warmth). Your source image remains unchanged.</p></div></div>}
     </div>
   )
 }

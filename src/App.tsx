@@ -548,7 +548,14 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
 
 function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: boolean; onClose: () => void; onNavigate: (id: string) => void; theme: Theme; onTheme: () => void }) {
   const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const closeRef = useRef(onClose)
+  const navigateRef = useRef(onNavigate)
+  closeRef.current = onClose
+  navigateRef.current = onNavigate
   const actions = [
     { label: 'Go to home', detail: 'Navigate to introduction', id: 'home', keys: 'home start' },
     { label: 'Explore projects', detail: 'Browse selected work', id: 'projects', keys: 'work builds portfolio' },
@@ -567,35 +574,126 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
     { label: 'Recruiter view', detail: 'Open a concise, shareable qualifications profile', id: 'recruiter-view', keys: 'cv resume hiring recruiter internship employer' },
     { label: 'Open admin console', detail: 'Private owner sign-in', id: 'admin-console', keys: 'admin dashboard owner login moderation' },
   ]
-  const filtered = actions.filter((item) => `${item.label} ${item.detail} ${item.keys}`.toLowerCase().includes(query.toLowerCase()))
+  const filtered = useMemo(
+    () => actions.filter((item) => `${item.label} ${item.detail} ${item.keys}`.toLowerCase().includes(query.trim().toLowerCase())),
+    [query],
+  )
+  const filteredRef = useRef(filtered)
+  const activeIndexRef = useRef(activeIndex)
+  filteredRef.current = filtered
+  activeIndexRef.current = activeIndex
+
   useEffect(() => {
     if (!open) return
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setQuery('')
+    setActiveIndex(0)
     const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 40)
-    return () => window.clearTimeout(focusTimer)
+
+    const handle = (event: KeyboardEvent) => {
+      const items = filteredRef.current
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeRef.current()
+        return
+      }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        if (!items.length) return
+        event.preventDefault()
+        const direction = event.key === 'ArrowDown' ? 1 : -1
+        const next = (activeIndexRef.current + direction + items.length) % items.length
+        activeIndexRef.current = next
+        setActiveIndex(next)
+        return
+      }
+      if (event.key === 'Home' || event.key === 'End') {
+        if (!items.length) return
+        event.preventDefault()
+        const next = event.key === 'Home' ? 0 : items.length - 1
+        activeIndexRef.current = next
+        setActiveIndex(next)
+        return
+      }
+      if (event.key === 'Enter') {
+        const selected = items[activeIndexRef.current]
+        if (selected) {
+          event.preventDefault()
+          navigateRef.current(selected.id)
+        }
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const panel = dialogRef.current
+      if (!panel) return
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => element.tabIndex >= 0 && element.getClientRects().length > 0)
+      if (!focusable.length) {
+        event.preventDefault()
+        panel.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handle)
+    return () => {
+      window.clearTimeout(focusTimer)
+      window.removeEventListener('keydown', handle)
+      const previousFocus = previousFocusRef.current
+      previousFocusRef.current = null
+      window.requestAnimationFrame(() => {
+        if (previousFocus?.isConnected) previousFocus.focus()
+      })
+    }
   }, [open])
+
   useEffect(() => {
     if (!open) return
-    const handle = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handle)
-    return () => window.removeEventListener('keydown', handle)
-  }, [open, onClose])
+    const active = filtered[activeIndex]
+    if (active) document.getElementById(`command-option-${active.id}`)?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex, filtered, open])
+
   if (!open) return null
   return (
     <div className="palette-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <div className="command-palette" role="dialog" aria-modal="true" aria-label="Quick navigation">
-        <div className="palette-search"><Icon name="command"/><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Where do you want to go?" aria-label="Search portfolio commands"/><kbd>ESC</kbd></div>
+      <div ref={dialogRef} className="command-palette" role="dialog" aria-modal="true" aria-label="Quick navigation" tabIndex={-1}>
+        <div className="palette-search">
+          <Icon name="command"/>
+          <input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0) }}
+            placeholder="Where do you want to go?" aria-label="Search portfolio commands"
+            aria-autocomplete="list" aria-expanded="true" aria-controls="command-results"
+            aria-activedescendant={filtered[activeIndex] ? `command-option-${filtered[activeIndex].id}` : undefined}/>
+          <kbd aria-hidden="true">ESC</kbd>
+        </div>
+        <span className="visually-hidden" role="status" aria-live="polite">{filtered.length} navigation result{filtered.length === 1 ? '' : 's'}.</span>
         <div className="palette-label">NAVIGATION</div>
-        <div className="palette-results">
-          {filtered.map((item, index) => <button key={item.id} className="palette-item" data-sfx="navigate" onClick={() => onNavigate(item.id)}><span className="palette-index">0{index + 1}</span><span className="palette-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><Icon name="arrow" size={16}/></button>)}
+        <div id="command-results" className="palette-results" role="listbox" aria-label="Navigation results">
+          {filtered.map((item, index) => (
+            <button id={`command-option-${item.id}`} type="button" role="option" aria-selected={index === activeIndex}
+              key={item.id} tabIndex={-1} data-active={index === activeIndex ? 'true' : 'false'}
+              className="palette-item" data-sfx="navigate" onClick={() => onNavigate(item.id)}>
+              <span className="palette-index">{String(index + 1).padStart(2, '0')}</span>
+              <span className="palette-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
+              <Icon name="arrow" size={16}/>
+            </button>
+          ))}
           {filtered.length === 0 && <p className="palette-empty">No matching destination. Try “projects” or “skills”.</p>}
         </div>
-        <div className="palette-footer"><span><kbd>↵</kbd> select</span><button data-sfx="toggle" onClick={onTheme}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14}/> Switch to {theme === 'dark' ? 'light' : 'dark'} theme</button></div>
+        <div className="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> move · <kbd>↵</kbd> select</span><button type="button" data-sfx="toggle" onClick={onTheme}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14}/> Switch to {theme === 'dark' ? 'light' : 'dark'} theme</button></div>
       </div>
     </div>
   )
 }
-
 function SectionHeading({ index, kicker, title, accent, description }: { index: string; kicker: string; title: string; accent?: string; description?: string }) {
   return (
     <div className="section-heading" data-reveal>

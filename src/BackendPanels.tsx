@@ -16,6 +16,7 @@ type TurnstileAPI = {
     'expired-callback'?: () => void
     'error-callback'?: () => void
     theme?: 'light' | 'dark' | 'auto'
+    action: string
   }) => string
   reset: (widgetId?: string) => void
   remove?: (widgetId?: string) => void
@@ -23,7 +24,7 @@ type TurnstileAPI = {
 
 declare global { interface Window { turnstile?: TurnstileAPI } }
 
-function TurnstileChallenge({ onToken, resetSignal }: { onToken: (token: string) => void; resetSignal: number }) {
+function TurnstileChallenge({ onToken, resetSignal, action }: { onToken: (token: string) => void; resetSignal: number; action: 'portfolio_inquiry' | 'portfolio_comment' }) {
   const [error, setError] = useState('')
   const elementId = useId().replace(/:/g, '')
   const widgetIdRef = useRef<string | null>(null)
@@ -39,6 +40,7 @@ function TurnstileChallenge({ onToken, resetSignal }: { onToken: (token: string)
         container.dataset.widgetMounted = 'yes'
         widgetIdRef.current = window.turnstile.render(container, {
           sitekey: backendConfig.turnstileSiteKey,
+          action,
           theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
           callback: onToken,
           'expired-callback': () => onToken(''),
@@ -70,7 +72,7 @@ function TurnstileChallenge({ onToken, resetSignal }: { onToken: (token: string)
         widgetIdRef.current = null
       }
     }
-  }, [elementId, onToken])
+  }, [elementId, onToken, action])
 
   useEffect(() => {
     if (resetSignal > 0 && widgetIdRef.current) {
@@ -217,7 +219,7 @@ export function InquiryAndComments() {
           <label className="inquiry-full">SUBJECT<input value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={140} required placeholder="What would you like to discuss?"/></label>
           <label className="inquiry-full">MESSAGE<textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={5} minLength={10} maxLength={5000} required placeholder="Give a little context, goal, and any useful details."/></label>
           <label className="honeypot-field" aria-hidden="true">Leave this field empty<input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(event) => setHoneypot(event.target.value)}/></label>
-          <div className="inquiry-submit-row inquiry-full"><TurnstileChallenge onToken={captchaTokenHandler} resetSignal={captchaReset}/><button className="feature-button" type="submit" disabled={submitting}>{submitting ? 'SENDING…' : backendConfig.configured ? 'SEND PRIVATE INQUIRY ↗' : 'OPEN PREFILLED EMAIL ↗'}</button></div>
+          <div className="inquiry-submit-row inquiry-full"><TurnstileChallenge action="portfolio_inquiry" onToken={captchaTokenHandler} resetSignal={captchaReset}/><button className="feature-button" type="submit" disabled={submitting}>{submitting ? 'SENDING…' : backendConfig.configured ? 'SEND PRIVATE INQUIRY ↗' : 'OPEN PREFILLED EMAIL ↗'}</button></div>
           {formStatus && <p className="form-status inquiry-full" role="status">{formStatus}</p>}
         </form>
         <p className="privacy-microcopy">{backendConfig.configured ? 'Stored privately and visible only to the approved site administrator.' : 'Backend not configured: this form opens your email application as a fallback. No message is stored by the website.'}</p>
@@ -284,7 +286,7 @@ export function InquiryAndComments() {
             <label htmlFor="public-note-body">YOUR COMMENT<textarea id="public-note-body" value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={4} minLength={3} maxLength={1000} required placeholder="Share a short, constructive note…" disabled={!backendConfig.configured}/></label>
             <div className="comment-compose-meta"><span>NO CONTACT DETAILS REQUIRED</span><small>{commentBody.length.toLocaleString()} / 1,000</small></div>
             <label className="honeypot-field" aria-hidden="true">Leave this field empty<input tabIndex={-1} autoComplete="off" value={commentHoneypot} onChange={(event) => setCommentHoneypot(event.target.value)}/></label>
-            <TurnstileChallenge onToken={setCommentCaptcha} resetSignal={commentCaptchaReset}/>
+            <TurnstileChallenge action="portfolio_comment" onToken={setCommentCaptcha} resetSignal={commentCaptchaReset}/>
             <button className="feature-button feature-button-quiet comment-submit" type="submit" disabled={!backendConfig.configured || commentSubmitting || !commentName.trim() || commentBody.trim().length < 3}>
               {commentSubmitting ? 'SENDING TO MODERATION…' : 'SUBMIT FOR REVIEW ↗'}
             </button>
@@ -562,7 +564,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
         {!backendConfig.configured ? <div className="admin-unconfigured"><strong>Backend connection required.</strong><p>No administrator mode is enabled in this build. Configure <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, apply the SQL schema, deploy the Edge Function, and add the owner’s Auth user ID to the admin allowlist. The site deliberately does not use a client-side password or fake administrator switch.</p><a href="/BACKEND-SETUP.md" target="_blank" rel="noopener noreferrer">Open backend setup instructions ↗</a></div> : !session ? recoveryToken ? <form className="admin-login" onSubmit={handlePasswordUpdate}><p>Your email has been verified. Choose a new password for the private portfolio administrator account.</p><label>NEW PASSWORD<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength={8} required/></label><label>CONFIRM NEW PASSWORD<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'UPDATING…' : 'SET NEW PASSWORD ↗'}</button>{(loginError || authNotice) && <p className="form-status" role="alert">{loginError || authNotice}</p>}</form> : recoveryRequestOpen ? <form className="admin-login" onSubmit={handleRecoveryRequest}><p>Enter the administrator email address. We’ll send a secure, time-limited link to choose a new password.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'SENDING…' : 'SEND PASSWORD RESET LINK ↗'}</button><button className="admin-auth-link" type="button" onClick={() => { setRecoveryRequestOpen(false); setLoginError('') }}>BACK TO SIGN IN</button>{(loginError || authNotice) && <p className="form-status" role="status">{loginError || authNotice}</p>}</form> : <form className="admin-login" onSubmit={handleLogin}><p>Sign in with the owner account created in Supabase Auth. Access is checked against the database allowlist and enforced again by Row Level Security.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" required/></label><label>PASSWORD<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'VERIFYING…' : 'SIGN IN SECURELY ↗'}</button><button className="admin-auth-link" type="button" onClick={() => { setRecoveryRequestOpen(true); setLoginError('') }}>FORGOT PASSWORD?</button>{(loginError || dashboardError || authNotice) && <p className="form-status" role="alert">{loginError || dashboardError || authNotice}</p>}</form> : <>
           <div className="admin-session-bar"><span>AUTHENTICATED / {session.user.email ?? session.user.id}</span><div><button onClick={() => void refresh()}>REFRESH</button><button onClick={() => { setSession(null); storeAdminSession(null); setInquiries([]); setComments([]); setActivity([]); setAnalytics(null) }}>SIGN OUT</button></div></div>
           <div className="admin-metrics"><span><small>NEW INQUIRIES</small><b>{newInquiryCount}</b></span><span><small>PENDING COMMENTS</small><b>{pendingCommentCount}</b></span><span><small>RECORDED VIEWS</small><b>{analytics?.views ?? '—'}</b></span></div>
-          <nav className="admin-tabs" aria-label="Admin data views">{(['inquiries', 'comments', 'analytics', 'activity'] as const).map((item) => <button key={item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>{item.toUpperCase()}</button>)}</nav>
+          <nav className="admin-tabs" aria-label="Admin data views" role="group">{(['inquiries', 'comments', 'analytics', 'activity'] as const).map((item) => <button type="button" key={item} className={tab === item ? 'active' : ''} aria-pressed={tab === item} onClick={() => setTab(item)}>{item.toUpperCase()}</button>)}</nav>
           {busy && <p className="admin-loading">SYNCING PRIVATE RECORDS…</p>}
           {dashboardError && <p className="form-status" role="alert">{dashboardError}</p>}
           {tab === 'inquiries' && <div className="admin-record-list">{inquiries.length ? inquiries.map((item) => <article className="admin-record" key={item.id}><div className="admin-record-top"><span>{new Date(item.created_at).toLocaleString()}</span><select aria-label={`Status for ${item.name}`} value={item.status} onChange={(event) => void updateInquiry(item.id, { status: event.target.value as PortfolioInquiry['status'] })}><option value="new">New</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="archived">Archived</option></select></div>{editInquiryId === item.id ? <div className="admin-edit-fields"><input value={String(inquiryDraft.name ?? item.name)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, name: event.target.value }))} aria-label="Edit sender name"/><input value={String(inquiryDraft.email ?? item.email)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, email: event.target.value }))} aria-label="Edit sender email"/><input value={String(inquiryDraft.subject ?? item.subject)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, subject: event.target.value }))} aria-label="Edit inquiry subject"/><textarea value={String(inquiryDraft.message ?? item.message)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, message: event.target.value }))} aria-label="Edit inquiry message"/><textarea value={String(inquiryDraft.admin_notes ?? item.admin_notes ?? '')} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, admin_notes: event.target.value }))} aria-label="Administrator notes" placeholder="Private admin notes"/><div><button onClick={() => void updateInquiry(item.id, inquiryDraft)}>SAVE</button><button onClick={() => { setEditInquiryId(null); setInquiryDraft({}) }}>CANCEL</button></div></div> : <><h3>{item.subject}</h3><p>{item.message}</p><div className="admin-contact-line">{item.name} · <a href={`mailto:${item.email}`}>{item.email}</a></div>{item.admin_notes && <small className="admin-note">PRIVATE NOTE: {item.admin_notes}</small>}<div className="admin-record-actions"><button onClick={() => { setEditInquiryId(item.id); setInquiryDraft({}) }}>EDIT RECORD / NOTES</button><button onClick={() => void removeInquiry(item.id)}>DELETE</button></div></>}</article>) : <div className="admin-empty">No inquiry records.</div>}</div>}

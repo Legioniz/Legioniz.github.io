@@ -14,6 +14,10 @@ const legacyServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const SERVICE_ROLE_KEY = modernSecretKey || legacyServiceRoleKey
 const USE_MODERN_SECRET = Boolean(modernSecretKey)
 const ALLOWED_ORIGIN = Deno.env.get('PORTFOLIO_ALLOWED_ORIGIN') ?? 'https://legioniz.github.io'
+const ALLOWED_HOSTNAME = (() => {
+  try { return new URL(ALLOWED_ORIGIN).hostname }
+  catch { return '' }
+})()
 const RATE_SECRET = Deno.env.get('PORTFOLIO_RATE_LIMIT_SECRET') ?? SERVICE_ROLE_KEY
 const TURNSTILE_SECRET = Deno.env.get('TURNSTILE_SECRET_KEY') ?? ''
 
@@ -54,14 +58,16 @@ async function consumeQuota(hash: string, scope: string, limit: number) {
   return await result.json() === true
 }
 
-async function verifyTurnstile(token: string) {
+async function verifyTurnstile(token: string, expectedAction: 'portfolio_inquiry' | 'portfolio_comment') {
   if (!TURNSTILE_SECRET) return true
-  if (!token) return false
+  if (!token || !ALLOWED_HOSTNAME) return false
   const body = new URLSearchParams({ secret: TURNSTILE_SECRET, response: token })
   const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body })
   if (!result.ok) return false
-  const payload = await result.json()
+  const payload = await result.json() as { success?: boolean; hostname?: string; action?: string }
   return payload.success === true
+    && payload.hostname === ALLOWED_HOSTNAME
+    && payload.action === expectedAction
 }
 
 async function readLimitedBody(request: Request, maximumBytes: number): Promise<string | null> {
@@ -83,6 +89,10 @@ async function readLimitedBody(request: Request, maximumBytes: number): Promise<
   let offset = 0
   for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength }
   return new TextDecoder().decode(body)
+}
+
+function readText(value: unknown): string | null {
+  return typeof value === 'string' ? value.trim() : null
 }
 
 async function insertRecord(table: string, record: Record<string, unknown>) {
@@ -107,7 +117,7 @@ Deno.serve(async (request) => {
 
   // Safe deployment probe: reports configuration state, never key material.
   if (request.method === 'GET') {
-    const ready = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY && ALLOWED_ORIGIN && RATE_SECRET)
+    const ready = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY && ALLOWED_ORIGIN && ALLOWED_HOSTNAME && RATE_SECRET)
     return response({ ok: ready, service: 'portfolio-submit', status: ready ? 'ready' : 'missing_server_credentials' }, ready ? 200 : 503, origin)
   }
   if (request.method === 'OPTIONS') return response({ ok: true }, 204, origin)
@@ -149,17 +159,20 @@ Deno.serve(async (request) => {
 
   if (kind !== 'page_view') {
     const token = typeof payload.turnstileToken === 'string' ? payload.turnstileToken : ''
-    if (!(await verifyTurnstile(token))) return response({ ok: false, message: 'Human verification failed. Please retry the challenge.' }, 400, origin)
+    const expectedAction = kind === 'inquiry' ? 'portfolio_inquiry' : 'portfolio_comment'
+    if (!(await verifyTurnstile(token, expectedAction))) return response({ ok: false, message: 'Human verification failed. Please retry the challenge.' }, 400, origin)
   }
 
   try {
     if (kind === 'inquiry') {
-      const name = String(payload.name ?? '').trim()
-      const email = String(payload.email ?? '').trim()
-      const subject = String(payload.subject ?? '').trim()
-      const message = String(payload.message ?? '').trim()
+      const name = readText(payload.name)
+      const email = readText(payload.email)
+      const subject = readText(payload.subject)
+      const message = readText(payload.message)
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (name.length < 1 || name.length > 100 || !emailPattern.test(email) || email.length > 254 || subject.length < 1 || subject.length > 140 || message.length < 10 || message.length > 5000) {
+      if (name === null || email === null || subject === null || message === null
+        || name.length < 1 || name.length > 100 || !emailPattern.test(email) || email.length > 254
+        || subject.length < 1 || subject.length > 140 || message.length < 10 || message.length > 5000) {
         return response({ ok: false, message: 'Please check the name, email, subject, and message length.' }, 400, origin)
       }
       await insertRecord('inquiries', { name, email, subject, message, status: 'new' })
@@ -167,19 +180,20 @@ Deno.serve(async (request) => {
     }
 
     if (kind === 'comment') {
-      const display_name = String(payload.display_name ?? '').trim()
-      const body = String(payload.body ?? '').trim()
-      if (display_name.length < 1 || display_name.length > 60 || body.length < 3 || body.length > 1000) {
+      const display_name = readText(payload.display_name)
+      const body = readText(payload.body)
+      if (display_name === null || body === null
+        || display_name.length < 1 || display_name.length > 60 || body.length < 3 || body.length > 1000) {
         return response({ ok: false, message: 'Please check the display name and comment length.' }, 400, origin)
       }
       await insertRecord('comments', { display_name, body, status: 'pending' })
       return response({ ok: true }, 200, origin)
     }
 
-    const session_id = String(payload.session_id ?? '')
-    const path = String(payload.path ?? '')
+    const session_id = readText(payload.session_id)
+    const path = readText(payload.path)
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    if (!uuidPattern.test(session_id) || !/^\/[a-z0-9/_-]{0,99}$/i.test(path) || path.includes('//')) {
+    if (session_id === null || path === null || !uuidPattern.test(session_id) || !/^\/[a-z0-9/_-]{0,99}$/i.test(path) || path.includes('//')) {
       return response({ ok: false, message: 'Invalid anonymous analytics event.' }, 400, origin)
     }
     await insertRecord('page_views', { session_id, path })
