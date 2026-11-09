@@ -597,6 +597,7 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
         closeRef.current()
         return
       }
+      if (document.activeElement !== inputRef.current && ['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter'].includes(event.key)) return
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         if (!items.length) return
         event.preventDefault()
@@ -632,6 +633,11 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
       if (!focusable.length) {
         event.preventDefault()
         panel.focus()
+        return
+      }
+      if (!panel.contains(document.activeElement)) {
+        event.preventDefault()
+        focusable[0]?.focus()
         return
       }
       const first = focusable[0]
@@ -670,7 +676,7 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
         <div className="palette-search">
           <Icon name="command"/>
           <input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0) }}
-            placeholder="Where do you want to go?" aria-label="Search portfolio commands"
+            placeholder="Where do you want to go?" aria-label="Search portfolio commands" role="combobox"
             aria-autocomplete="list" aria-expanded="true" aria-controls="command-results"
             aria-activedescendant={filtered[activeIndex] ? `command-option-${filtered[activeIndex].id}` : undefined}/>
           <kbd aria-hidden="true">ESC</kbd>

@@ -34,7 +34,7 @@ for section_id, label in [
 check('project-compare' in chrome and 'Technologies' in chrome and 'Selected capabilities' in chrome, 'Project comparison uses documented project details')
 check('new URLSearchParams(window.location.search).get(\'project\')' in app and "url.searchParams.set('project', project.id)" in app, 'Project case studies support direct, shareable query-string links')
 check("window.addEventListener('popstate', syncRouteFromUrl)" in app and 'Copy project link' in app and 'openProject' in app and 'closeProject' in app, 'Project links synchronize with browser history and expose a copy action')
-check("localStorage.getItem('legion-portfolio-motion-v7')" in chrome, 'Intro sequence defaults to motion on and respects an explicit saved pause')
+check("localStorage.getItem('legion-portfolio-motion-v7')" in chrome and "prefers-reduced-motion: reduce" in chrome, 'Intro sequence respects the saved motion choice and system reduced-motion preference')
 check("file.size > 12 * 1024 * 1024" in features and '48 * 1024 * 1024' in features and '45_000_000' in features, 'Local photo viewer caps file count, total bytes, per-file size, and decoded dimensions')
 check('URL.createObjectURL(file)' in features and 'URL.revokeObjectURL(url)' in features and 'Nothing has been uploaded' in features, 'Photography preview remains browser-local and releases object URLs')
 check(all(ip in features for ip in ['192.0.2.', '198.51.100.', '203.0.113.']), 'Network Lab uses documentation-only RFC 5737 addresses')
@@ -77,6 +77,9 @@ check("website: commentHoneypot" in backend_ui and 'maxLength={1000}' in backend
 check("'pending'" in backend_ui and 'APPROVE / PUBLISH' in backend_ui and 'HIDE' in backend_ui and 'ARCHIVE' in backend_ui and 'DELETE' in backend_ui, 'Admin comments support moderation status changes and permanent deletion')
 check('admin-comment-filters' in backend_ui and 'commentSearch' in backend_ui and 'visibleComments' in backend_ui, 'Admin moderation queue supports status filters and search')
 check('useCallback((token: string) => setCaptcha(token), [])' in backend_ui, 'Turnstile callback remains stable across inquiry form state changes')
+check("aria-activedescendant" in app and 'role="combobox"' in app and 'role="listbox"' in app and 'role="option"' in app and "event.key === 'Enter'" in app and "event.key === 'ArrowDown'" in app and "previousFocus?.isConnected" in app, 'Command palette supports keyboard result selection, focus containment, and focus restoration')
+check('id="lab-tab-exposure"' in features and 'aria-controls="lab-panel-exposure"' in features and 'tabIndex={labTab ===' in features and 'onKeyDown={handleLabTabKeyDown}' in features and 'role="tabpanel" tabIndex={0}' in features and "event.key === 'Home'" in features, 'Project Lab tabs use linked panels, roving focus, and arrow/Home/End keyboard operation')
+check('aria-pressed={tab === item}' in backend_ui and 'role="group"' in backend_ui, 'Owner data-view controls expose their selected state to assistive technology')
 check('action: string' in backend_ui and 'action,\n          theme:' in backend_ui and 'action="portfolio_inquiry"' in backend_ui and 'action="portfolio_comment"' in backend_ui, 'Inquiry and comment challenges carry distinct Turnstile actions')
 check("payload.hostname === ALLOWED_HOSTNAME" in edge and "payload.action === expectedAction" in edge and "new URL(ALLOWED_ORIGIN).hostname" in edge, 'Turnstile verification binds tokens to the configured site hostname and expected form action')
 check('function readText(value: unknown): string | null' in edge and 'name === null' in edge and 'display_name === null' in edge and 'session_id === null' in edge, 'Server-side intake rejects non-string JSON fields instead of coercing arbitrary objects')
@@ -110,7 +113,7 @@ check("message.length < 10 || message.length > 5000" in edge and "body.length < 
 check('crypto.subtle.importKey' in edge and 'HMAC' in edge and 'raw address is neither stored nor logged' in edge, 'Rate-limit network identifier is HMAC-derived rather than stored raw')
 check('readLimitedBody' in edge and 'Array.isArray(parsed)' in edge and 'JSON.parse(rawBody)' in edge, 'Edge Function bounds streamed request bodies and rejects non-object JSON')
 check("'/rest/v1/'" in sw and "'/auth/v1/'" in sw and "'/functions/v1/'" in sw and "'/storage/v1/'" in sw, 'Service worker explicitly bypasses database, auth, function, and storage APIs')
-check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v16' in sw and "'/og-card.png?v=20261109-4'" in sw and "'/favicon.ico?v=20261109-4'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the palette asset release')
+check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v17' in sw and "'/og-card.png?v=20261109-4'" in sw and "'/favicon.ico?v=20261109-4'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the palette asset release')
 check("const isSoundToggle = interactive.classList.contains('sound-toggle')" in sound and '!isSoundToggle && now - lastActionAt < 35' in sound, 'Sound mute confirmation bypasses rapid-action debounce so the final cue is not lost')
 
 failures = [label for ok, label in checks if not ok]

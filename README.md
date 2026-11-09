@@ -12,6 +12,10 @@ Professional portfolio of **King Art D. Pacumberto**, a BSIT student at the Poly
 - GitHub Actions + GitHub Pages deployment
 - Supabase Auth, PostgreSQL/RLS, server-side inquiry and public-comment intake, moderation, opt-in analytics, and owner console. The production build is connected to the dedicated Singapore project; pending comments stay private until the owner approves them.
 
+## Design and engineering standards
+
+The portfolio's working UI/UX, accessibility, responsive, performance, SEO, privacy, security, and release criteria are documented in [UI-UX-ENGINEERING-STANDARD.md](./UI-UX-ENGINEERING-STANDARD.md). The creative system and visual direction remain documented in [VISUAL-DESIGN-SYSTEM.md](./VISUAL-DESIGN-SYSTEM.md).
+
 ## Run locally
 
 Requirements: Node.js 20.19+ or 22.12+ and npm.
@@ -46,9 +50,9 @@ Install the test-only Python dependencies with `python -m pip install -r require
 
 ## Deploy to GitHub Pages
 
-The included workflow is configured for the root GitHub Pages user site `https://legioniz.github.io/`. Follow [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md): create the empty public repository `Legioniz.github.io`, then run `PUSH-TO-GITHUB.cmd` from the extracted folder. In **Settings -> Pages**, select **GitHub Actions** as the source. The workflow runs the full React/Vite verification, browser tests, and Lighthouse audits, then validates and uploads the compiled `dist/` directory directly with `actions/upload-pages-artifact@v4`. It deliberately skips Jekyll packaging so the production HTML and hashed JS/CSS bundles are deployed unchanged. The `actions/deploy-pages@v4` step runs only after verification and artifact validation pass. Do not add a second Pages workflow; use the existing one to avoid competing deployments.
+The included workflow is configured for the root GitHub Pages user site `https://legioniz.github.io/`. Follow [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md): create the empty public repository `Legioniz.github.io`, then run `PUSH-TO-GITHUB.cmd` from the extracted folder. In **Settings -> Pages**, select **GitHub Actions** as the source. The workflow runs the full React/Vite verification, browser tests, and Lighthouse audits, then validates and uploads the compiled `dist/` directory directly with `actions/upload-pages-artifact (pinned to a full commit SHA)`. It deliberately skips Jekyll packaging so the production HTML and hashed JS/CSS bundles are deployed unchanged. The `actions/deploy-pages (pinned to a full commit SHA)` step runs only after verification and artifact validation pass. Do not add a second Pages workflow; use the existing one to avoid competing deployments.
 
-The deployment history, including the earlier Jekyll packaging failure and the current direct Vite artifact workflow, is consolidated in [CHANGELOG.md](./CHANGELOG.md). The current workflow and [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) are the operational source of truth.
+The deployment history, including the earlier Jekyll packaging failure and the current direct Vite artifact workflow, is consolidated in [CHANGELOG.md](./CHANGELOG.md). The current workflow and [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) are the operational source of truth. Third-party workflow actions are pinned to full commit SHAs and monitored by Dependabot.
 
 The public URLs are `https://legioniz.github.io/` (full portfolio) and `https://legioniz.github.io/?view=recruiter` (Recruiter View). `START-PORTFOLIO-LAN.cmd` launches a same-Wi-Fi preview; it is not a public Internet tunnel. This source package intentionally omits `node_modules/` and `dist/`.
 
@@ -70,7 +74,7 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Collapsible skill categories, work-history entries, extracurricular details, and project-scope notes using native keyboard-accessible disclosures
 - Progressive disclosure animation where supported; native open/close behavior remains available as a lightweight fallback
 - Decorative orbit, project-art, and skills animations pause outside the viewport and resume near view; the capability strip stays static for readability
-- Decorative motion is enabled by default, including when the OS requests reduced motion. Visitors can pause/resume it from the header; an explicit preference is stored under the versioned `legion-portfolio-motion-v5` key.
+- Decorative motion follows the operating system's reduced-motion preference by default. Visitors can explicitly pause or opt in from the header; the preference is stored under the versioned `legion-portfolio-motion-v7` key.
 - Asymmetric 12-column project case-study board with a dedicated horizontal treatment for the photography project
 - Side-by-side project comparison for purpose, contribution, status, stack, and documented capabilities
 - Project Laboratory with an exposure-triangle / EV100 calculator and a user-adjustable appliance-energy estimator; both are explicitly labelled local teaching models

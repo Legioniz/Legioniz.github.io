@@ -71,7 +71,7 @@ check(any(link.get('rel') == 'icon' and link.get('type') == 'image/png' and 'fav
 check(any(link.get('rel') == 'icon' and link.get('type') == 'image/svg+xml' and 'favicon.svg?v=20261109-4' in link.get('href', '') for link in parser.links), 'Scalable SVG favicon is linked')
 try:
     structured = json.loads(parser.jsonld)
-    check(structured.get('@type') == 'Person' and structured.get('name') == 'King Art D. Pacumberto', 'Person structured data is valid JSON-LD and identifies the site owner')
+    check(structured.get('@type') == 'ProfilePage' and structured.get('mainEntity', {}).get('@type') == 'Person' and structured.get('mainEntity', {}).get('name') == 'King Art D. Pacumberto', 'ProfilePage structured data identifies the owner as its Person main entity')
 except (json.JSONDecodeError, AttributeError):
     check(False, 'Person structured data is valid JSON-LD and identifies the site owner')
 
@@ -97,6 +97,9 @@ except (json.JSONDecodeError, OSError):
 
 app = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
 check("getPropertyValue('--muted-2')" in app and 'ctx.globalAlpha = particle.a' in app and 'ctx.globalAlpha = opacity' in app, 'Decorative canvas particles inherit the active theme color token')
+check('aria-activedescendant' in app and 'role="combobox"' in app and "event.key === 'ArrowDown'" in app and "event.key === 'Enter'" in app, 'Command palette implements keyboard selection and combobox semantics')
+features_accessibility = (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8')
+check('aria-controls="lab-panel-exposure"' in features_accessibility and 'aria-controls="lab-panel-energy"' in features_accessibility and 'onKeyDown={handleLabTabKeyDown}' in features_accessibility and 'role="tabpanel" tabIndex={0}' in features_accessibility, 'Interactive lab tabs expose linked focusable panels and arrow-key activation')
 recruiter = (ROOT / 'src/RecruiterView.tsx').read_text(encoding='utf-8')
 css = (ROOT / 'src/styles.css').read_text(encoding='utf-8') + '\n' + (ROOT / 'src/layout-integrity.css').read_text(encoding='utf-8')
 data = (ROOT / 'src/data.ts').read_text(encoding='utf-8')
@@ -178,8 +181,8 @@ check('--content-measure: 68ch' in css and '--section-space: clamp(72px, 9vw, 13
 check('#151719' in css and '#f3f0e9' in css and '#e87961' in css and '#a94837' in css, 'Editorial charcoal/ivory/coral palette is consistent across dark and light themes')
 check('--font-size-base: 16px' in css and '--font-size-sm: 14px' in css and 'font-size: clamp(10px, .72em, 12px)' in css, 'Editorial typography uses a readable body scale and legible metadata floor')
 check('editorial-emphasis-in' in css and 'editorial-heading-in' in css and ":root[data-motion='off']" in css, 'Heading text animation includes an explicit pause and static fallback')
-check("const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html and "const motionEnabled = motionPreference === 'on'" in app and "return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app,
-      'Motion defaults on before React starts and remains on until a visitor explicitly pauses it')
+check("const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html and "const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)" in html and "motionPreference === 'system' && !systemMotionReduced" in app and "savedMotion === 'on' || !systemReducedMotion" in (ROOT / 'src/PortfolioChrome.tsx').read_text(encoding='utf-8'),
+      'Motion respects the OS reduced-motion preference on first paint, in React, and in the intro unless explicitly overridden')
 check('::view-transition-new(project-visual)' in css and 'project-art-in' in css and 'runProjectViewTransition' in app and 'catch {' in app and "document.documentElement.dataset.motion !== 'off'" in app, 'Project visual uses guarded shared-element transitions, CSS fallback, and the explicit site motion state')
 check('.timeline.motion-active::after' in css and 'recruiter-timeline.motion-active::after' in css and 'data-motion-zone' in recruiter, 'Full and recruiter experience timelines animate only while in view')
 check('ArrowLeft' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8') and 'onTouchEnd' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8') and 'useMemo(() => photos.filter' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8'), 'Photography viewer supports keyboard, touch, and stable filtered-image lifecycle')

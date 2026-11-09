@@ -111,8 +111,17 @@ check("path: ./dist" in workflow and "test -s dist/index.html" in workflow and "
       "The Pages artifact is validated directly from the compiled Vite dist folder, including every favicon format")
 check("uses: actions/jekyll-build-pages@v1" not in workflow and "destination: ./_site" not in workflow and "path: ./_site" not in workflow,
       "The deployment bypasses Jekyll packaging and publishes the Vite build without rewriting its files")
-check(workflow.index("npm run verify") < workflow.index("Validate the production Pages artifact") < workflow.index("actions/upload-pages-artifact@v4"),
+check(workflow.index("npm run verify") < workflow.index("Validate the production Pages artifact") < workflow.index("actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b"),
       "Build/verification, direct dist validation, and Pages artifact upload occur in the required order")
+check(all(f"uses: actions/{action}@{sha}" in workflow for action, sha in [
+    ("checkout", "11bd71901bbe5b1630ceea73d27597364c9af683"),
+    ("configure-pages", "983d7736d9b0ae728b81ab479565c72886d7745b"),
+    ("setup-node", "49933ea5288caeca8642d1e84afbd3f7d6820020"),
+    ("setup-python", "a26af69be951a213d495a4c3e4e4022e16d87065"),
+    ("upload-artifact", "ea165f8d65b6e75b540449e92b4886f43607fa02"),
+    ("upload-pages-artifact", "7b1f4a764d45c48632c6b24a0339c27f5614fb0b"),
+    ("deploy-pages", "d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e"),
+]), "GitHub Actions dependencies are pinned to verified immutable full-length commit SHAs")
 html_shell = read("index.html")
 favicon_svg = read("public/favicon.svg")
 favicon_png = (ROOT / "public/favicon-32.png").read_bytes()
@@ -125,16 +134,16 @@ check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([
       "All deployed favicon source formats have valid file signatures")
 check('favicon.svg?v=20261109-4' in manifest and 'favicon-32.png?v=20261109-4' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v16" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v17" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
-check("legion-portfolio-motion-v7" in html_shell and "const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html_shell and "const motionEnabled = savedMotion !== 'off'" in html_shell,
-      "Early boot enables motion by default and applies only an explicit saved visitor pause")
+check("legion-portfolio-motion-v7" in html_shell and "prefers-reduced-motion: reduce" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)" in html_shell,
+      "Early boot follows the OS reduced-motion preference unless a visitor explicitly overrides it")
 app_source = read("src/App.tsx")
 intro_source = read("src/PortfolioChrome.tsx")
-check("return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app_source and "const motionEnabled = motionPreference === 'on'" in app_source,
-      "React motion controls default to on and preserve an explicit visitor pause")
-check("if (savedMotion === 'off') return false" in intro_source and "return true" in intro_source,
-      "The intro sequence follows the same default-on visitor motion preference")
+check("return saved === 'on' || saved === 'off' ? saved : 'system'" in app_source and "motionPreference === 'system' && !systemMotionReduced" in app_source and "query.addEventListener('change', update)" in app_source,
+      "React motion controls follow live system preference changes while preserving explicit visitor overrides")
+check("if (savedMotion === 'off') return false" in intro_source and "window.matchMedia?.('(prefers-reduced-motion: reduce)')" in intro_source and "savedMotion === 'on' || !systemReducedMotion" in intro_source,
+      "The intro sequence follows the OS motion preference unless explicitly enabled")
 adaptive_source = read("src/adaptive.ts")
 check("document.documentElement.dataset.motion === 'off'" in adaptive_source and "prefers-reduced-motion" not in adaptive_source,
       "Adaptive motion load follows the explicit site pause state")
