@@ -198,6 +198,29 @@ check('HERO VISIBILITY GUARANTEE' in css and 'hero-line-enter' in css and ":root
 check(":root[data-motion='off'] .recruiter-view .recruiter-experience-card" in css and '@media (prefers-reduced-motion: reduce)' in css and ':focus-visible' in css, 'Reduced-motion mode keeps all recruiter content visible and keyboard focus clear')
 
 
+# 9. Interaction contracts and operating-system preference defaults.
+motion_html = html
+motion_app = app
+chrome = (ROOT / 'src/PortfolioChrome.tsx').read_text(encoding='utf-8')
+features = (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8')
+layout_css = (ROOT / 'src/layout-integrity.css').read_text(encoding='utf-8')
+check("legion-portfolio-motion-v8" in motion_html and "savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in motion_html and "motionOverride === 'system' && !systemReducedMotion" in motion_html,
+      'First paint respects prefers-reduced-motion unless a visitor explicitly overrides it')
+check("function readMotionPreference(): MotionPreference" in motion_app and "motionPreference === 'system' && !systemReducedMotion" in motion_app and "query.addEventListener?.('change', update)" in motion_app,
+      'React motion preference remains synchronized with operating-system changes')
+check("localStorage.getItem('legion-portfolio-sound-v2') === 'on'" in motion_app,
+      'Interface audio is opt-in instead of playing unexpectedly for first-time visitors')
+check('aria-labelledby="palette-title"' in motion_app and 'onCloseRef.current()' in motion_app and 'previousFocus?.focus()' in motion_app and 'getFocusable' in motion_app,
+      'Command palette is a labelled, keyboard-contained dialog that restores focus')
+check('ArrowRight' in features and 'ArrowLeft' in features and "'Home'" in features and "'End'" in features and 'aria-controls="lab-panel-exposure"' in features and 'aria-labelledby="lab-tab-energy"' in features,
+      'Project Laboratory tabs implement expected arrow/Home/End navigation and explicit panel relationships')
+check('@media (forced-colors: active)' in layout_css and 'outline: 2px solid Highlight' in layout_css and 'textarea' in layout_css,
+      'Shared focus treatment includes textareas and Windows forced-colors visibility')
+check('@media (pointer: coarse)' in layout_css and 'min-width: 44px' in layout_css and 'min-height: 44px' in layout_css,
+      'Important coarse-pointer controls have comfortable 44px activation areas')
+check('UX-ACCESSIBILITY-PLAYBOOK.md' in (ROOT / 'scripts/portfolio.mjs').read_text(encoding='utf-8') and (ROOT / 'UX-ACCESSIBILITY-PLAYBOOK.md').is_file(),
+      'Source-backed UX and accessibility standards are included in the checked project inventory')
+
 failures = [label for ok, label in checks if not ok]
 print(f"\n{len(checks) - len(failures)}/{len(checks)} production-source checks passed.")
 if failures:
