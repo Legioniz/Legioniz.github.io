@@ -293,9 +293,9 @@ with sync_playwright() as p:
 
     print('QA:preference migration', flush=True)
     # Preference migration ignores the previous keys; v6 defaults to system and stores explicit visitor choices.
-    assert "localStorage.getItem('legion-portfolio-motion-v6')" in INDEX
-    assert "localStorage.getItem('legion-portfolio-motion-v6')" in APP
-    assert "localStorage.setItem('legion-portfolio-motion-v6'" in APP
+    assert "localStorage.getItem('legion-portfolio-motion-v7')" in INDEX
+    assert "localStorage.getItem('legion-portfolio-motion-v7')" in APP
+    assert "localStorage.setItem('legion-portfolio-motion-v7'" in APP
     assert "legion-portfolio-motion-v5" not in INDEX + APP
     assert "updateScrollReveals" not in APP
     assert 'installScrollReveal' in APP and 'useLayoutEffect' in APP
@@ -330,11 +330,11 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     os_motion=pref_page.locator('html').get_attribute('data-motion')
     assert os_motion == 'on' and pref_page.locator('html').get_attribute('data-motion-override') == 'on', {'system-reduced-motion-default': os_motion}
-    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v6'] = 'on'")
+    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'on'")
     pref_page.add_script_tag(content=inline_scripts[0])
     explicit_on=pref_page.locator('html').get_attribute('data-motion')
     assert explicit_on == 'on' and pref_page.locator('html').get_attribute('data-motion-override') == 'on', {'explicit-site-motion-on': explicit_on}
-    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v6'] = 'off'")
+    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'off'")
     pref_page.add_script_tag(content=inline_scripts[0])
     explicit_off=pref_page.locator('html').get_attribute('data-motion')
     assert explicit_off == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'off', {'explicit-site-pause': explicit_off}
