@@ -338,34 +338,38 @@ export function PrivacyNotice() {
 
 const ADMIN_RECOVERY_SESSION_KEY = 'legion-portfolio-admin-recovery-v1'
 
-function consumeAdminAuthRedirect(): { accessToken: string | null; notice: string } {
-  if (typeof window === 'undefined') return { accessToken: null, notice: '' }
+type AdminAuthRedirect = {
+  accessToken: string | null
+  notice: string
+  hashToken: string | null
+  clearStoredToken: boolean
+  clearHash: boolean
+}
+
+function consumeAdminAuthRedirect(): AdminAuthRedirect {
+  if (typeof window === 'undefined') return { accessToken: null, notice: '', hashToken: null, clearStoredToken: false, clearHash: false }
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const type = hash.get('type')
   const accessToken = hash.get('access_token')
   const errorCode = hash.get('error_code')
   const errorDescription = hash.get('error_description')
-  let notice = ''
-
-  if (type === 'recovery' && accessToken) {
-    try { window.sessionStorage.setItem(ADMIN_RECOVERY_SESSION_KEY, accessToken) } catch { /* Keep the token in memory if storage is unavailable. */ }
-  } else if (errorCode || hash.get('error')) {
-    try { window.sessionStorage.removeItem(ADMIN_RECOVERY_SESSION_KEY) } catch { /* Storage may be unavailable. */ }
-    notice = errorCode === 'otp_expired'
-      ? 'That password-reset link has expired or was already used. Request a fresh one below.'
-      : errorDescription || 'The authentication link could not be verified. Request a fresh password-reset link.'
-  }
-
-  const shouldCleanHash = hash.has('access_token') || hash.has('error') || hash.has('error_code')
-  if (shouldCleanHash) {
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
-  }
-
+  const hasAuthError = Boolean(errorCode || hash.get('error'))
+  const notice = errorCode === 'otp_expired'
+    ? 'That password-reset link has expired or was already used. Request a fresh one below.'
+    : hasAuthError
+      ? errorDescription || 'The authentication link could not be verified. Request a fresh password-reset link.'
+      : ''
   let storedToken: string | null = null
   try { storedToken = window.sessionStorage.getItem(ADMIN_RECOVERY_SESSION_KEY) } catch { /* Storage may be unavailable. */ }
-  return { accessToken: type === 'recovery' && accessToken ? accessToken : storedToken, notice }
-}
 
+  return {
+    accessToken: type === 'recovery' && accessToken ? accessToken : storedToken,
+    notice,
+    hashToken: type === 'recovery' && accessToken ? accessToken : null,
+    clearStoredToken: hasAuthError,
+    clearHash: hash.has('access_token') || hash.has('error') || hash.has('error_code'),
+  }
+}
 export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [authRedirect] = useState(consumeAdminAuthRedirect)
   const [recoveryToken, setRecoveryToken] = useState<string | null>(authRedirect.accessToken)
@@ -393,6 +397,18 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
   const dialogRef = useRef<HTMLElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
+
+  useEffect(() => {
+    if (authRedirect.clearStoredToken) {
+      try { window.sessionStorage.removeItem(ADMIN_RECOVERY_SESSION_KEY) } catch { /* Storage may be unavailable. */ }
+    }
+    if (authRedirect.hashToken) {
+      try { window.sessionStorage.setItem(ADMIN_RECOVERY_SESSION_KEY, authRedirect.hashToken) } catch { /* The token remains available in component state. */ }
+    }
+    if (authRedirect.clearHash) {
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
+    }
+  }, [authRedirect])
 
   useEffect(() => {
     if (!open) return
