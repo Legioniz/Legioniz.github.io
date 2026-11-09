@@ -1,25 +1,21 @@
 ## 2026-11-10 — Personal application documents removed
 
-- Removed the résumé and CV PDF assets from the current repository tree so the next GitHub Pages artifact excludes them at their former paths.
-- Removed document-download actions from the Full Portfolio header, hero, and contact area; Recruiter View; startup/no-JavaScript fallback; and React error fallback.
-- Removed document links and descriptions from the public Markdown discovery pages, recruiter documentation, source notes, and deployment guidance.
-- Updated release scripts, artifact validation, and browser/source QA to require the absence of personal application documents instead of expecting PDFs.
+- Removed the résumé and CV PDF assets from the current branch tree so the next GitHub Pages artifact excludes them at their former paths.
+- Removed document-download actions from the Full Portfolio, Recruiter View, startup/no-JavaScript fallback, and React error fallback.
+- Removed document links and descriptions from the Markdown discovery pages, recruiter documentation, source notes, and deployment guide.
+- Updated release scripts, artifact validation, and browser/source QA to require the absence of personal application documents.
 - Bumped the service-worker shell cache to v18 so returning visitors adopt the updated site shell.
 
-## 2026-11-10 — Compiled-app accessibility and reflow regression gate
+## 2026-11-09 — Deep UX and accessibility implementation
 
-- Added a real-browser regression suite against the compiled React application; it runs on both Full Portfolio and Recruiter View in dark and light themes.
-- Added viewport checks at 320, 360, 390, 430, 768, 1024, 1280, and 1440 CSS pixels, including WCAG 2.2's 320px reflow threshold.
-- Audited rendered landmarks, visible H1 hierarchy, control-name smoke coverage, image alt attributes, duplicate IDs, ARIA ID references, in-page anchors, focusable content inside hidden regions, keyboard-focus visibility, and new-tab opener isolation.
-- Registered the suite in `npm run verify` and added preflight checks so the test cannot silently fall out of the release pipeline.
-- Kept target-size exception handling honest: undersized controls are inventoried for manual spacing review instead of being marked nonconforming from dimensions alone.
-- Preserved the Technical Field Journal visual system; this change improves the engineering feedback loop rather than replacing the portfolio's identity.
+- Changed motion to inherit the operating-system reduced-motion preference before first paint, then follow OS changes until the visitor explicitly selects Motion On or Off. Existing explicit v7 choices migrate to v8.
+- Changed synthesized interface audio to opt-in for new visitors.
+- Added a focus-contained, focus-restoring command palette dialog and WAI-ARIA APG keyboard behavior for the Project Laboratory tablist.
+- Added shared visible-focus, forced-colors, and coarse-pointer touch-target refinements across Full and Recruiter views.
+- Added `UX-ACCESSIBILITY-PLAYBOOK.md` with sourced usability, WCAG 2.2 AA, WAI-ARIA, responsive, Core Web Vitals, SEO, and security standards.
+- Extended automated release checks for the new interaction contracts and refreshed the service-worker shell cache to v17.
 
-## 2026-11-10 — Semantic navigation state and accessibility regression gate
-
-- Added `aria-current="location"` to the single active in-page navigation link so assistive technology receives the same section context already shown visually.
-- Added a production-source regression check to prevent the visual and programmatic navigation states from drifting apart.
-- Updated the living UI/UX engineering standard with the current-location requirement, grounded in WAI-ARIA guidance.
+Automated source and browser regression checks are included in the production release workflow. Manual keyboard, screen-reader, touch-device, zoom, and forced-colors review remains necessary; this work does not claim formal WCAG conformance.
 
 ## 2026-11-09 — Recruiter bundle, accessibility, and content-discovery upgrade
 

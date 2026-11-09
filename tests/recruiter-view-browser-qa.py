@@ -115,17 +115,18 @@ def main() -> None:
             check(page.locator('.recruiter-scroll-progress > span').count() == 1,
                   'Recruiter view mounts its dedicated scroll-progress indicator')
             motion_toggle = preferences.get_by_role('button', name='Motion On — pause decorative motion')
-            sound_toggle = preferences.get_by_role('button', name='Sound Off — turn interface sounds on')
+            sound_toggle = preferences.locator('.sound-toggle')
             check(motion_toggle.get_attribute('aria-pressed') == 'true',
-                  'Recruiter view exposes the shared default-on motion control')
-            check(sound_toggle.get_attribute('aria-pressed') == 'false' and sound_toggle.get_attribute('data-sfx') == 'toggle',
-                  'Recruiter view exposes a sound control that is opt-in and starts muted')
+                  'Recruiter view exposes the shared system-aware motion control')
+            check(preferences.get_by_role('button', name='Sound Off — turn interface sounds on').get_attribute('aria-pressed') == 'false'
+                  and sound_toggle.get_attribute('data-sfx') == 'toggle',
+                  'Recruiter view keeps interface sound muted for first-time visitors and exposes an explicit opt-in control')
 
             motion_toggle.click()
             page.wait_for_function("document.documentElement.dataset.motion === 'off'")
             check(preferences.get_by_role('button', name='Motion Off — resume decorative motion').get_attribute('aria-pressed') == 'false',
                   'Recruiter motion control pauses decorative motion and updates its pressed state')
-            check(page.evaluate("localStorage.getItem('legion-portfolio-motion-v7')") == 'off',
+            check(page.evaluate("localStorage.getItem('legion-portfolio-motion-v8')") == 'off',
                   'Recruiter motion preference persists using the shared site setting')
             preferences.get_by_role('button', name='Resume decorative motion').click()
             page.wait_for_function("document.documentElement.dataset.motion === 'on'")
@@ -142,15 +143,15 @@ def main() -> None:
 
             sound_toggle.click()
             check(preferences.get_by_role('button', name='Sound On — turn interface sounds off').get_attribute('aria-pressed') == 'true',
-                  'Recruiter sound control enables the delegated interface sound system')
+                  'Recruiter sound control explicitly enables the delegated interface sound system')
             check(page.evaluate("localStorage.getItem('legion-portfolio-sound-v2')") == 'on',
-                  'Recruiter sound preference persists the enabled state')
-            preferences.get_by_role('button', name='Turn interface sounds off').click()
+                  'Recruiter sound opt-in persists using the shared site setting')
+            sound_toggle.click()
             check(preferences.get_by_role('button', name='Sound Off — turn interface sounds on').get_attribute('aria-pressed') == 'false',
-                  'Recruiter sound control mutes the delegated interface sound system')
+                  'Recruiter sound control can mute interface feedback again')
             check(page.evaluate("localStorage.getItem('legion-portfolio-sound-v2')") == 'off',
-                  'Recruiter sound preference persists the muted state')
-            preferences.get_by_role('button', name='Turn interface sounds on').click()
+                  'Recruiter sound mute persists using the shared site setting')
+            sound_toggle.click()
             check(preferences.get_by_role('button', name='Sound On — turn interface sounds off').get_attribute('aria-pressed') == 'true',
                   'Recruiter sound control restores interface feedback')
             notes_before_disclosure = page.evaluate('window.__portfolioAudioNotes')

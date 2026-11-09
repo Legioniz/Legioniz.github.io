@@ -918,7 +918,12 @@ button, input, select, textarea { font: inherit; }
 }
 .recruiter-hero .recruiter-intro { max-width: 64ch; }
 .recruiter-hero-links { align-items: center; gap: 9px 18px; }
-.recruiter-hero-links a:hover { transform: translateY(-2px); }
+.recruiter-hero-links a:not(.recruiter-primary-link):hover { transform: translateY(-2px); }
+.recruiter-primary-link { box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 20%, transparent); }
+.recruiter-primary-link:hover {
+  transform: translate3d(-2px, -2px, 0);
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--accent) 20%, transparent);
+}
 
 .recruiter-section-heading {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
@@ -1082,6 +1087,10 @@ button, input, select, textarea { font: inherit; }
   transform: translate3d(3px, 0, 0);
   border-color: var(--accent);
   box-shadow: 4px 0 0 color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.recruiter-contact-actions .recruiter-download:hover {
+  background: var(--accent-dark);
+  color: var(--on-accent);
 }
 .recruiter-footer button:hover {
   transform: translate3d(0, -2px, 0);
@@ -1726,4 +1735,56 @@ button, input, select, textarea { font: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .approved-comment, .comments-loading span { animation: none !important; }
+}
+
+
+/* Accessibility refinements shared by the full portfolio and recruiter view. */
+:where(
+  button, a, input, select, textarea, summary,
+  [role="button"], [role="tab"], [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  scroll-margin-block: calc(var(--layout-header-height) + 24px);
+}
+
+/* The hidden attribute must win over component display declarations. */
+.lab-shell [hidden] { display: none !important; }
+
+/* Coarse-pointer controls get a comfortable activation area, beyond WCAG's 24px minimum. */
+@media (pointer: coarse) {
+  .site-header .icon-button,
+  .site-header .command-trigger,
+  .site-header .main-nav.nav-open > a,
+  .lab-tabs > [role="tab"],
+  .recruiter-preference-toggle,
+  .recruiter-jumps > a,
+  .recruiter-project-actions :is(button, a),
+  .recruiter-actions :is(button, a),
+  .photo-viewer-nav,
+  .photo-lightbox .feature-close,
+  .privacy-actions button,
+  .privacy-settings-reopen,
+  .admin-head .feature-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* Keep the compact header from overflowing 320px viewports while preserving 24px+ width and 44px height. */
+  .site-header .icon-button { min-width: 32px; min-height: 44px; flex-basis: 32px; }
+  .site-header .command-trigger { min-width: 44px; padding-inline: 12px; }
+}
+
+/* Preserve an unmistakable focus indicator in Windows High Contrast / forced-colors modes. */
+@media (forced-colors: active) {
+  :where(
+    button, a, input, select, textarea, summary,
+    [role="button"], [role="tab"], [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
+  }
+  .site-header, .command-palette, .project-modal, .admin-panel,
+  .photo-lightbox-panel, .recruiter-view {
+    border-color: CanvasText;
+  }
 }

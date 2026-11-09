@@ -86,25 +86,44 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
 
   useEffect(() => {
     const root = recruiterRootRef.current
-    if (!root || !('IntersectionObserver' in window)) return
+    if (!root) return
     const sections = Array.from(root.querySelectorAll<HTMLElement>('.recruiter-main > section[id]'))
     const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('.recruiter-jumps a[href^="#"]'))
     if (sections.length === 0 || links.length === 0) return
 
-    let activeSection = ''
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-      if (!visible || visible.target.id === activeSection) return
-      activeSection = visible.target.id
-      links.forEach((link) => {
-        if (link.hash === `#${activeSection}`) link.setAttribute('aria-current', 'location')
-        else link.removeAttribute('aria-current')
+    let frame = 0
+    const updateCurrentSection = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        // Use a stable reading line instead of competing intersection ratios.
+        // This keeps the active link deterministic for short, tall, and nested sections.
+        const readingLine = Math.max(96, Math.min(220, window.innerHeight * 0.32))
+        let currentSection: HTMLElement | undefined
+        for (const section of sections) {
+          if (section.getBoundingClientRect().top <= readingLine) currentSection = section
+          else break
+        }
+        const activeHash = currentSection ? `#${currentSection.id}` : ''
+        links.forEach((link) => {
+          if (activeHash && link.hash === activeHash) link.setAttribute('aria-current', 'location')
+          else link.removeAttribute('aria-current')
+        })
       })
-    }, { rootMargin: '-18% 0px -66% 0px', threshold: [0, 0.15, 0.3, 0.5] })
+    }
 
-    sections.forEach((section) => observer.observe(section))
-    return () => observer.disconnect()
+    updateCurrentSection()
+    window.addEventListener('scroll', updateCurrentSection, { passive: true })
+    window.addEventListener('resize', updateCurrentSection)
+    window.addEventListener('hashchange', updateCurrentSection)
+    window.addEventListener('popstate', updateCurrentSection)
+    return () => {
+      window.removeEventListener('scroll', updateCurrentSection)
+      window.removeEventListener('resize', updateCurrentSection)
+      window.removeEventListener('hashchange', updateCurrentSection)
+      window.removeEventListener('popstate', updateCurrentSection)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
   }, [])
 
   // A real scroll-progress signal drives the recruiter reading rail. Updates are
