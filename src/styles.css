@@ -3897,3 +3897,33 @@ body {
   font-size: clamp(10px, .72em, 12px);
   line-height: 1.5;
 }
+
+
+/* Fine-print cleanup for artwork, utilities, and compact controls. */
+.site-shell :is(
+  .lens-mark, .art-index, .art-caption, .meter-topline, .meter-bottom,
+  .meter-readout > span, .meter-readout em, .meter-pill, .fan-readout, .fan-footer,
+  .fan-temp b, .game-topline, .game-bottom, .game-window-bar, .game-side-label,
+  .toki-copy em, .toki-coordinate, .skills-core span, .visual-plate-head,
+  .visual-plate-foot, .project-detail-link, .modal-topbar, .palette-label,
+  .palette-footer, .palette-footer button, .feature-button, .lab-tabs button,
+  .privacy-notice p, .privacy-notice small, .privacy-actions button,
+  .privacy-settings-reopen, .recruiter-actions a, .recruiter-actions button,
+  .recruiter-jumps a, .recruiter-project-actions button, .recruiter-project-actions a,
+  .recruiter-more-experience summary
+) {
+  font-size: clamp(10px, .72em, 12px);
+  line-height: 1.5;
+}
+.site-shell :is(.project-art, .recruiter-project-art) :is(span, small, em, b) {
+  font-size: clamp(10px, .72em, 12px);
+}
+.site-shell button { font-size: max(10px, .72em); }
+.recruiter-view :is(
+  .recruiter-actions a, .recruiter-actions button, .recruiter-jumps a,
+  .recruiter-project-actions button, .recruiter-project-actions a,
+  .recruiter-more-experience summary
+) {
+  font-size: clamp(10px, .72em, 12px);
+  line-height: 1.5;
+}
