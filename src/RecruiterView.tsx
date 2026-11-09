@@ -107,6 +107,72 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
     return () => observer.disconnect()
   }, [])
 
+  // A real scroll-progress signal drives the recruiter reading rail. Updates are
+  // frame-coalesced so long profiles do not create a scroll-handler bottleneck.
+  useEffect(() => {
+    const root = recruiterRootRef.current
+    if (!root) return
+
+    let frame = 0
+    const updateProgress = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const range = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+        const progress = Math.min(1, Math.max(0, window.scrollY / range))
+        root.style.setProperty('--recruiter-scroll-progress', String(progress))
+        root.dataset.scrollDepth = progress >= .985 ? 'end' : 'reading'
+      })
+    }
+
+    updateProgress()
+    window.addEventListener('scroll', updateProgress, { passive: true })
+    window.addEventListener('resize', updateProgress)
+    return () => {
+      window.removeEventListener('scroll', updateProgress)
+      window.removeEventListener('resize', updateProgress)
+      if (frame) window.cancelAnimationFrame(frame)
+      root.style.removeProperty('--recruiter-scroll-progress')
+      delete root.dataset.scrollDepth
+    }
+  }, [])
+
+  // Pointer spotlight is deliberately limited to fine pointers and project
+  // cards; touch devices keep a static, lightweight presentation.
+  useEffect(() => {
+    const root = recruiterRootRef.current
+    if (!root || !motionEnabled || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('.recruiter-project-card'))
+    const onMove = (event: PointerEvent) => {
+      const card = event.currentTarget as HTMLElement
+      const bounds = card.getBoundingClientRect()
+      const x = Math.min(100, Math.max(0, ((event.clientX - bounds.left) / Math.max(1, bounds.width)) * 100))
+      const y = Math.min(100, Math.max(0, ((event.clientY - bounds.top) / Math.max(1, bounds.height)) * 100))
+      card.style.setProperty('--recruiter-spot-x', `${x.toFixed(1)}%`)
+      card.style.setProperty('--recruiter-spot-y', `${y.toFixed(1)}%`)
+      card.dataset.spotlight = 'active'
+    }
+    const onLeave = (event: PointerEvent) => {
+      const card = event.currentTarget as HTMLElement
+      delete card.dataset.spotlight
+    }
+
+    cards.forEach((card) => {
+      card.addEventListener('pointermove', onMove, { passive: true })
+      card.addEventListener('pointerleave', onLeave, { passive: true })
+    })
+    return () => {
+      cards.forEach((card) => {
+        card.removeEventListener('pointermove', onMove)
+        card.removeEventListener('pointerleave', onLeave)
+        delete card.dataset.spotlight
+        card.style.removeProperty('--recruiter-spot-x')
+        card.style.removeProperty('--recruiter-spot-y')
+      })
+    }
+  }, [motionEnabled])
+
   const activateSectionLink = (sectionId: string) => {
     const root = recruiterRootRef.current
     if (!root) return
@@ -118,6 +184,7 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
 
   return (
     <div className="recruiter-view" id="recruiter-view" ref={recruiterRootRef}>
+      <div className="recruiter-scroll-progress" aria-hidden="true"><span/></div>
       <a className="skip-link recruiter-skip" href="#recruiter-main" data-sfx="navigate">Skip to recruiter profile</a>
       <header className="recruiter-topbar">
         <a className="recruiter-brand" href="#recruiter-top" data-sfx="navigate">
