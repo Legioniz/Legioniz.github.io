@@ -33,7 +33,7 @@ try {
   check(Boolean(byPath.get('index.html')), 'Production HTML exists')
   check(Boolean(byPath.get('og-card.png')) && byPath.get('og-card.png').size <= 250 * 1024, 'Crawler-compatible 1200x630 PNG preview ships within its 250 KiB budget')
   check(Boolean(byPath.get('robots.txt') && byPath.get('sitemap.xml') && byPath.get('site.webmanifest')), 'SEO and install metadata ship in the production root')
-  check(Boolean(byPath.get('King-Art-Pacumberto-CV.pdf') && byPath.get('King-Art-Pacumberto-Resume.pdf')), 'Both intentionally supplied PDF documents ship')
+  check(!files.some((file) => /\.(?:pdf|docx?|odt)$/i.test(file.path)), 'No downloadable personal application documents ship in the production artifact')
   check(!files.some((file) => /\.(?:docx?|odt)$/i.test(file.path)), 'No Word or OpenDocument files ship')
   check(!files.some((file) => /(?:private|phone|personal-cv)/i.test(path.basename(file.path))), 'No private CV-named asset ships')
   check(!files.some((file) => file.path.endsWith('.map')), 'Production source maps are not exposed')

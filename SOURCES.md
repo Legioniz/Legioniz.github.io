@@ -81,9 +81,9 @@ A portrait supplied by the owner on 2026-11-08 is included in the profile sectio
 - MDN — Using responsive images: https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Responsive_images
 - MDN — `picture` element: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/picture
 
-## Original uploaded resume PDF
+## Personal application documents
 
-The owner supplied `King_Art_Pacumberto_Resume_Updated (1)(3).pdf` on 2026-11-08 and explicitly asked for that exact resume to be available from the portfolio. It is bundled byte-for-byte as `public/King-Art-Pacumberto-Resume.pdf`. The source PDF includes the phone number shown in the document. The redesigned public-safe CV PDF is the phone-free alternative. The editable Word/DOCX copy has been removed from the current public release.
+Downloadable resume/CV files are intentionally excluded from the public repository and website. The portfolio's profile, experience, education, skills, and project summaries are maintained as on-page content instead.
 
 
 ## GitHub Pages Jekyll deployment

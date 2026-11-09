@@ -918,12 +918,7 @@ button, input, select, textarea { font: inherit; }
 }
 .recruiter-hero .recruiter-intro { max-width: 64ch; }
 .recruiter-hero-links { align-items: center; gap: 9px 18px; }
-.recruiter-hero-links a:not(.recruiter-primary-link):hover { transform: translateY(-2px); }
-.recruiter-primary-link { box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 20%, transparent); }
-.recruiter-primary-link:hover {
-  transform: translate3d(-2px, -2px, 0);
-  box-shadow: 6px 6px 0 color-mix(in srgb, var(--accent) 20%, transparent);
-}
+.recruiter-hero-links a:hover { transform: translateY(-2px); }
 
 .recruiter-section-heading {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
@@ -1087,10 +1082,6 @@ button, input, select, textarea { font: inherit; }
   transform: translate3d(3px, 0, 0);
   border-color: var(--accent);
   box-shadow: 4px 0 0 color-mix(in srgb, var(--accent) 14%, transparent);
-}
-.recruiter-contact-actions .recruiter-download:hover {
-  background: var(--accent-dark);
-  color: var(--on-accent);
 }
 .recruiter-footer button:hover {
   transform: translate3d(0, -2px, 0);

@@ -118,8 +118,6 @@ jobs:
           test -s dist/experience.md
           grep -q '^# King Art D. Pacumberto' dist/llms.txt
           test -d dist/assets
-          test -s dist/King-Art-Pacumberto-CV.pdf
-          test -s dist/King-Art-Pacumberto-Resume.pdf
           test -f dist/.nojekyll
 
           # Reject the raw Vite development shell: production must use

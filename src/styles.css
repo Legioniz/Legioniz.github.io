@@ -14,7 +14,6 @@
   --line-strong: rgba(232, 231, 224, .25);
   --accent: #e87961;
   --accent-dark: #d6634d;
-  --accent-strong: #f09881;
   --fan-speed: 800ms;
   --on-accent: #17191b;
   --blue: #8a9db2;
@@ -56,7 +55,6 @@
   --line-strong: rgba(39, 45, 50, .25);
   --accent: #a94837;
   --accent-dark: #923b2e;
-  --accent-strong: #923b2e;
   --on-accent: #ffffff;
   --blue: #4a6078;
   --shadow: 0 24px 65px rgba(35, 34, 30, .13);
@@ -88,9 +86,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .main-nav a::after { content: ''; position: absolute; left: 0; bottom: -9px; width: 0; height: 1px; background: var(--accent); transition: width .25s ease; }
 .main-nav a:hover, .main-nav a.active { color: var(--text-strong); }
 .main-nav a.active::after, .main-nav a:hover::after { width: 100%; }
-.main-nav .nav-resume { color: var(--text-strong); display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 3px; }
-.main-nav .nav-resume:hover { border-color: var(--accent); color: var(--accent); }
-.main-nav .nav-resume::after { display: none; }
 .main-nav .nav-contact { color: var(--accent); display: inline-flex; align-items: center; gap: 8px; }
 .main-nav .nav-contact::after { display: none; }
 .header-tools { display: flex; align-items: center; gap: 10px; }
@@ -676,7 +671,6 @@ details[open] > summary .disclosure-control {
   .main-nav a { padding: 13px 12px; border-bottom: 1px solid var(--line); }
   .main-nav a:last-child { border-bottom: 0; }
   .main-nav a::after { display: none; }
-  .main-nav .nav-resume { margin: 8px 10px; justify-content: center; }
   .main-nav .nav-contact { padding-top: 15px; }
   .mobile-menu-button { display: inline-grid; }
   .hero-section { min-height: auto; height: auto; padding: 125px 0 66px; }
@@ -903,7 +897,6 @@ body::before { opacity: .022; }
 .main-nav { gap: clamp(15px, 2.1vw, 29px); margin-right: clamp(14px, 2.4vw, 32px); }
 .main-nav a { font-size: 10px; }
 .main-nav a::after { bottom: -8px; }
-.main-nav .nav-resume { border-radius: 3px; }
 .command-trigger { border-radius: 3px; }
 .icon-button { border-radius: 3px; }
 
@@ -2093,17 +2086,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   :root:not([data-motion-override='on']) .site-header { transform: translate3d(-50%, 0, 0) !important; opacity: 1 !important; pointer-events: auto !important; }
 }
 
-/* Personal document actions are PDF-only. */
+/* Keep hero actions aligned without forcing the row to overflow. */
 .hero-actions .button { white-space: nowrap; }
-
-
-/* Original resume download is the primary document action; public-safe CV exports remain separate. */
-.main-nav .nav-original-resume {
-  color: var(--accent-strong, var(--accent));
-  border-color: color-mix(in srgb, var(--accent) 62%, var(--line-strong));
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
-}
-.main-nav .nav-original-resume:hover { color: var(--text-strong); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); }
 /* -------------------------------------------------------------------------
    INTERACTION CHOREOGRAPHY / tactile motion + project side-preview
    CSS-only; no runtime animation library or external sound assets.
@@ -2131,11 +2115,11 @@ button:active:not(:disabled), [role="button"]:active, [role="tab"]:active {
 }
 
 /* Navigation has a moving underline, lift and compact active-state marker. */
-.main-nav > a:not(.nav-resume):not(.nav-contact) {
+.main-nav > a:not(.nav-contact) {
   transition: color .24s ease, transform .3s var(--ease-expressive);
 }
-.main-nav > a:not(.nav-resume):not(.nav-contact):hover { transform: translateY(-2px); }
-.main-nav > a.active:not(.nav-resume)::before {
+.main-nav > a:not(.nav-contact):hover { transform: translateY(-2px); }
+.main-nav > a.active:not(.nav-contact)::before {
   content: '';
   position: absolute;
   width: 4px;
@@ -3042,8 +3026,7 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
 .recruiter-jumps a { color: var(--muted); font-size: 11px; font-weight: 700; white-space: nowrap; }
 .recruiter-jumps a:hover { color: var(--accent); }
 .recruiter-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-.recruiter-actions a, .recruiter-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-strong); cursor: pointer; font-size: 10px; font-weight: 800; white-space: nowrap; }
-.recruiter-actions .recruiter-download { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.recruiter-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-strong); cursor: pointer; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .recruiter-main { width: min(1120px, calc(100% - 56px)); margin: 0 auto; }
 .recruiter-hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(260px, .7fr); align-items: center; gap: clamp(28px, 6vw, 86px); padding: clamp(58px, 9vw, 112px) 0 76px; border-bottom: 1px solid var(--line); }
 .recruiter-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; color: var(--accent); font: 9px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
@@ -3055,7 +3038,6 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
 .recruiter-hero-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 19px; margin-top: 27px; }
 .recruiter-hero-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; color: var(--muted); font-size: 11px; font-weight: 700; }
 .recruiter-hero-links a:hover { color: var(--accent); }
-.recruiter-hero-links .recruiter-primary-link { min-height: 44px; padding: 0 15px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); }
 .recruiter-snapshot { display: grid; gap: 0; padding: 18px 21px; border: 1px solid var(--line-strong); background: var(--surface); }
 .recruiter-portrait { display: block; width: calc(100% + 42px); margin: -18px -21px 18px; overflow: hidden; background: var(--bg-2); border-bottom: 1px solid var(--line); }
 .recruiter-portrait img { display: block; width: 100%; height: auto; object-fit: cover; object-position: center 32%; }
@@ -3143,7 +3125,6 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
 .recruiter-contact-actions { display: grid; gap: 7px; }
 .recruiter-contact-actions a { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; border: 1px solid var(--line); color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
 .recruiter-contact-actions a:hover { border-color: var(--accent); color: var(--accent); }
-.recruiter-contact-actions .recruiter-download { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 800; }
 .recruiter-footer { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 18px max(24px, calc((100vw - 1180px) / 2)); border-top: 1px solid var(--line); color: var(--muted-2); font: 8px var(--font-mono); letter-spacing: .07em; }
 .recruiter-footer button { padding: 8px 10px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font: inherit; }
 .recruiter-skip { z-index: 100; }

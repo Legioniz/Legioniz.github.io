@@ -307,7 +307,7 @@ with sync_playwright() as p:
     page.screenshot(path=str(Path(tempfile.gettempdir()) / 'motion-header-mobile.png'),full_page=False)
 
     print('QA:boot preference', flush=True)
-    # Validate boot behavior: motion defaults on in every system profile, and only an explicit v7 pause turns it off.
+    # System preference is authoritative unless the visitor explicitly chooses motion on/off in v7.
     pref_page=browser.new_page(reduced_motion='no-preference')
     pref_page.set_content('<!doctype html><html><head><meta name=theme-color content=#101619></head><body></body></html>')
     import re
@@ -325,11 +325,12 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     default_motion=pref_page.locator('html').get_attribute('data-motion')
     default_override=pref_page.locator('html').get_attribute('data-motion-override')
-    assert default_motion == 'on' and default_override == 'on', {'stale-v1-v6-settings-ignored': True, 'data-motion': default_motion, 'override': default_override}
+    assert default_motion == 'on' and default_override == 'system', {'stale-v1-v6-settings-ignored': True, 'data-motion': default_motion, 'override': default_override}
     pref_page.emulate_media(reduced_motion='reduce')
     pref_page.add_script_tag(content=inline_scripts[0])
     os_motion=pref_page.locator('html').get_attribute('data-motion')
-    assert os_motion == 'on' and pref_page.locator('html').get_attribute('data-motion-override') == 'on', {'system-reduced-motion-default': os_motion}
+    os_override=pref_page.locator('html').get_attribute('data-motion-override')
+    assert os_motion == 'off' and os_override == 'system', {'system-reduced-motion-default': os_motion, 'override': os_override}
     pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'on'")
     pref_page.add_script_tag(content=inline_scripts[0])
     explicit_on=pref_page.locator('html').get_attribute('data-motion')
@@ -338,15 +339,19 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     explicit_off=pref_page.locator('html').get_attribute('data-motion')
     assert explicit_off == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'off', {'explicit-site-pause': explicit_off}
+    pref_page.evaluate("delete window.__mockMotionStore['legion-portfolio-motion-v7']")
+    pref_page.add_script_tag(content=inline_scripts[0])
+    restored_system=pref_page.locator('html').get_attribute('data-motion')
+    assert restored_system == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'system', {'restored-system-preference': restored_system}
     browser.close()
 
 print(json.dumps({
   'sectionReveal':{'initial':initial,'enter':entered,'exit':exited,'reenter':returned,'dynamicProject':dynamic_state,
-                   'disabledMotion':disabled,'noIntersectionObserver':no_io,'noMutationObserver':no_mo,'observerTimeoutFallback':timeout_fallback,'defaultMotionOn':default_motion,'explicitPause':paused_motion},
+                   'disabledMotion':disabled,'noIntersectionObserver':no_io,'noMutationObserver':no_mo,'observerTimeoutFallback':timeout_fallback,'defaultMotionOn':default_motion,'systemReducedMotion':os_motion,'restoredSystemPreference':restored_system,'explicitPause':paused_motion},
   'disclosures':disclosure_results,
   'KA_responsive':brand_metrics,
   'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
-  'preferenceMigration':'old v1-v6 keys ignored; motion defaults on across system profiles; v7 stores explicit visitor choices',
+  'preferenceMigration':'old v1-v6 keys ignored; system reduced motion is respected; v7 stores explicit visitor overrides',
   'integration':'App uses real IntersectionObserver reveals and the separately browser-tested production masthead controller',
   'browserErrors':errors,
   'result':'PASS'

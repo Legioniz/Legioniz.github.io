@@ -29,4 +29,3 @@ I enjoy following a problem across its interface, logic, data, hardware, and use
 - GitHub: https://github.com/Legioniz
 - LinkedIn: https://www.linkedin.com/in/king-art-pacumberto-6003b2353/
 - Email: kingartriez@gmail.com
-- Public-safe CV: https://legioniz.github.io/King-Art-Pacumberto-CV.pdf
