@@ -3745,7 +3745,6 @@ body {
 
 :root[data-motion='on'] [data-reveal].is-visible .section-heading h2 em,
 :root[data-motion='on'] [data-reveal].is-visible .feature-header h2 em {
-  display: inline-block;
   animation: editorial-emphasis-in 560ms var(--ease-expressive) 90ms both;
 }
 
@@ -3754,8 +3753,8 @@ body {
 }
 
 @keyframes editorial-emphasis-in {
-  from { opacity: .68; transform: translate3d(0, .12em, 0); filter: blur(1px); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+  from { opacity: .68; filter: blur(1px); }
+  to { opacity: 1; filter: blur(0); }
 }
 
 @keyframes editorial-heading-in {
