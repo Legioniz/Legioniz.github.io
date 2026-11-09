@@ -31,7 +31,7 @@ for section_id, label in [
 check('project-compare' in features and 'Technologies' in features and 'Selected capabilities' in features, 'Project comparison uses documented project details')
 check('new URLSearchParams(window.location.search).get(\'project\')' in app and "url.searchParams.set('project', project.id)" in app, 'Project case studies support direct, shareable query-string links')
 check("window.addEventListener('popstate', syncRouteFromUrl)" in app and 'Copy project link' in app and 'openProject' in app and 'closeProject' in app, 'Project links synchronize with browser history and expose a copy action')
-check("localStorage.getItem('legion-portfolio-motion-v6')" in features, 'Intro sequence defaults to motion on and respects an explicit saved pause')
+check("localStorage.getItem('legion-portfolio-motion-v7')" in features, 'Intro sequence defaults to motion on and respects an explicit saved pause')
 check("file.size > 12 * 1024 * 1024" in features and '48 * 1024 * 1024' in features and '45_000_000' in features, 'Local photo viewer caps file count, total bytes, per-file size, and decoded dimensions')
 check('URL.createObjectURL(file)' in features and 'URL.revokeObjectURL(url)' in features and 'Nothing has been uploaded' in features, 'Photography preview remains browser-local and releases object URLs')
 check(all(ip in features for ip in ['192.0.2.', '198.51.100.', '203.0.113.']), 'Network Lab uses documentation-only RFC 5737 addresses')
