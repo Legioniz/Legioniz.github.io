@@ -1549,6 +1549,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
    clipping while keeping the practice map comfortably inside its frame. */
 @media (max-width: 600px) {
   .systems-orbit { width: min(82vw, 370px); }
+  .systems-orbit .orbit-node > span { width: 44px; height: 44px; }
+  .systems-orbit .orbit-center small { font-size: clamp(9px, 2.5vw, 10px); letter-spacing: .04em; }
 }
 @media (max-width: 380px) {
   .hero-title { font-size: 42px; }
