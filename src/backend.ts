@@ -77,7 +77,10 @@ async function request<T>(path: string, options: RequestInit = {}, accessToken?:
   requireBackend()
   const headers = new Headers(options.headers)
   headers.set('apikey', backendConfig.anonKey)
-  headers.set('Authorization', `Bearer ${accessToken || backendConfig.anonKey}`)
+  // Publishable API keys are not JWTs. Anonymous calls use only the apikey header;
+  // authenticated admin calls attach the real Supabase Auth access token.
+  if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`)
+  else headers.delete('Authorization')
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const response = await fetch(`${backendConfig.url}${path}`, { ...options, headers })
   const raw = await response.text()
