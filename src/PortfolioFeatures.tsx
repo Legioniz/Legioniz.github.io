@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent, CSSProperties } from 'react'
+import type { ChangeEvent, CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { projects } from './data'
 import type { Project } from './data'
 
@@ -8,6 +8,23 @@ type Photo = { id: string; name: string; url: string; width: number; height: num
 
 export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   const [labTab, setLabTab] = useState<FeatureTab>('exposure')
+  function handleLabTabKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
+    const tabs = Array.from(event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])
+    const currentIndex = tabs.indexOf(event.currentTarget)
+    let nextIndex = currentIndex
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length
+    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = tabs.length - 1
+    else return
+    event.preventDefault()
+    const nextTab = tabs[nextIndex]
+    const nextValue = nextTab?.dataset.labTab
+    if (nextTab && (nextValue === 'exposure' || nextValue === 'energy')) {
+      setLabTab(nextValue)
+      nextTab.focus()
+    }
+  }
   const [iso, setIso] = useState(400)
   const [aperture, setAperture] = useState(5.6)
   const [shutterIndex, setShutterIndex] = useState(2)
@@ -202,11 +219,10 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
         <div className="lab-shell" data-reveal>
           <div className="lab-shell-head"><span><i className="live-dot"/> INTERACTIVE WORKSPACE</span><span>LOCAL SIMULATION / NO EXTERNAL DATA</span></div>
           <div className="lab-tabs" role="tablist" aria-label="Project laboratory demonstrations">
-            <button role="tab" aria-selected={labTab === 'exposure'} className={labTab === 'exposure' ? 'is-selected' : ''} onClick={() => setLabTab('exposure')}>01 / EXPOSURE MODEL</button>
-            <button role="tab" aria-selected={labTab === 'energy'} className={labTab === 'energy' ? 'is-selected' : ''} onClick={() => setLabTab('energy')}>02 / ENERGY ESTIMATOR</button>
+            <button type="button" role="tab" id="lab-tab-exposure" data-lab-tab="exposure" aria-controls="lab-panel-exposure" tabIndex={labTab === 'exposure' ? 0 : -1} aria-selected={labTab === 'exposure'} className={labTab === 'exposure' ? 'is-selected' : ''} onClick={() => setLabTab('exposure')} onKeyDown={handleLabTabKeyDown}>01 / EXPOSURE MODEL</button>
+            <button type="button" role="tab" id="lab-tab-energy" data-lab-tab="energy" aria-controls="lab-panel-energy" tabIndex={labTab === 'energy' ? 0 : -1} aria-selected={labTab === 'energy'} className={labTab === 'energy' ? 'is-selected' : ''} onClick={() => setLabTab('energy')} onKeyDown={handleLabTabKeyDown}>02 / ENERGY ESTIMATOR</button>
           </div>
-          {labTab === 'exposure' ? (
-            <div className="exposure-workspace" role="tabpanel">
+          <div id="lab-panel-exposure" className="exposure-workspace" role="tabpanel" aria-labelledby="lab-tab-exposure" tabIndex={0} hidden={labTab !== 'exposure'}>
               <div className="lab-description"><span className="feature-code">LENS LAB / EXPOSURE TRIANGLE</span><h3>Three controls. <em>One exposure.</em></h3><p>Adjust ISO, aperture, and shutter speed to see how their light contribution changes relative to a fixed baseline of f/5.6, 1/125 s, ISO 100.</p><button className="feature-text-button" onClick={() => { setIso(400); setAperture(5.6); setShutterIndex(2) }}>Reset example ↺</button></div>
               <div className="exposure-controls">
                 <RangeControl label="ISO" value={iso} min={100} max={6400} step={100} output={String(iso)} onChange={setIso}/>
@@ -215,8 +231,7 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
               </div>
               <div className="exposure-result"><span className="feature-code">CALCULATED RESULT / EV100</span><strong>{exposureValue.toFixed(2)}<small> EV</small></strong><div className="exposure-meter"><i style={{ width: `${Math.max(2, Math.min(100, relativeExposure / 4 * 100))}%` }}/></div><p><b>{relativeExposure.toFixed(2)}×</b> relative exposure compared with the baseline. This is a mathematical teaching aid, not a rendered camera preview.</p></div>
             </div>
-          ) : (
-            <div className="energy-workspace" role="tabpanel">
+          <div id="lab-panel-energy" className="energy-workspace" role="tabpanel" aria-labelledby="lab-tab-energy" tabIndex={0} hidden={labTab !== 'energy'}>
               <div className="lab-description"><span className="feature-code">SMART ELECTRICAL MONITORING / ESTIMATE</span><h3>Put usage into <em>monthly context.</em></h3><p>Change the sample appliance assumptions. The calculator estimates energy use from rated watts × daily hours × 30 days.</p><button className="feature-text-button" onClick={() => { setWatts(90); setHours(6); setRate(12) }}>Reset assumptions ↺</button></div>
               <div className="energy-controls">
                 <RangeControl label="APPLIANCE POWER" value={watts} min={5} max={2000} step={5} output={`${watts} W`} onChange={setWatts}/>
@@ -224,8 +239,7 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
                 <div className="range-control"><label htmlFor="electricity-rate">ASSUMED RATE / kWh</label><output>₱{rate.toFixed(2)}</output><input id="electricity-rate" type="number" min="0" max="1000" step="0.25" value={rate} onChange={(event) => setRate(Math.max(0, Number(event.target.value) || 0))}/></div>
               </div>
               <div className="energy-result"><span className="feature-code">ESTIMATED MONTHLY COST</span><strong>₱{monthlyCost.toLocaleString('en-PH', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</strong><div className="energy-result-stats"><span><small>MONTHLY ENERGY</small><b>{monthlyKwh.toFixed(2)} kWh</b></span><span><small>DAILY ENERGY</small><b>{(watts * hours / 1000).toFixed(2)} kWh</b></span></div><p>The ₱/kWh rate is an editable example assumption, not a current utility tariff or actual bill calculation.</p></div>
-            </div>
-          )}
+          </div>
           <div className="lab-shell-foot"><span>FORMULA-LED / CLIENT-SIDE ONLY</span><span>INPUTS RESET ON PAGE RELOAD</span></div>
         </div>
         <div className="feature-side-note"><span>RELATED BUILD</span><button onClick={() => onOpenProject(projects[0]!)}>LensLab <b>↗</b></button><button onClick={() => onOpenProject(projects[1]!)}>Smart Electrical Monitoring <b>↗</b></button></div>
