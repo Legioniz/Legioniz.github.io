@@ -34,7 +34,7 @@ The portfolio should feel like a personal technical field journal: part engineer
 ## Accessibility and performance
 
 - Keep visible focus, skip-to-content, labels on controls, and contrast in both themes.
-- Respect `prefers-reduced-motion` by default. Visitors can explicitly resume decorative motion from the site control; a separate pause remains available at all times.
+- Decorative motion starts enabled. Keep the site-level pause/resume control available at all times, and ensure that disabling motion never hides information or blocks an interaction.
 - Prefer transform/opacity for transitions. Keep Canvas particle count and frame rate capped, pause off-screen, and avoid unnecessary runtime packages.
 - Do not convey state through color alone; use text and shape/state changes as well.
 - Keep layout responsive without horizontal scrolling at 320px and above. On tablet and phone widths, the hero changes from vertically centered desktop flex composition to normal block flow; its display headline and orbit scale down on very narrow screens.
@@ -72,4 +72,4 @@ The display / body / annotation roles remain Space Grotesk, Manrope, and DM Mono
 - Balanced quality shortens hero and reveal motion.
 - Economy quality removes nonessential card lifts and corner flourish animation.
 - Coarse-pointer layouts suppress hover-only depth and use touch-appropriate interactions.
-- The system reduced-motion preference and the site's motion-off setting expose all content immediately. Visitors can explicitly resume motion from the site control if they prefer the full animation experience.
+- The site's motion-off setting exposes all content immediately. Visitors can pause or resume decorative motion from the site control.
