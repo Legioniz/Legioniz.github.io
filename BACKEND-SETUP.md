@@ -15,15 +15,9 @@ The browser only receives the Supabase URL, anon/publishable key, and Turnstile 
 ## 1. Create the Supabase project
 
 1. Create a Supabase project and keep the project URL and anon/publishable key available for the frontend.
-2. Apply **all** SQL migrations in `supabase/migrations/` in timestamp order. With the Supabase CLI, run `supabase db push` from the repository root. When using SQL Editor, execute each migration file in order. The later `portfolio_security_hardening` migration moves the admin predicate and audit trigger into the non-exposed `private` schema, removes unused public helper functions, tightens function grants, and separates anonymous approved-comment reads from authenticated admin moderation. Do not skip it.
-3. Create the owner account in **Authentication → Users**. Disable public user sign-ups if no visitor account flow is required.
-4. Copy the owner's Auth user UUID and manually insert it into the allowlist:
-
-   ```sql
-   insert into public.admin_users (user_id)
-   values ('REPLACE-WITH-THE-OWNER-AUTH-USER-UUID');
-   ```
-
+2. Apply **all** SQL migrations in `supabase/migrations/` in timestamp order. With the Supabase CLI, run `supabase db push` from the repository root. When using SQL Editor, execute each migration file in order. The `portfolio_security_hardening` migration moves admin and audit helpers into the non-exposed `private` schema. The `portfolio_owner_verified_allowlist` migration only allowlists the exact owner email after Supabase Auth confirms it. Do not skip either migration.
+3. In **Authentication → Users**, send an invitation to `kingartriez@gmail.com` (your existing portfolio account email). Complete the invitation and verify the email address. The `portfolio_owner_verified_allowlist` trigger adds the confirmed account's UUID to `admin_users` automatically; it does not grant access to unverified accounts.
+4. Disable public user sign-ups in **Authentication → Settings → User Signups** after the owner invitation is complete. Visitor comments do not require Auth accounts.
 5. Do not create public policies for inquiry inserts, comment updates, analytics reads, or allowlist writes. The migrations intentionally grant anonymous visitors only approved-comment reads.
 
 
@@ -33,26 +27,15 @@ The `portfolio_security_hardening` migration is required after the initial schem
 
 ## 2. Configure and deploy the Edge Function
 
-Set the following Supabase Function secrets:
-
-```text
-SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
-PORTFOLIO_ALLOWED_ORIGIN=https://YOUR-EXACT-PUBLISHED-SITE-ORIGIN
-PORTFOLIO_RATE_LIMIT_SECRET=GENERATE-A-LONG-RANDOM-SECRET
-TURNSTILE_SECRET_KEY=YOUR-CLOUDFLARE_TURNSTILE_SECRET
-```
-
-`PORTFOLIO_ALLOWED_ORIGIN` must exactly match the site's origin (scheme and hostname, no path or trailing slash). For a local preview, use the exact local origin only while testing and change it before production. Generate a unique long random rate-limit secret; changing it resets the HMAC rate-limit bucket identity.
+The hosted Edge Function reads `SUPABASE_URL` and `SUPABASE_SECRET_KEYS` from Supabase's injected environment. It uses the project's default server-only secret key for privileged database writes and as the HMAC key for rate-limit buckets; no service-role/secret key needs to be copied into source control or the browser. The production origin defaults to `https://legioniz.github.io`. Optional overrides are `PORTFOLIO_ALLOWED_ORIGIN` and `PORTFOLIO_RATE_LIMIT_SECRET`. If either override is set, keep it in Supabase Function secrets only. Cloudflare Turnstile is optional; only configure `TURNSTILE_SECRET_KEY` when a matching frontend site key is also configured.
 
 Deploy from the repository root:
 
 ```bash
 supabase functions deploy portfolio-submit
-supabase secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... PORTFOLIO_ALLOWED_ORIGIN=... PORTFOLIO_RATE_LIMIT_SECRET=... TURNSTILE_SECRET_KEY=...
 ```
 
-The order of those commands may be reversed; the function must have all required secrets before accepting submissions. The function does not accept requests without an exact allowed origin. Rate limiting is 4 inquiries, 6 comments, and 60 opt-in page-view events per ten-minute window per HMAC-derived network bucket. Adjust these limits only after reviewing operational needs.
+The function is deployed with JWT gateway verification disabled because it accepts public submissions. It performs exact Origin validation, streamed request-size checks, a honeypot, server-side quotas, and optional Turnstile verification itself. Rate limiting is 4 inquiries, 6 comments, and 60 opt-in page-view events per ten-minute window per HMAC-derived network bucket. The GET readiness probe reports only whether required configuration is present; it never returns credentials.
 
 Cloudflare Turnstile is recommended for inquiry and comment submissions. Configure a Turnstile site key for the published domain and set it in the frontend. When `TURNSTILE_SECRET_KEY` is configured on Supabase, a valid challenge token is required for public inquiry and comment submissions. Page-view events do not invoke Turnstile.
 
@@ -66,7 +49,7 @@ VITE_SUPABASE_ANON_KEY=YOUR-ANON-OR-PUBLISHABLE-KEY
 VITE_TURNSTILE_SITE_KEY=YOUR-CLOUDFLARE-TURNSTILE-SITE-KEY
 ```
 
-For GitHub Actions, add the three Vite values as repository Actions secrets/variables and expose them only to the build step. Because the public anon key is intentionally browser-visible, safety depends on RLS and Edge Function validation—not secrecy of that key. The service role key and Turnstile secret stay in Supabase Function secrets only.
+The GitHub Actions workflow already has the project's public URL and publishable key as safe build fallbacks. You may override them with repository Actions variables if the project is moved. These public values are intentionally visible in the browser; authorization depends on RLS and Edge Function validation. Supabase's secret key remains available only inside the Edge Function.
 
 ## 4. Verify the controls before production
 
