@@ -125,7 +125,7 @@ check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([
       "All deployed favicon source formats have valid file signatures")
 check('favicon.svg?v=20261109-3' in manifest and 'favicon-32.png?v=20261109-3' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v13" in service_worker and "favicon.ico?v=20261109-3" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v14" in service_worker and "favicon.ico?v=20261109-3" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
 check("legion-portfolio-motion-v7" in html_shell and "const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html_shell and "const motionEnabled = savedMotion !== 'off'" in html_shell,
       "Early boot enables motion by default and applies only an explicit saved visitor pause")
