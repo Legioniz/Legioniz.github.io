@@ -23,10 +23,6 @@ type TurnstileAPI = {
 
 declare global { interface Window { turnstile?: TurnstileAPI } }
 
-function resetTurnstile() {
-  try { window.turnstile?.reset() } catch { /* A blocked or expired widget should not prevent the email fallback. */ }
-}
-
 function TurnstileChallenge({ onToken, resetSignal }: { onToken: (token: string) => void; resetSignal: number }) {
   const [error, setError] = useState('')
   const elementId = useId().replace(/:/g, '')
@@ -326,6 +322,8 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
   const [inquiryDraft, setInquiryDraft] = useState<Partial<PortfolioInquiry>>({})
   const [editCommentId, setEditCommentId] = useState<string | null>(null)
   const [commentDraft, setCommentDraft] = useState<Partial<PortfolioComment>>({})
+  const [commentFilter, setCommentFilter] = useState<'all' | PortfolioComment['status']>('pending')
+  const [commentSearch, setCommentSearch] = useState('')
   const [dashboardError, setDashboardError] = useState('')
   const dialogRef = useRef<HTMLElement>(null)
   const onCloseRef = useRef(onClose)
@@ -435,6 +433,13 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
   if (!open) return null
   const newInquiryCount = inquiries.filter((item) => item.status === 'new').length
   const pendingCommentCount = comments.filter((item) => item.status === 'pending').length
+  const commentFilters = ['pending', 'approved', 'hidden', 'archived', 'all'] as const
+  const normalizedCommentSearch = commentSearch.trim().toLocaleLowerCase()
+  const visibleComments = comments.filter((item) => {
+    const matchesStatus = commentFilter === 'all' || item.status === commentFilter
+    const matchesSearch = !normalizedCommentSearch || [item.display_name, item.body].some((value) => value.toLocaleLowerCase().includes(normalizedCommentSearch))
+    return matchesStatus && matchesSearch
+  })
   return (
     <div className="admin-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <section ref={dialogRef} className="admin-panel" role="dialog" aria-modal="true" aria-labelledby="admin-title" tabIndex={-1}>
@@ -446,7 +451,41 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
           {busy && <p className="admin-loading">SYNCING PRIVATE RECORDS…</p>}
           {dashboardError && <p className="form-status" role="alert">{dashboardError}</p>}
           {tab === 'inquiries' && <div className="admin-record-list">{inquiries.length ? inquiries.map((item) => <article className="admin-record" key={item.id}><div className="admin-record-top"><span>{new Date(item.created_at).toLocaleString()}</span><select aria-label={`Status for ${item.name}`} value={item.status} onChange={(event) => void updateInquiry(item.id, { status: event.target.value as PortfolioInquiry['status'] })}><option value="new">New</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="archived">Archived</option></select></div>{editInquiryId === item.id ? <div className="admin-edit-fields"><input value={String(inquiryDraft.name ?? item.name)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, name: event.target.value }))} aria-label="Edit sender name"/><input value={String(inquiryDraft.email ?? item.email)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, email: event.target.value }))} aria-label="Edit sender email"/><input value={String(inquiryDraft.subject ?? item.subject)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, subject: event.target.value }))} aria-label="Edit inquiry subject"/><textarea value={String(inquiryDraft.message ?? item.message)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, message: event.target.value }))} aria-label="Edit inquiry message"/><textarea value={String(inquiryDraft.admin_notes ?? item.admin_notes ?? '')} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, admin_notes: event.target.value }))} aria-label="Administrator notes" placeholder="Private admin notes"/><div><button onClick={() => void updateInquiry(item.id, inquiryDraft)}>SAVE</button><button onClick={() => { setEditInquiryId(null); setInquiryDraft({}) }}>CANCEL</button></div></div> : <><h3>{item.subject}</h3><p>{item.message}</p><div className="admin-contact-line">{item.name} · <a href={`mailto:${item.email}`}>{item.email}</a></div>{item.admin_notes && <small className="admin-note">PRIVATE NOTE: {item.admin_notes}</small>}<div className="admin-record-actions"><button onClick={() => { setEditInquiryId(item.id); setInquiryDraft({}) }}>EDIT RECORD / NOTES</button><button onClick={() => void removeInquiry(item.id)}>DELETE</button></div></>}</article>) : <div className="admin-empty">No inquiry records.</div>}</div>}
-          {tab === 'comments' && <div className="admin-record-list">{comments.length ? comments.map((item) => <article className="admin-record" key={item.id}><div className="admin-record-top"><span>{new Date(item.created_at).toLocaleString()}</span><select aria-label={`Moderation status for ${item.display_name}`} value={item.status} onChange={(event) => void updateComment(item.id, { status: event.target.value as PortfolioComment['status'] })}><option value="pending">Pending</option><option value="approved">Approved</option><option value="hidden">Hidden</option><option value="archived">Archived</option></select></div>{editCommentId === item.id ? <div className="admin-edit-fields"><input value={String(commentDraft.display_name ?? item.display_name)} onChange={(event) => setCommentDraft((draft) => ({ ...draft, display_name: event.target.value }))} aria-label="Edit display name"/><textarea value={String(commentDraft.body ?? item.body)} onChange={(event) => setCommentDraft((draft) => ({ ...draft, body: event.target.value }))} aria-label="Edit comment body"/><div><button onClick={() => void updateComment(item.id, commentDraft)}>SAVE</button><button onClick={() => { setEditCommentId(null); setCommentDraft({}) }}>CANCEL</button></div></div> : <><h3>{item.display_name}</h3><p>{item.body}</p><div className="admin-record-actions"><button onClick={() => { setEditCommentId(item.id); setCommentDraft({}) }}>EDIT</button>{item.status !== 'approved' && <button onClick={() => void updateComment(item.id, { status: 'approved' })}>APPROVE</button>}{item.status !== 'archived' && <button onClick={() => void updateComment(item.id, { status: 'archived' })}>ARCHIVE</button>}<button onClick={() => void removeComment(item.id)}>DELETE</button></div></>}</article>) : <div className="admin-empty">No comment records.</div>}</div>}
+          {tab === 'comments' && <section className="admin-comments-workspace" aria-label="Comment moderation workspace">
+            <div className="admin-comment-toolbar">
+              <label>SEARCH PUBLIC NOTES<input type="search" value={commentSearch} onChange={(event) => setCommentSearch(event.target.value)} placeholder="Name or comment text…" aria-label="Search public notes"/></label>
+              <div className="admin-comment-filters" role="group" aria-label="Filter comments by moderation status">
+                {commentFilters.map((filter) => <button type="button" key={filter} className={commentFilter === filter ? 'active' : ''} aria-pressed={commentFilter === filter} onClick={() => setCommentFilter(filter)}>
+                  {filter.toUpperCase()} <b>{filter === 'all' ? comments.length : comments.filter((item) => item.status === filter).length}</b>
+                </button>)}
+              </div>
+            </div>
+            <div className="admin-record-list">
+              {visibleComments.length ? visibleComments.map((item) => <article className="admin-record admin-comment-record" data-status={item.status} key={item.id}>
+                <div className="admin-record-top">
+                  <span>{new Date(item.created_at).toLocaleString()}</span>
+                  <select aria-label={`Moderation status for ${item.display_name}`} value={item.status} onChange={(event) => void updateComment(item.id, { status: event.target.value as PortfolioComment['status'] })}>
+                    <option value="pending">Pending review</option><option value="approved">Approved / public</option><option value="hidden">Hidden</option><option value="archived">Archived</option>
+                  </select>
+                </div>
+                {editCommentId === item.id ? <div className="admin-edit-fields">
+                  <label>DISPLAY NAME<input maxLength={60} value={String(commentDraft.display_name ?? item.display_name)} onChange={(event) => setCommentDraft((draft) => ({ ...draft, display_name: event.target.value }))} aria-label="Edit display name"/></label>
+                  <label>COMMENT TEXT<textarea maxLength={1000} rows={4} value={String(commentDraft.body ?? item.body)} onChange={(event) => setCommentDraft((draft) => ({ ...draft, body: event.target.value }))} aria-label="Edit comment body"/></label>
+                  <div><button type="button" onClick={() => void updateComment(item.id, commentDraft)}>SAVE CHANGES</button><button type="button" onClick={() => { setEditCommentId(null); setCommentDraft({}) }}>CANCEL</button></div>
+                </div> : <>
+                  <h3>{item.display_name}</h3><p>{item.body}</p>
+                  <div className="admin-comment-status-line"><span>{item.status === 'pending' ? 'AWAITING REVIEW' : item.status === 'approved' ? 'VISIBLE ON PUBLIC SITE' : item.status === 'hidden' ? 'HIDDEN FROM PUBLIC' : 'ARCHIVED'}</span><span>{item.body.length.toLocaleString()} / 1,000 CHARACTERS</span></div>
+                  <div className="admin-record-actions">
+                    <button type="button" onClick={() => { setEditCommentId(item.id); setCommentDraft({}) }}>EDIT</button>
+                    {item.status !== 'approved' && <button type="button" onClick={() => void updateComment(item.id, { status: 'approved' })}>APPROVE / PUBLISH</button>}
+                    {item.status === 'approved' && <button type="button" onClick={() => void updateComment(item.id, { status: 'hidden' })}>HIDE</button>}
+                    {item.status !== 'archived' && <button type="button" onClick={() => void updateComment(item.id, { status: 'archived' })}>ARCHIVE</button>}
+                    <button type="button" onClick={() => void removeComment(item.id)}>DELETE</button>
+                  </div>
+                </>}
+              </article>) : <div className="admin-empty">{comments.length ? 'No comments match this filter.' : 'No comment records yet. New public submissions will arrive here for review.'}</div>}
+            </div>
+          </section>}
           {tab === 'analytics' && <div className="admin-analytics"><div><span>RECORDED PAGE VIEWS</span><strong>{analytics?.views ?? 0}</strong></div><div><span>SESSION IDS IN SAMPLE</span><strong>{analytics?.uniqueSessions ?? 0}</strong></div><h3>Views by path</h3>{Object.entries(analytics?.pathCounts ?? {}).sort((a, b) => b[1] - a[1]).map(([path, count]) => <div className="analytics-path" key={path}><span>{path}</span><b>{count}</b></div>)}<p>Counts are approximate and include only visitors who opted in. The dashboard does not collect IP addresses, device fingerprints, or precise location.</p></div>}
           {tab === 'activity' && <div className="admin-record-list">{activity.length ? activity.map((item) => <article className="admin-activity-row" key={item.id}><time>{new Date(item.created_at).toLocaleString()}</time><strong>{item.action} / {item.record_type}</strong><p>{item.summary}</p></article>) : <div className="admin-empty">No administrator activity has been recorded yet.</div>}</div>}
           <div className="admin-export-row"><button onClick={() => exportRecords('portfolio-inquiries.json', inquiries)}>EXPORT INQUIRIES</button><button onClick={() => exportRecords('portfolio-comments.json', comments)}>EXPORT COMMENTS</button><button onClick={() => exportRecords('portfolio-admin-activity.json', activity)}>EXPORT ACTIVITY</button></div>
