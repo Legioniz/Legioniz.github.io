@@ -97,7 +97,7 @@ except (json.JSONDecodeError, OSError):
 
 app = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
 recruiter = (ROOT / 'src/RecruiterView.tsx').read_text(encoding='utf-8')
-css = (ROOT / 'src/styles.css').read_text(encoding='utf-8')
+css = (ROOT / 'src/styles.css').read_text(encoding='utf-8') + '\n' + (ROOT / 'src/layout-integrity.css').read_text(encoding='utf-8')
 data = (ROOT / 'src/data.ts').read_text(encoding='utf-8')
 check("get('view') === 'recruiter'" in app and "searchParams.set('view', 'recruiter')" in app, 'Recruiter mode is directly shareable and survives page refresh')
 check("window.addEventListener('popstate', syncRouteFromUrl)" in app, 'Browser back and forward synchronize recruiter and project views')
@@ -119,7 +119,7 @@ check('window.print' not in recruiter and '@media print' in css and '.recruiter-
 check(all(label in recruiter for label in ['PUP Quezon City', 'BSIT 1-2', '2026–2027']) and 'Synthetic-data demonstration' in data, 'Recruiter view uses supplied education and qualified project data')
 check('not presented as professional penetration-testing experience' in recruiter, 'Security experience is qualified as foundational and authorized-lab practice')
 
-check('@media (max-width: 760px)' in css and '@media (max-width: 420px)' in css and '.recruiter-project-card { grid-template-columns: 82px' in css, 'Recruiter layout includes compact-screen responsive rules')
+check("import './layout-integrity.css'" in (ROOT / 'src/main.tsx').read_text(encoding='utf-8') and '--layout-gutter' in css and 'min-width: 0' in css and 'grid-template-columns: minmax(0, 1fr)' in css, 'Shared layout integrity layer is loaded and enforces shrink-safe grid geometry')\ncheck('@media (max-width: 760px)' in css and '@media (max-width: 420px)' in css and '.recruiter-project-card { grid-template-columns: 82px' in css, 'Recruiter layout includes compact-screen responsive rules')
 check('@media (pointer: coarse)' in css and '.recruiter-jumps a { min-height: 44px; }' in css, 'Touch navigation and interactive targets have a 44px minimum')
 check('@media print' in css and '.recruiter-jumps, .recruiter-actions' in css, 'Print mode removes navigation controls and avoids sticky headers')
 check('prefers-reduced-motion: reduce' in css and ':focus-visible' in css, 'Reduced-motion and visible keyboard focus support remain present')
@@ -169,7 +169,7 @@ edge = (ROOT / 'supabase/functions/portfolio-submit/index.ts').read_text(encodin
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'Frontend backend configuration contains no service-role credential')
 check('enable row level security' in sql.lower() and 'is_portfolio_admin' in sql, 'Database migration retains RLS and administrator policy enforcement')
 check('verifyTurnstile' in edge and 'consume_portfolio_quota' in edge and 'PORTFOLIO_ALLOWED_ORIGIN' in edge, 'Server-side intake retains CAPTCHA, rate quota, and origin restrictions')
-check("const CACHE_NAME = 'legion-portfolio-shell-v10'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker uses a new cache version for this release')
+check("const CACHE_NAME = 'legion-portfolio-shell-v11'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker uses a new cache version for this release')
 check('service_role' not in recruiter.lower(), 'Recruiter chunk has no privileged backend credential references')
 
 check('--content-measure: 68ch' in css and '--section-space: clamp(72px, 9vw, 132px)' in css and '--type-kicker' in css, 'Shared design system includes readable measure, responsive section spacing, and semantic typography tokens')
