@@ -174,6 +174,22 @@ for item in missing_assets:
 # 4. CSS syntax, classes, custom properties, and keyframes.
 css = read("src/styles.css")
 parsed_sheet = tinycss2.parse_stylesheet(css, skip_whitespace=True, skip_comments=True)
+orbit_source = read("src/App.tsx")
+orbit_categories = ["Software", "Data & Systems", "Embedded", "Creative"]
+check(
+    all(f'data-category="{category}"' in orbit_source and f"onSelectCategory('{category}')" in orbit_source for category in orbit_categories)
+    and orbit_source.count('type="button" className="orbit-node') == 4
+    and 'aria-label="Interactive areas of interest:' in orbit_source
+    and 'aria-hidden="true"' in orbit_source,
+    "Systems orbit exposes four correctly wired, labeled buttons and hides decorative artwork from assistive technology"
+)
+check(
+    "width: clamp(108px, 34%, 156px)" in css
+    and ".systems-orbit .orbit-node > span { width: 44px; height: 44px; }" in css
+    and "@keyframes orbit-spin { to { transform: translate(-50%,-50%) rotate(360deg); } }" in css
+    and "@keyframes orbit-spin-reverse { to { transform: translate(-50%,-50%) rotate(-360deg); } }" in css,
+    "Systems orbit keeps its caption contained, its mobile icon targets at 44px, and its animated rings centered"
+)
 css_errors = [token for token in parsed_sheet if token.type == "error"]
 
 
@@ -232,7 +248,7 @@ for name in unused_keyframes:
     print(f"  UNUSED KEYFRAME {name}")
 
 # 5. Documentation links, duplicated deploy guide, PDF-only policy, and design source ownership.
-active_docs = ["README.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "design-assets/README.md", "docs/releases/README.md"]
+active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "design-assets/README.md"]
 missing_doc_links: list[str] = []
 for doc_name in active_docs:
     content = read(doc_name)
@@ -274,8 +290,12 @@ else:
     warnings.append("package-lock.json is not committed in this release; CI npm install resolves the exact direct pins and produces an ephemeral lock. Commit the generated lockfile once registry access is available to make transitive installs fully reproducible.")
 
 # 7. Archive traceability and automatic backup coverage.
-check((ROOT / "docs/releases/README.md").is_file() and (ROOT / "FULL-SYSTEM-AUDIT-2026-11-09.md").is_file(),
-      "Historical release reports are separated from the current canonical audit")
+legacy_release_logs = [
+    path for path in ROOT.glob("*.md")
+    if re.search(r"(?:QA|AUDIT)(?:-|\\.md$)", path.name, flags=re.IGNORECASE)
+]
+check((ROOT / "CHANGELOG.md").is_file() and not legacy_release_logs and not (ROOT / "docs/releases").exists(),
+      "Historical QA/update reports are consolidated into one changelog with no duplicate archive folder")
 backup_script = read("scripts/portfolio.mjs")
 check("snapshotRoots()" in backup_script and "excludedSecretPattern" in backup_script and "excludedSnapshotFilePattern" in backup_script and "__pycache__" in backup_script and ".qa-build" in backup_script and "snapshotItems" not in backup_script,
       "Backup inventory is automatic and excludes local secrets/build/cache/compiler artifacts")

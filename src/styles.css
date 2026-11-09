@@ -146,7 +146,7 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; padding: 3px 5
 .ring-outer { width: 87%; height: 87%; border-style: dashed; opacity: .46; animation: orbit-spin 76s linear infinite; }
 .ring-middle { width: 66%; height: 66%; border-color: color-mix(in srgb, var(--accent) 23%, var(--line)); box-shadow: 0 0 55px color-mix(in srgb, var(--blue) 9%, transparent), inset 0 0 50px color-mix(in srgb, var(--blue) 7%, transparent); animation: orbit-spin-reverse 50s linear infinite; }
 .ring-inner { width: 45%; height: 45%; border-style: dotted; opacity: .5; animation: orbit-spin 34s linear infinite; }
-.orbit-center { width: clamp(100px, 34%, 156px); box-sizing: border-box; padding: 8px; aspect-ratio: 1; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--bg) 75%); box-shadow: 0 0 50px color-mix(in srgb, var(--accent) 9%, transparent), inset 0 0 25px color-mix(in srgb, var(--accent) 8%, transparent); z-index: 2; }
+.orbit-center { width: clamp(108px, 34%, 156px); box-sizing: border-box; padding: 8px; aspect-ratio: 1; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--bg) 75%); box-shadow: 0 0 50px color-mix(in srgb, var(--accent) 9%, transparent), inset 0 0 25px color-mix(in srgb, var(--accent) 8%, transparent); z-index: 2; }
 .orbit-monogram { color: var(--text-strong); font: 600 clamp(29px, 4vw, 48px)/1 var(--font-display); letter-spacing: -.1em; }
 .orbit-center small { margin-top: 7px; color: var(--muted-2); font: 7px var(--font-mono); letter-spacing: .12em; white-space: nowrap; }
 .orbit-node { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 7px; z-index: 3; padding: 0; border: 0; background: transparent; font: inherit; cursor: pointer; }
@@ -3941,4 +3941,14 @@ body {
 ) {
   font-size: clamp(12px, .88em, 14px);
   line-height: 1.65;
+}
+
+
+/* Compact orbit caption must remain entirely inside the center tile at 320px. */
+.site-shell .systems-orbit .orbit-center { width: clamp(108px, 34%, 156px); }
+.site-shell .systems-orbit .orbit-center small {
+  font-size: 10px;
+  letter-spacing: .025em;
+  line-height: 1.5;
+  white-space: nowrap;
 }

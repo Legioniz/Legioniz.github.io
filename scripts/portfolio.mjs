@@ -28,7 +28,7 @@ const expectedFiles = [
   '.github/workflows/deploy.yml', '.github/dependabot.yml',
   'README.md', 'SOURCES.md', 'BACKEND-SETUP.md', 'CONTENT-CHECKLIST.md', 'PRODUCTION-QUALITY.md', 'RECRUITER-VIEW.md',
   'UI-MOTION-DESIGN.md', 'VISUAL-DESIGN-SYSTEM.md', 'VIEW-TRANSITION-LIFECYCLE.md',
-  'docs/releases/README.md', 'FULL-SYSTEM-AUDIT-2026-11-09.md', 'GITHUB-PAGES-JEKYLL-QA-2026-11-09.md', 'docs/releases/GITHUB-PAGES-JEKYLL-QA-2026-11-09.md',
+  'CHANGELOG.md',
 ]
 const excludedSnapshotNames = new Set(['.git', 'node_modules', 'dist', '.portfolio-backups', '.lighthouseci', 'coverage', 'playwright-report', 'test-results', '__pycache__', '.qa-build', '.vite', '_site', '.jekyll-cache', '.bundle'])
 const excludedSnapshotFilePattern = /\.(?:py[co]|tsbuildinfo)$/i

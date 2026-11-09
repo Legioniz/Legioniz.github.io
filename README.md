@@ -48,7 +48,7 @@ Install the test-only Python dependencies with `python -m pip install -r require
 
 The included workflow is configured for the root GitHub Pages user site `https://legioniz.github.io/`. Follow [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md): create the empty public repository `Legioniz.github.io`, then run `PUSH-TO-GITHUB.cmd` from the extracted folder. In **Settings -> Pages**, select **GitHub Actions** as the source. The workflow runs the full React/Vite verification, browser tests, and Lighthouse audits, then validates and uploads the compiled `dist/` directory directly with `actions/upload-pages-artifact@v4`. It deliberately skips Jekyll packaging so the production HTML and hashed JS/CSS bundles are deployed unchanged. The `actions/deploy-pages@v4` step runs only after verification and artifact validation pass. Do not add a second Pages workflow; use the existing one to avoid competing deployments.
 
-The earlier [GITHUB-PAGES-JEKYLL-QA-2026-11-09.md](./GITHUB-PAGES-JEKYLL-QA-2026-11-09.md) is a historical record of the Jekyll-based deployment attempt; the current workflow and [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) supersede it.
+The deployment history, including the earlier Jekyll packaging failure and the current direct Vite artifact workflow, is consolidated in [CHANGELOG.md](./CHANGELOG.md). The current workflow and [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) are the operational source of truth.
 
 The public URLs are `https://legioniz.github.io/` (full portfolio) and `https://legioniz.github.io/?view=recruiter` (Recruiter View). `START-PORTFOLIO-LAN.cmd` launches a same-Wi-Fi preview; it is not a public Internet tunnel. This source package intentionally omits `node_modules/` and `dist/`.
 
@@ -156,7 +156,7 @@ The section navigator appears after the visitor moves beyond the hero area. It s
 See [VIEW-TRANSITION-LIFECYCLE.md](./VIEW-TRANSITION-LIFECYCLE.md) for the Recruiter View/full portfolio lifecycle repair, observer cleanup/rebinding, history-scroll behavior, and regression test coverage.
 
 
-Historical incremental release checks are retained in [docs/releases](./docs/releases/README.md). The current system-wide audit is [FULL-SYSTEM-AUDIT-2026-11-09.md](./FULL-SYSTEM-AUDIT-2026-11-09.md).
+Historical release notes, audits, and update reports are consolidated in [CHANGELOG.md](./CHANGELOG.md).
 
 
 ## Editorial motion release
