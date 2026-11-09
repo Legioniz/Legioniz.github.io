@@ -1,3 +1,13 @@
+## 2026-11-09 — Public comments wired through production
+
+- Corrected the Pages release gate and completed the public-comment integration work so the production build receives its Supabase public configuration and verifies the actual intake endpoint.
+- Reworked the pointer spotlight to paint on the visible project-content panel and strengthened its browser assertion to inspect the rendered radial background rather than an ineffective pseudo-element.
+- Made Supabase REST reads explicitly uncached and made the client require an explicit `{ ok: true }` response before displaying submission success.
+- Added a production-build browser suite for enabled comment fields, approved-only feed rendering, manual refresh, publishable-key-only anonymous requests, pending submission payload, and post-submit confirmation. The standard release verification now runs this suite.
+- Extended the live deployment gate with an Edge Function CORS preflight and a honeypot-only POST that intentionally creates no production comment.
+- Bumped the service-worker shell cache to v14 so the updated portfolio shell is adopted cleanly.
+- Confirmed the production database has the comment table and moderation policies: anonymous visitors may read approved comments but cannot write directly; signed-in allowlisted administrators can review and update the queue. The public Edge Function is the visitor-write path and assigns new records to pending review.
+
 # Portfolio changelog and release history
 
 This file is the single record of portfolio updates, maintenance work, and release verification. The individual QA/update reports that previously existed at the repository root and in docs/releases/ have been consolidated here. Older test counts are historical snapshots from their original commits; they are not substitutes for the current commit's CI result.
