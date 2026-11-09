@@ -30,7 +30,7 @@ HTML = r'''<!doctype html><html lang="en" data-theme="dark" data-motion="on" dat
   <div class="timeline motion-active"><article class="timeline-item"><span class="timeline-marker"></span></article></div>
   <section class="recruiter-view" data-recruiter-motion-ready="true"><div class="recruiter-timeline motion-active"><article class="recruiter-experience-card is-in-view"><span class="recruiter-timeline-marker"></span><div><span>2026</span><h3>Experience</h3></div><div><p>Technical support and project work.</p></div></article></div><article class="recruiter-education-item is-in-view"><span>2026</span><div><h3>Education</h3></div></article><div class="recruiter-project-card"><div class="recruiter-project-art"><i></i></div></div></section>
   <div class="network-path motion-active"><div class="network-link is-traversed"><i></i></div><button class="network-node active">Selected</button><div class="network-node-detail" aria-live="polite">Selected node details</div></div>
-  <div class="photo-lightbox"><div class="photo-lightbox-panel"><button class="photo-viewer-nav">Next</button></div></div>
+  <div class="photo-lightbox" style="display:none"><div class="photo-lightbox-panel"><button class="photo-viewer-nav">Next</button></div></div>
   <button id="focus-test">Focus test</button>
   <div class="project-meta">PROJECT / 01</div><div class="feature-code">LENS LAB / EXPOSURE</div><footer class="footer-copy"><small>© 2026 PORTFOLIO</small></footer>
 </main></div></body></html>'''
