@@ -1735,7 +1735,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   z-index: 1;
   inset: 42% 0 0;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, #101619 28%, transparent));
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, #151719 28%, transparent));
 }
 .profile-image-fallback {
   position: absolute;
