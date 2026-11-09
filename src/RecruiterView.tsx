@@ -155,7 +155,8 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
         if (item !== card) delete item.dataset.spotlight
       })
       if (!card || !root.contains(card)) return
-      const bounds = card.getBoundingClientRect()
+      const focusArea = card.querySelector<HTMLElement>('.recruiter-project-body') ?? card
+      const bounds = focusArea.getBoundingClientRect()
       const x = Math.min(100, Math.max(0, ((event.clientX - bounds.left) / Math.max(1, bounds.width)) * 100))
       const y = Math.min(100, Math.max(0, ((event.clientY - bounds.top) / Math.max(1, bounds.height)) * 100))
       card.style.setProperty('--recruiter-spot-x', `${x.toFixed(1)}%`)
