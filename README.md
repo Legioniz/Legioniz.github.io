@@ -66,7 +66,7 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Keyboard command palette (`Ctrl+K` / `Cmd+K`) with labelled modal semantics, focus containment and restoration, Escape-to-close, live no-results feedback, and shortcuts to the labs, photography workspace, network simulation, OSINT journal, activity record, and owner console
 - Scroll progress and bidirectional section reveals driven by IntersectionObserver: content eases in when entering the reading area and eases out when leaving, then re-enters when scrolling back
 - Direction-aware floating masthead: hides after deliberate downward scroll and reappears on upward scroll; stays available near the page top, while the mobile menu is open, and during keyboard focus
-- Adaptive Canvas particle field (maximum 42 fine-pointer desktop / 18 coarse-pointer particles; downshifts to 12 on constrained devices and 0 for Save-Data or an explicit motion pause; 24 fps cap and adaptive pixel ratio)
+- Adaptive Canvas particle field (maximum 42 fine-pointer desktop / 18 coarse-pointer particles; downshifts to 12 on constrained devices and 0 for Save-Data or reduced motion; 24 fps cap and adaptive pixel ratio)
 - Collapsible skill categories, work-history entries, extracurricular details, and project-scope notes using native keyboard-accessible disclosures
 - Progressive disclosure animation where supported; native open/close behavior remains available as a lightweight fallback
 - Decorative orbit, project-art, and skills animations pause outside the viewport and resume near view; the capability strip stays static for readability
@@ -121,7 +121,7 @@ CSS owns the layout through fluid sizing, breakpoints, orientation rules, dynami
 
 ## Interaction sounds and project previews
 
-The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close, downloads, and copy actions have distinct action cues. Sound is enabled by default for first-time visitors in this release, but browsers require a real user gesture before Web Audio can play; the first click, tap, or keyboard action unlocks the context and subsequent hover cues become audible. The speaker control can mute sound persistently. The setting is stored as `legion-portfolio-sound-v2`.
+The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close, downloads, and copy actions have distinct action cues. Sound is off for first-time visitors and is enabled only after an explicit choice; browsers still require a real user gesture before Web Audio can play. The speaker control persists the preference under `legion-portfolio-sound-v2`.
 
 On fine-pointer desktop layouts, hovering or keyboard-focusing a project card slides a quick-view panel in from the right. Clicking anywhere on the card, or pressing Enter/Space while focused, opens the complete project introduction. Touch layouts skip the hover-only panel and open the same introduction on tap. Projects without a live demo only expose the documented overview and repository link; no fake launch destinations are shown.
 
@@ -143,7 +143,7 @@ On fine-pointer desktop layouts, hovering or keyboard-focusing a project card sl
 - `tests/adaptive-smoke.ts`: dependency-free device-profile tests.
 - `tests/feature-security-qa.py`: source checks for interactive lab safety boundaries, project links, photo limits, RLS, submission validation, and no client-side service-role secret.
 - `tests/interactions-browser-qa.py` and `tests/interaction-fixture.html`: optional browser tests against the exact compiled sound module and shipped stylesheet, covering hover pop-out, project click/keyboard opening, touch behavior, motion pause, target-specific hover sounds, keyboard focus, text/select/submit cues, and disclosure feedback; requires Python Playwright and a Chromium-family browser.
-- `tests/portfolio-motion-qa.py`: Chromium/Playwright test that compiles and loads the exact production reveal and masthead controllers, verifies section enter/exit/re-entry, dynamic project insertion, skill/education/achievement disclosure open-close transitions, motion-on-by-default behavior, explicit visitor pause, header movement by scroll direction, fallback behavior, and the one-line `KA` lockup at seven viewport widths. Requires global TypeScript (`tsc`), Python Playwright, and Chromium outside the deployed runtime. Run it with `npm run test:motion`.
+- `tests/portfolio-motion-qa.py`: Chromium/Playwright test that compiles and loads the exact production reveal and masthead controllers, verifies section enter/exit/re-entry, dynamic project insertion, skill/education/achievement disclosure open-close transitions, system-aware reduced motion, explicit visitor overrides, header movement by scroll direction, fallback behavior, and the one-line `KA` lockup at seven viewport widths. Requires global TypeScript (`tsc`), Python Playwright, and Chromium outside the deployed runtime. Run it with `npm run test:motion`.
 - `SOURCES.md`: evidence and editorial notes for public-facing claims.
 - `UX-ACCESSIBILITY-PLAYBOOK.md`: the sourced design, accessibility, interaction, performance, SEO, and security standards used to review and maintain the site.
 
@@ -172,7 +172,7 @@ The current source refines the shared charcoal/ivory/coral design system, hero m
 
 The first-screen hero heading, eyebrow, supporting copy, actions, and visual are deliberately excluded from the global scroll-reveal observer. They use a dedicated, fail-open entrance sequence: the baseline styles keep all hero content visible, while motion only adds a brief transform/blur refinement. Pausing motion with the persistent header control removes the animation without hiding content. The heading also exposes a complete accessible sentence (`From a question to working systems.`) rather than relying on adjacent visual line fragments.
 
-The service-worker shell cache is versioned as `legion-portfolio-shell-v7` for this visibility fix.
+The service-worker shell cache is versioned to invalidate previously cached shell assets when shared layout behavior changes.
 
 
 ## Global layout integrity upgrade
