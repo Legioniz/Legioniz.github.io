@@ -1769,7 +1769,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .runtime-fallback-actions a,
 .boot-fallback nav a { display: inline-flex; min-height: 44px; align-items: center; padding: 0 16px; border: 1px solid var(--line-strong, rgba(232, 231, 224, .25)); border-radius: 4px; }
 .runtime-fallback-actions a:first-child,
-.boot-fallback nav a:first-child { border-color: var(--accent, #e47d5e); background: var(--accent, #e47d5e); color: #181c1a; }
+.boot-fallback nav a:first-child { border-color: var(--accent, #e87961); background: var(--accent, #e87961); color: var(--on-accent, #17191b); }
 .no-script-note { margin: 0; padding: 0 28px 28px; color: var(--muted); background: var(--bg); }
 
 /* Capability fallback: keep the designed background when Canvas is unavailable. */
