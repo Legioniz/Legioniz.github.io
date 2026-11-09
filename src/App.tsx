@@ -61,6 +61,33 @@ function runProjectViewTransition(update: () => void, source: HTMLElement | null
   }
 }
 
+/** Animate the full/recruiter layout handoff when the browser supports View Transitions. */
+function runLayoutViewTransition(update: () => void): void {
+  const doc = document as ViewTransitionDocument
+  const root = document.documentElement
+  const canAnimate = Boolean(doc.startViewTransition) && root.dataset.motion !== 'off'
+
+  if (!canAnimate || !doc.startViewTransition) {
+    update()
+    return
+  }
+
+  root.dataset.layoutTransition = 'recruiter'
+  let updateCommitted = false
+  try {
+    const transition = doc.startViewTransition(() => {
+      flushSync(update)
+      updateCommitted = true
+    })
+    void transition.finished.catch(() => undefined).finally(() => {
+      delete root.dataset.layoutTransition
+    })
+  } catch {
+    delete root.dataset.layoutTransition
+    if (!updateCommitted) update()
+  }
+}
+
 const motionIsPaused = () => document.documentElement.dataset.motion === 'off'
 type IconName = 'arrow' | 'external' | 'github' | 'sun' | 'moon' | 'menu' | 'close' | 'command' | 'mail' | 'pin' | 'spark' | 'chevron' | 'download' | 'copy' | 'check' | 'code' | 'layers' | 'terminal' | 'camera' | 'cpu' | 'database' | 'award' | 'arrowUp' | 'volume' | 'volumeOff' | 'play' | 'pause'
 
@@ -639,20 +666,24 @@ export default function App() {
     }, null, () => source?.style.setProperty('view-transition-name', 'project-visual'))
   }, [selectedProject])
   const openRecruiterView = useCallback(() => {
-    const url = new URL(window.location.href)
-    url.searchParams.set('view', 'recruiter')
-    url.searchParams.delete('project')
-    window.history.pushState({ ...(window.history.state ?? {}), portfolioView: 'recruiter' }, '', url)
-    setSelectedProject(null)
-    setRecruiterView(true)
-    window.scrollTo(0, 0)
+    runLayoutViewTransition(() => {
+      const url = new URL(window.location.href)
+      url.searchParams.set('view', 'recruiter')
+      url.searchParams.delete('project')
+      window.history.pushState({ ...(window.history.state ?? {}), portfolioView: 'recruiter' }, '', url)
+      setSelectedProject(null)
+      setRecruiterView(true)
+      window.scrollTo(0, 0)
+    })
   }, [])
   const exitRecruiterView = useCallback(() => {
-    const url = new URL(window.location.href)
-    url.searchParams.delete('view')
-    window.history.pushState({ ...(window.history.state ?? {}), portfolioView: 'full' }, '', url)
-    setRecruiterView(false)
-    window.scrollTo(0, 0)
+    runLayoutViewTransition(() => {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('view')
+      window.history.pushState({ ...(window.history.state ?? {}), portfolioView: 'full' }, '', url)
+      setRecruiterView(false)
+      window.scrollTo(0, 0)
+    })
   }, [])
   const openRecruiterProject = useCallback((project: Project) => {
     const source = projectArtFor(project.id, '.recruiter-project-art')
