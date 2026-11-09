@@ -73,3 +73,51 @@ The display / body / annotation roles remain Space Grotesk, Manrope, and DM Mono
 - Economy quality removes nonessential card lifts and corner flourish animation.
 - Coarse-pointer layouts suppress hover-only depth and use touch-appropriate interactions.
 - The site's motion-off setting exposes all content immediately. Visitors can pause or resume decorative motion from the site control.
+
+## Color governance — canonical rules
+
+The CSS custom properties in `src/styles.css` are the single source of truth. Components must consume semantic tokens (for example `var(--bg)`, `var(--surface)`, `var(--text)`, `var(--muted)`, `var(--line)`, `var(--accent)`, and `var(--blue)`) rather than introducing isolated hex values. Do not change the palette in one view without updating both themes and this document.
+
+### Canonical palette
+
+| Semantic role | Dark theme | Light theme | Usage |
+|---|---|---|---|
+| Page background (`--bg`) | `#151719` | `#F3F0E9` | Main canvas |
+| Secondary background (`--bg-2`) | `#1C2023` | `#EAE6DE` | Recessed regions and page transitions |
+| Primary surface (`--surface`) | `#22272A` | `#FFFCF6` | Cards, panels, menus |
+| Secondary surface (`--surface-2`) | `#2A3034` | `#F4EFE7` | Nested controls and secondary panels |
+| Raised surface (`--surface-3`) | `#343C41` | `#E7E0D6` | Raised or selected neutral surfaces |
+| Main text (`--text`) | `#E6E5DF` | `#42464A` | Paragraphs and standard content |
+| Strong text (`--text-strong`) | `#F3F0E9` | `#1B2024` | Headings and high-priority content |
+| Muted text (`--muted`) | `#B2B0A8` | `#5F6469` | Supporting copy |
+| Quiet metadata (`--muted-2`) | `#92979A` | `#62696D` | Metadata; never use for essential small text unless contrast is verified |
+| Signal coral (`--accent`) | `#E87961` | `#A94837` | Primary actions, focus, active states, key highlights |
+| Deep coral (`--accent-dark`) | `#D6634D` | `#923B2E` | Pressed/hover action treatment |
+| Slate blue (`--blue`) | `#8A9DB2` | `#4A6078` | Secondary technical emphasis, diagrams, informational states |
+| Accent foreground (`--on-accent`) | `#17191B` | `#FFFFFF` | Text/icons placed directly on the accent fill |
+
+Border and grid colors must use the existing translucent `--line`, `--line-strong`, and `--grid-line` tokens. Shadows should remain subtle and theme-appropriate.
+
+### Application rules
+
+1. **Coral is scarce and meaningful.** Reserve it for primary calls to action, keyboard focus, selected navigation/filter states, important status markers, and small editorial highlights. Do not turn every icon, heading, border, or card into an accent.
+2. **Slate blue is secondary.** Use it for technical diagrams, supporting data visualization, neutral informational status, and secondary markers. It must not compete with coral for primary actions.
+3. **Surfaces establish hierarchy.** Build depth through the existing background/surface levels, fine borders, and spacing—not through a different bright color for every card.
+4. **Text hierarchy is semantic.** Use `--text-strong` for headings, `--text` for body copy, and muted tokens only for supporting information. Do not lower opacity to make essential text appear subtle.
+5. **Status is never color-only.** Pair color with a readable label, icon, shape, or explicit state. Pending, selected, success, error, and disabled states must remain understandable without color perception. Do not assign an unapproved green/red/amber status palette ad hoc.
+6. **Theme parity is mandatory.** Every new component must work in dark and light mode using semantic tokens. Check text, borders, controls, hover/focus states, charts, illustrations, and overlays in both themes.
+7. **Contrast is a release requirement.** Meet WCAG 2.2 AA contrast: at least 4.5:1 for normal text and 3:1 for large text; meaningful UI boundaries and graphical indicators should reach 3:1 against adjacent colors. Verify actual rendered combinations rather than assuming a token pair passes. Do not use muted metadata colors for critical information without testing.
+8. **Gradients are restrained.** Existing low-opacity ambient hero treatments and subtle progress treatments may remain. Do not introduce loud multicolor gradients, neon glows, or gradients as substitutes for clear hierarchy.
+9. **No arbitrary hard-coded colors in components.** New CSS should use the shared semantic variables. If a genuinely new semantic color is required, define its dark and light values in `:root` and `:root[data-theme='light']`, document its role here, and verify contrast before use.
+10. **Full Portfolio and Recruiter View share the same palette.** Recruiter View may adjust density and layout, but it must not create a separate brand color system.
+
+### Color review checklist
+
+- [ ] All new component colors use shared semantic tokens.
+- [ ] Dark and light themes both have complete, intentional states.
+- [ ] Text and interactive contrast have been checked against their actual surfaces.
+- [ ] Coral remains reserved for primary emphasis; blue remains secondary.
+- [ ] Status is communicated with text/icon/shape as well as color.
+- [ ] No new arbitrary hex values, neon effects, or decorative color overload.
+- [ ] Full Portfolio and Recruiter View remain visually consistent.
+
