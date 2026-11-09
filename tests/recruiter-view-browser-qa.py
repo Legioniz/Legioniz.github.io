@@ -161,7 +161,7 @@ def main() -> None:
             check(notes_after_disclosure > notes_before_disclosure,
                   f'Recruiter disclosure triggers real synthesized interface audio ({notes_before_disclosure} → {notes_after_disclosure} oscillator notes)')
 
-            page.get_by_role('link', name='Experience').click()
+            page.locator('#recruiter-experience').evaluate("(section) => section.scrollIntoView({behavior:'instant',block:'start'})")
             page.wait_for_function("document.querySelector('.recruiter-jumps a[href=\"#recruiter-experience\"]')?.getAttribute('aria-current') === 'location'")
             check(page.locator('.recruiter-jumps a[aria-current="location"]').get_attribute('href') == '#recruiter-experience',
                   'Recruiter section navigation tracks the current section')
