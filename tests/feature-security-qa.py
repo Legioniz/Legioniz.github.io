@@ -34,7 +34,7 @@ for section_id, label in [
 check('project-compare' in chrome and 'Technologies' in chrome and 'Selected capabilities' in chrome, 'Project comparison uses documented project details')
 check('new URLSearchParams(window.location.search).get(\'project\')' in app and "url.searchParams.set('project', project.id)" in app, 'Project case studies support direct, shareable query-string links')
 check("window.addEventListener('popstate', syncRouteFromUrl)" in app and 'Copy project link' in app and 'openProject' in app and 'closeProject' in app, 'Project links synchronize with browser history and expose a copy action')
-check("localStorage.getItem('legion-portfolio-motion-v7')" in chrome, 'Intro sequence defaults to motion on and respects an explicit saved pause')
+check("document.documentElement.dataset.motion === 'off'" in chrome, 'Intro sequence is skipped when system or visitor motion preference disables motion')
 check("file.size > 12 * 1024 * 1024" in features and '48 * 1024 * 1024' in features and '45_000_000' in features, 'Local photo viewer caps file count, total bytes, per-file size, and decoded dimensions')
 check('URL.createObjectURL(file)' in features and 'URL.revokeObjectURL(url)' in features and 'Nothing has been uploaded' in features, 'Photography preview remains browser-local and releases object URLs')
 check(all(ip in features for ip in ['192.0.2.', '198.51.100.', '203.0.113.']), 'Network Lab uses documentation-only RFC 5737 addresses')
@@ -107,7 +107,7 @@ check("message.length < 10 || message.length > 5000" in edge and "body.length < 
 check('crypto.subtle.importKey' in edge and 'HMAC' in edge and 'raw address is neither stored nor logged' in edge, 'Rate-limit network identifier is HMAC-derived rather than stored raw')
 check('readLimitedBody' in edge and 'Array.isArray(parsed)' in edge and 'JSON.parse(rawBody)' in edge, 'Edge Function bounds streamed request bodies and rejects non-object JSON')
 check("'/rest/v1/'" in sw and "'/auth/v1/'" in sw and "'/functions/v1/'" in sw and "'/storage/v1/'" in sw, 'Service worker explicitly bypasses database, auth, function, and storage APIs')
-check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v16' in sw and "'/og-card.png?v=20261109-4'" in sw and "'/favicon.ico?v=20261109-4'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the palette asset release')
+check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v17' in sw and "'/og-card.png?v=20261109-4'" in sw and "'/favicon.ico?v=20261109-4'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the palette asset release')
 check("const isSoundToggle = interactive.classList.contains('sound-toggle')" in sound and '!isSoundToggle && now - lastActionAt < 35' in sound, 'Sound mute confirmation bypasses rapid-action debounce so the final cue is not lost')
 
 failures = [label for ok, label in checks if not ok]
