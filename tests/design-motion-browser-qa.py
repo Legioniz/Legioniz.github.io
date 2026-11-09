@@ -72,8 +72,17 @@ def main() -> None:
             button.addEventListener('click', () => window.__orbitSelections.push(button.dataset.category))
           })
         }""")
-        for category in ['Software', 'Data & Systems', 'Embedded', 'Creative']:
-            orbit.locator(f'.orbit-node[data-category="{category}"]').click()
+        pointer_targets = page.evaluate("""() => [...document.querySelectorAll('#systems-orbit .orbit-node')].map((button) => {
+          const r = button.getBoundingClientRect()
+          const x = r.left + r.width / 2, y = r.top + r.height / 2
+          const hit = document.elementFromPoint(x, y)
+          return {category:button.dataset.category, hitCategory:hit?.closest('.orbit-node')?.dataset.category ?? null,
+            x:Math.round(x*10)/10, y:Math.round(y*10)/10, width:Math.round(r.width*10)/10, height:Math.round(r.height*10)/10}
+        })""")
+        print('ORBIT_POINTER_HIT_TEST ' + str(pointer_targets))
+        check(all(item['hitCategory'] == item['category'] for item in pointer_targets), 'Each orbit button owns its visible center hit point without overlap from another node')
+        for item in pointer_targets:
+            page.mouse.click(item['x'], item['y'])
         selected_categories = page.evaluate('window.__orbitSelections')
         check(selected_categories == ['Software', 'Data & Systems', 'Embedded', 'Creative'], 'Each orbit node remains independently clickable and maps to its intended category')
         def inspect_orbit_geometry(width: int, height: int) -> dict:
