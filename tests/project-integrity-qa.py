@@ -292,7 +292,7 @@ else:
 # 7. Archive traceability and automatic backup coverage.
 legacy_release_logs = [
     path for path in ROOT.glob("*.md")
-    if re.search(r"(?:QA|AUDIT)(?:-|\\.md$)", path.name, flags=re.IGNORECASE)
+    if re.search(r"(?:QA|AUDIT)(?:-|\.md$)", path.name, flags=re.IGNORECASE)
 ]
 check((ROOT / "CHANGELOG.md").is_file() and not legacy_release_logs and not (ROOT / "docs/releases").exists(),
       "Historical QA/update reports are consolidated into one changelog with no duplicate archive folder")

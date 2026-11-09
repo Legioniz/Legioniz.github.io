@@ -63,6 +63,9 @@ def main() -> None:
         check(recruiter_meta >= 10, 'Recruiter timeline metadata follows the same legible minimum')
         orbit = page.locator('#systems-orbit')
         check(orbit.count() == 1 and orbit.locator('.orbit-node').count() == 4, 'Interactive systems orbit renders all four category controls')
+        check(all(orbit.locator('.orbit-node').nth(i).get_attribute('type') == 'button' and
+          bool(orbit.locator('.orbit-node').nth(i).get_attribute('aria-label')) for i in range(4)),
+          'Orbit controls are non-submit buttons with accessible names')
         page.evaluate("""() => {
           window.__orbitSelections = []
           document.querySelectorAll('#systems-orbit .orbit-node').forEach((button) => {
@@ -90,6 +93,7 @@ def main() -> None:
               const center = root.querySelector('.orbit-center')
               const centerRect = rect(center)
               const captionRect = rect(center.querySelector('small'))
+              const innerRing = rect(root.querySelector('.ring-inner'))
               const nodes = [...root.querySelectorAll('.orbit-node')].map((element) => {
                 const r = rect(element)
                 const overlapX = Math.max(0, Math.min(r.right, centerRect.right)-Math.max(r.left, centerRect.left))
@@ -99,15 +103,17 @@ def main() -> None:
                   r.top >= frame.top-1 && r.bottom <= frame.bottom+1,
                   overlap:overlapX*overlapY, targetWidth:target.width, targetHeight:target.height}
               })
-              return {width:frame.width, rings, centerContainsCaption:captionRect.left >= centerRect.left-1 &&
-                captionRect.right <= centerRect.right+1, centerWidth:centerRect.width, nodes}
+              return {width:frame.width, rings, centerContainsCaption:captionRect.left >= centerRect.left+2 &&
+                captionRect.right <= centerRect.right-2 && captionRect.top >= centerRect.top &&
+                captionRect.bottom <= centerRect.bottom, centerFitsInnerRing:centerRect.width <= innerRing.width-1,
+                centerWidth:centerRect.width, nodes}
             }""")
         desktop_orbit = inspect_orbit_geometry(1440, 950)
         check(all(ring['dx'] <= 1.5 and ring['dy'] <= 1.5 for ring in desktop_orbit['rings']), 'All rotating orbit rings remain concentric at desktop size')
-        check(desktop_orbit['centerContainsCaption'] and all(node['inside'] and node['overlap'] <= 1 for node in desktop_orbit['nodes']), 'Desktop orbit keeps its center caption contained and nodes clear of the center tile')
+        check(desktop_orbit['centerContainsCaption'] and desktop_orbit['centerFitsInnerRing'] and all(node['inside'] and node['overlap'] <= 1 for node in desktop_orbit['nodes']), 'Desktop orbit keeps its caption and center tile within the inner ring and nodes clear of the tile')
         mobile_orbit = inspect_orbit_geometry(320, 780)
         check(all(ring['dx'] <= 1.5 and ring['dy'] <= 1.5 for ring in mobile_orbit['rings']), 'All rotating orbit rings remain concentric at 320px')
-        check(mobile_orbit['centerContainsCaption'], 'Mobile orbit center caption stays inside its tile without horizontal spill')
+        check(mobile_orbit['centerContainsCaption'] and mobile_orbit['centerFitsInnerRing'], 'Mobile orbit center caption stays inside its tile and the tile fits within the inner ring')
         check(all(node['inside'] and node['overlap'] <= 1 for node in mobile_orbit['nodes']), 'Mobile orbit nodes stay inside the diagram and clear of the center tile')
         check(all(node['targetWidth'] >= 44 and node['targetHeight'] >= 44 for node in mobile_orbit['nodes']), 'Mobile orbit icon hit areas meet the 44px touch-target size')
         contrast = page.evaluate("""() => {
