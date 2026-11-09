@@ -1,0 +1,43 @@
+{
+  "name": "legion-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc -b",
+    "build": "npm run typecheck && npm run build:app",
+    "build:app": "vite build",
+    "preview": "vite preview",
+    "check": "node scripts/portfolio.mjs check",
+    "test:adaptive": "node --experimental-strip-types tests/adaptive-smoke.ts",
+    "backup": "node scripts/portfolio.mjs backup",
+    "backup:verify": "node scripts/portfolio.mjs backup:verify",
+    "verify": "node scripts/portfolio.mjs verify",
+    "release": "node scripts/portfolio.mjs release",
+    "test:interactions": "python tests/interactions-browser-qa.py",
+    "test:motion": "python tests/portfolio-motion-qa.py",
+    "test:features": "python tests/feature-security-qa.py",
+    "test:production-source": "python tests/production-quality-qa.py",
+    "audit:bundle": "node scripts/production-audit.mjs",
+    "test:recruiter-browser": "python tests/recruiter-view-browser-qa.py",
+    "test:accessibility-browser": "python tests/accessibility-browser-qa.py",
+    "test:design-browser": "python tests/design-motion-browser-qa.py",
+    "test:integrity": "python tests/project-integrity-qa.py",
+    "test:comments-browser": "python tests/comments-browser-qa.py"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.6"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

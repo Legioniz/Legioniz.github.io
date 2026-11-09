@@ -1,0 +1,28 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+.vscode/
+.idea/
+.portfolio-backups/
+.env
+.env.*
+!.env.example
+
+# Local Lighthouse CI reports
+.lighthouseci/
+
+# Generated checks, compiler metadata, and local test output
+__pycache__/
+*.py[cod]
+*.tsbuildinfo
+.qa-build/
+coverage/
+playwright-report/
+test-results/
+.coverage
+
+# Jekyll output and local Ruby tooling
+_site/
+.jekyll-cache/
+.bundle/

@@ -1,0 +1,22 @@
+# King Art D. Pacumberto — Portfolio
+
+> Official portfolio of King Art D. Pacumberto, a BSIT student at the Polytechnic University of the Philippines — Quezon City. The portfolio documents software, data, embedded, IT support, technical production, student leadership, and creative photography work.
+
+Use the linked Markdown references for concise, factual summaries. Project status and scope are stated explicitly; proposed or synthetic-data demonstrations are not described as live production systems.
+
+## Core content
+
+- [Profile](https://legioniz.github.io/profile.md): current study, practice areas, background, and public contact links.
+- [Projects](https://legioniz.github.io/projects.md): project summaries, technologies, repository links, and scope notes.
+- [Experience and education](https://legioniz.github.io/experience.md): supplied roles, dates, responsibilities, education, and selected recognition.
+
+## Portfolio pages
+
+- [Full interactive portfolio](https://legioniz.github.io/): projects, learning tools, skills, experience, and contact.
+- [Recruiter profile](https://legioniz.github.io/?view=recruiter): concise professional profile and selected evidence.
+
+## Source and contact
+
+- [GitHub profile](https://github.com/Legioniz): public repositories and project source.
+- [LinkedIn profile](https://www.linkedin.com/in/king-art-pacumberto-6003b2353/): professional profile.
+- [Email](mailto:kingartriez@gmail.com): direct contact.

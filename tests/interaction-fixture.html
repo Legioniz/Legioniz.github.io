@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-motion="on" data-quality="full" data-pointer="fine">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portfolio interaction QA fixture</title>
+  <link rel="stylesheet" href="../src/styles.css" />
+  <style>
+    body { min-height: 100vh; padding: 80px 24px; }
+    .qa-wrap { width: min(1160px, 100%); margin: 0 auto; }
+    .project-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; }
+    .project-card { min-height: 340px; grid-column: span 6; }
+    .project-art { min-height: 170px; height: 170px; }
+    .project-card-content { padding: 20px; }
+    .qa-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .qa-details { margin-top: 20px; padding: 20px; border: 1px solid var(--line-strong); }
+    .qa-details summary { cursor: pointer; }
+    .qa-modal { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.7); }
+    .qa-modal[hidden] { display: none; }
+    .qa-modal-inner { width: min(560px, 100%); padding: 30px; background: var(--surface); border: 1px solid var(--line-strong); }
+    @media (max-width: 900px) { .project-card { grid-column: span 12; } }
+  </style>
+</head>
+<body>
+  <div class="qa-wrap">
+    <div class="section-kicker"><span>QA</span><i></i> INTERACTION TEST</div>
+    <h1 class="hero-title">Project interaction <em>fixture</em></h1>
+    <div class="project-grid">
+      <article class="project-card project-lens project-featured is-visible" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Open LensLab project introduction" data-sfx="open">
+        <div class="project-art art-lens">
+          <div class="lens-grid"></div><div class="lens-mark mark-one">50mm</div><div class="lens-mark mark-two">ƒ / 1.8</div><div class="lens-orbit orbit-a"></div><div class="lens-orbit orbit-b"></div><div class="lens-glass"><span></span><i></i><b></b></div><div class="art-index">OPTICS / 001</div><div class="art-caption">EXPOSURE<br/>EXPLORER</div>
+        </div>
+        <div class="project-card-content">
+          <div class="project-meta"><span>01 / SOFTWARE</span><span>Interactive learning tool</span></div>
+          <div class="project-title-row"><h3>LENSLAB</h3><span class="round-arrow" aria-hidden="true">↗</span></div>
+          <p>Photography learning and camera-setting simulation application.</p>
+          <div class="project-stack"><span>React</span><span>TypeScript</span><span>Photography</span></div>
+          <span class="text-link project-detail-link" aria-hidden="true">Explore project →</span>
+        </div>
+        <aside class="project-peek" aria-hidden="true">
+          <span class="project-peek-kicker">QUICK VIEW / 01</span>
+          <strong>Learn camera settings through practice.</strong>
+          <p>Project prototype — interactive photography learning and camera controls simulation.</p>
+          <div class="project-peek-tags"><span>React</span><span>TypeScript</span><span>Camera logic</span></div>
+          <span class="project-peek-action">CLICK OR PRESS ENTER TO OPEN <span>↗</span></span>
+        </aside>
+      </article>
+    </div>
+    <div class="qa-controls">
+      <button class="button button-quiet" id="sound-unlock" data-sfx="click" aria-label="Enable interaction sound testing">Enable sound test</button>
+      <button class="button button-primary" id="toggle-control" data-sfx="toggle">Toggle test control</button>
+      <button class="icon-button sound-toggle" id="qa-sound-toggle" data-sfx="toggle" aria-label="Toggle interface sounds">Sound</button>
+      <a class="button button-ghost" href="#fixture-download" data-sfx="download">Test download feedback</a>
+    </div>
+    <div class="primary-navigation"><a id="nav-hover" href="#fixture-nav">Test navigation</a></div>
+    <p><a id="content-hover" href="#fixture-content">Test content link</a></p>
+    <form id="qa-form" class="qa-controls"><label>Test field <input id="qa-input" type="text" /></label><label>Test select <select id="qa-select"><option value="a">A</option><option value="b">B</option></select></label><button type="submit" id="qa-submit">Submit test</button></form>
+    <details class="qa-details"><summary data-sfx="toggle">Open disclosure test</summary><p id="disclosure-content">Disclosure is open.</p></details>
+  </div>
+  <div class="qa-modal" id="qa-modal" role="presentation" hidden>
+    <div class="qa-modal-inner" role="dialog" aria-modal="true" aria-label="Project introduction">
+      <span class="detail-label">PROJECT INTRODUCTION</span><h2>LensLab</h2><p>Project overview and contribution details.</p><button class="button button-quiet" id="close-project" data-sfx="close">Close project</button>
+    </div>
+  </div>
+  <script type="module">
+    class MockOscillator {
+      constructor(context) { this.context = context; this.frequency = { setValueAtTime: (value) => { this.context.tones.push(value) } }; this.onended = null }
+      connect() {} start() {} stop() {} disconnect() {}
+      set type(value) { this.wave = value }
+    }
+    class MockGain {
+      constructor() { this.gain = { setValueAtTime() {}, exponentialRampToValueAtTime() {} } }
+      connect() {} disconnect() {}
+    }
+    class MockAudioContext {
+      constructor() { this.state = 'running'; this.currentTime = 1; this.destination = {}; this.tones = []; window.__audioContext = this }
+      createOscillator() { return new MockOscillator(this) }
+      createGain() { return new MockGain() }
+      resume() { this.state = 'running'; return Promise.resolve() }
+    }
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: MockAudioContext })
+    const { installInteractionSounds } = await import('../.qa-build/sound.js')
+    window.__soundEnabled = true
+    installInteractionSounds(() => window.__soundEnabled)
+    const card = document.querySelector('.project-card')
+    const modal = document.getElementById('qa-modal')
+    const open = () => { modal.hidden = false }
+    const close = () => { modal.hidden = true }
+    card.addEventListener('click', open)
+    card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open() } })
+    document.getElementById('close-project').addEventListener('click', close)
+    document.getElementById('toggle-control').addEventListener('click', (event) => { event.currentTarget.dataset.toggled = event.currentTarget.dataset.toggled === 'yes' ? 'no' : 'yes' })
+    document.getElementById('qa-sound-toggle').addEventListener('click', () => { window.__soundEnabled = !window.__soundEnabled })
+    document.getElementById('qa-form').addEventListener('submit', (event) => event.preventDefault())
+  </script>
+</body>
+</html>

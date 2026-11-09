@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#151719" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="King Art D. Pacumberto" />
+    <link rel="canonical" href="https://legioniz.github.io/" />
+    <link rel="describedby" href="/llms.txt" />
+    <link rel="manifest" href="/site.webmanifest?v=20261109-4" />
+    <script>
+      (() => {
+        const root = document.documentElement
+        // Follow the operating-system motion preference unless the visitor explicitly chooses otherwise.
+        root.dataset.motionOverride = 'system'
+        root.dataset.motion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on'
+        try {
+          const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
+          const theme = savedTheme === 'light' ? 'light' : 'dark'
+          document.documentElement.dataset.theme = theme
+          const themeColor = document.querySelector('meta[name="theme-color"]')
+          if (themeColor) themeColor.content = theme === 'light' ? '#f3f0e9' : '#151719'
+
+          const hints = navigator
+          const saveData = Boolean(hints.connection && hints.connection.saveData)
+          const reducedGraphics = saveData || (hints.deviceMemory && hints.deviceMemory <= 2) || (hints.hardwareConcurrency && hints.hardwareConcurrency <= 2)
+          const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? (navigator.maxTouchPoints > 0)
+          document.documentElement.dataset.quality = reducedGraphics ? 'economy' : (coarsePointer ? 'balanced' : 'full')
+          document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
+
+          const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v7') } catch { return null } })()
+          const systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+          const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
+          const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)
+          root.dataset.motionOverride = motionOverride
+          root.dataset.motion = motionEnabled ? 'on' : 'off'
+        } catch {
+          // Theme and motion preferences remain usable when storage is unavailable.
+        }
+      })()
+    </script>
+    <meta name="description" content="King Art D. Pacumberto — PUP Quezon City BSIT student building software and embedded projects, with experience in IT support, technical operations, student leadership, and event production." />
+    <meta property="og:title" content="King Art D. Pacumberto — Field Notes & Portfolio" />
+    <meta property="og:description" content="King Art D. Pacumberto — BSIT student, software projects, embedded systems, technical support, audiovisual production, and event photography." />
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content="Legioniz Portfolio" />
+    <meta property="og:url" content="https://legioniz.github.io/" />
+    <meta property="og:image" content="https://legioniz.github.io/og-card.png?v=20261109-4" />
+    <meta property="og:image:alt" content="King Art D. Pacumberto — developer portfolio" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="King Art D. Pacumberto — Field Notes & Portfolio" />
+    <meta name="twitter:description" content="BSIT student building software, data, and embedded projects." />
+    <meta name="twitter:image" content="https://legioniz.github.io/og-card.png?v=20261109-4" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20261109-4" sizes="16x16 32x32" />
+    <link rel="icon" type="image/png" href="/favicon-32.png?v=20261109-4" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261109-4" sizes="any" />
+    <link rel="shortcut icon" href="/favicon.ico?v=20261109-4" />
+    <link rel="mask-icon" href="/favicon.svg?v=20261109-4" color="#e87961" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "url": "https://legioniz.github.io/",
+        "mainEntity": {
+          "@type": "Person",
+          "@id": "https://legioniz.github.io/#person",
+          "name": "King Art D. Pacumberto",
+          "url": "https://legioniz.github.io/",
+          "image": "https://legioniz.github.io/profile/king-art-portrait-800.webp",
+          "jobTitle": "BSIT Student · Aspiring IT Professional",
+          "email": "mailto:kingartriez@gmail.com",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Quezon City",
+            "addressCountry": "PH"
+          },
+          "alumniOf": {
+            "@type": "CollegeOrUniversity",
+            "name": "Polytechnic University of the Philippines — Quezon City"
+          },
+          "sameAs": [
+            "https://github.com/Legioniz",
+            "https://www.linkedin.com/in/king-art-pacumberto-6003b2353"
+          ],
+          "knowsAbout": [
+            "Python", "C++", "Java", "JavaScript", "HTML", "CSS", "SQL",
+            "Arduino", "Computer troubleshooting", "Networking", "Event photography"
+          ]
+        }
+      }
+    </script>
+    <title>King Art D. Pacumberto — Field Notes & Portfolio</title>
+  </head>
+  <body>
+    <div id="root">
+      <main class="boot-fallback" aria-live="polite">
+        <p>LEGIONIZ / FIELD NOTES</p>
+        <h1>King Art D. Pacumberto</h1>
+        <p>The enhanced portfolio is starting. You can still reach the public profile and contact the owner below.</p>
+        <nav aria-label="Fallback links">
+          <a href="https://github.com/Legioniz">GitHub</a>
+          <a href="mailto:kingartriez@gmail.com">Email</a>
+        </nav>
+      </main>
+    </div>
+    <noscript>
+      <style>
+        :root{color-scheme:dark;--bg:#151719;--text:#e6e5df;--accent:#e87961;--accent-strong:#f09881;--muted:#b2b0a8} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,sans-serif} .boot-fallback{max-width:720px;margin:12vh auto;padding:32px 24px;border-top:3px solid var(--accent)} .boot-fallback h1{font-size:clamp(2rem,8vw,4rem);line-height:1.05;letter-spacing:-.05em} .boot-fallback nav{display:flex;flex-wrap:wrap;gap:18px;margin-top:28px} .boot-fallback a{color:var(--accent-strong);text-underline-offset:4px} .no-script-note{max-width:720px;margin:0 auto;padding:0 24px 40px;color:var(--muted)} @media(max-width:760px){.boot-fallback{margin:7vh auto;padding:24px}}
+      </style>
+      <p class="no-script-note">JavaScript is disabled. Use the GitHub or email links above to get in touch.</p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
