@@ -83,6 +83,9 @@ jobs:
           python -m pip install -r requirements-test.txt
           python -m playwright install --with-deps chromium
 
+      - name: Render palette-aligned raster assets from SVG sources
+        run: python scripts/render-static-assets.py
+
       - name: Run complete source, type, build, and browser verification
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL || 'https://pjuwrngnrrvdiwqspkic.supabase.co' }}
@@ -103,9 +106,11 @@ jobs:
           test -s dist/favicon.svg
           test -s dist/favicon-32.png
           test -s dist/favicon.ico
-          grep -q '/favicon.svg?v=20261109-3' dist/index.html
-          grep -q '/favicon-32.png?v=20261109-3' dist/index.html
-          grep -q '/favicon.ico?v=20261109-3' dist/index.html
+          test -s dist/og-card.png
+          test -s dist/og-card.svg
+          grep -q '/favicon.svg?v=20261109-4' dist/index.html
+          grep -q '/favicon-32.png?v=20261109-4' dist/index.html
+          grep -q '/favicon.ico?v=20261109-4' dist/index.html
           test -s dist/site.webmanifest
           test -s dist/llms.txt
           test -s dist/profile.md
