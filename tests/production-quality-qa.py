@@ -171,15 +171,15 @@ edge = (ROOT / 'supabase/functions/portfolio-submit/index.ts').read_text(encodin
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'Frontend backend configuration contains no service-role credential')
 check('enable row level security' in sql.lower() and 'is_portfolio_admin' in sql, 'Database migration retains RLS and administrator policy enforcement')
 check('verifyTurnstile' in edge and 'consume_portfolio_quota' in edge and 'PORTFOLIO_ALLOWED_ORIGIN' in edge, 'Server-side intake retains CAPTCHA, rate quota, and origin restrictions')
-check("const CACHE_NAME = 'legion-portfolio-shell-v16'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker cache version is refreshed for the palette asset release')
+check("const CACHE_NAME = 'legion-portfolio-shell-v17'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker cache version is refreshed for the palette asset release')
 check('service_role' not in recruiter.lower(), 'Recruiter chunk has no privileged backend credential references')
 
 check('--content-measure: 68ch' in css and '--section-space: clamp(72px, 9vw, 132px)' in css and '--type-kicker' in css, 'Shared design system includes readable measure, responsive section spacing, and semantic typography tokens')
 check('#151719' in css and '#f3f0e9' in css and '#e87961' in css and '#a94837' in css, 'Editorial charcoal/ivory/coral palette is consistent across dark and light themes')
 check('--font-size-base: 16px' in css and '--font-size-sm: 14px' in css and 'font-size: clamp(10px, .72em, 12px)' in css, 'Editorial typography uses a readable body scale and legible metadata floor')
 check('editorial-emphasis-in' in css and 'editorial-heading-in' in css and ":root[data-motion='off']" in css, 'Heading text animation includes an explicit pause and static fallback')
-check("const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html and "const motionEnabled = motionPreference === 'on'" in app and "return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app,
-      'Motion defaults on before React starts and remains on until a visitor explicitly pauses it')
+check("const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html and "motionPreference === 'system' && !systemReducedMotion" in app and "legion-portfolio-motion-v8" in app,
+      'Motion follows the operating-system setting before React starts and supports explicit visitor overrides')
 check('::view-transition-new(project-visual)' in css and 'project-art-in' in css and 'runProjectViewTransition' in app and 'catch {' in app and "document.documentElement.dataset.motion !== 'off'" in app, 'Project visual uses guarded shared-element transitions, CSS fallback, and the explicit site motion state')
 check('.timeline.motion-active::after' in css and 'recruiter-timeline.motion-active::after' in css and 'data-motion-zone' in recruiter, 'Full and recruiter experience timelines animate only while in view')
 check('ArrowLeft' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8') and 'onTouchEnd' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8') and 'useMemo(() => photos.filter' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8'), 'Photography viewer supports keyboard, touch, and stable filtered-image lifecycle')
