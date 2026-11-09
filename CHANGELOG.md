@@ -7,7 +7,7 @@
 - Added `UX-ACCESSIBILITY-PLAYBOOK.md` with sourced usability, WCAG 2.2 AA, WAI-ARIA, responsive, Core Web Vitals, SEO, and security standards.
 - Extended automated release checks for the new interaction contracts and refreshed the service-worker shell cache to v17.
 
-The changes are awaiting the full production verification and deployment workflow; no conformance claim is made from source checks alone.
+Automated source and browser regression checks are included in the production release workflow. Manual keyboard, screen-reader, touch-device, zoom, and forced-colors review remains necessary; this work does not claim formal WCAG conformance.
 
 ## 2026-11-09 — Recruiter bundle, accessibility, and content-discovery upgrade
 
