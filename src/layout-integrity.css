@@ -1160,12 +1160,6 @@ button, input, select, textarea { font: inherit; }
   from { opacity: 0; transform: translate3d(0, 8px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-@keyframes recruiter-loop-orbit {
-  to { transform: rotate(360deg); }
-}
-@keyframes recruiter-loop-orbit-reverse {
-  to { transform: rotate(-360deg); }
-}
 
 :root[data-motion="on"] .recruiter-view .recruiter-topbar {
   animation: recruiter-masthead-in 620ms var(--recruiter-ease) both;
@@ -1182,17 +1176,6 @@ button, input, select, textarea { font: inherit; }
 }
 :root[data-motion="on"] .recruiter-view .recruiter-hero.is-in-view .recruiter-portrait img {
   animation: recruiter-portrait-in 1100ms var(--recruiter-ease) 220ms both;
-}
-:root[data-motion="on"] .recruiter-view .recruiter-project-art.motion-active > i::before {
-  transform-origin: 50% 50%;
-  animation: recruiter-loop-orbit 28s linear infinite;
-}
-:root[data-motion="on"] .recruiter-view .recruiter-project-art.motion-active > i::after {
-  transform-origin: 50% 50%;
-  animation: recruiter-loop-orbit-reverse 36s linear infinite;
-}
-:root[data-motion="on"] .recruiter-view .recruiter-timeline.motion-active::after {
-  transform: scaleY(1);
 }
 
 :root[data-motion="off"] .recruiter-view [data-reveal],
@@ -1277,4 +1260,20 @@ button, input, select, textarea { font: inherit; }
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
   }
+}
+
+
+/* Shared-element-free full/recruiter handoff uses a guarded native root transition. */
+:root[data-layout-transition="recruiter"]::view-transition-old(root) {
+  animation: recruiter-view-out 220ms cubic-bezier(.4, 0, 1, 1) both;
+}
+:root[data-layout-transition="recruiter"]::view-transition-new(root) {
+  animation: recruiter-view-in 460ms cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes recruiter-view-out {
+  to { opacity: 0; filter: blur(3px); transform: translate3d(0, -7px, 0) scale(.996); }
+}
+@keyframes recruiter-view-in {
+  from { opacity: 0; filter: blur(5px); transform: translate3d(0, 12px, 0) scale(.994); }
+  to { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0) scale(1); }
 }
