@@ -33,6 +33,6 @@
 - [ ] Configure a permanent backend and protected admin access before enabling stored inquiries, public comments, or visitor analytics. GitHub Pages itself is static hosting and cannot securely provide this storage/admin layer.
 - [ ] Test deployed page on desktop/mobile after publishing to `Legioniz.github.io`.
 
-- [x] Exact owner-supplied original resume PDF is bundled as `public/King-Art-Pacumberto-Resume.pdf` and linked from the header, hero, contact section, loading fallback, no-JavaScript fallback, and error fallback.
-- [x] Original resume PDF and redesigned public-safe CV PDF are the only public personal-document downloads; editable Word/DOCX has been removed.
-- [x] The original uploaded resume contains a phone number; public exposure is explicitly documented in README and release QA notes.
+- [x] Personal application documents are not bundled in `public/` or linked from the portfolio.
+- [x] Full Portfolio, Recruiter View, startup fallback, no-JavaScript fallback, and error fallback rely on on-page profile information and direct contact links.
+- [x] No personal application documents or document-contained contact details are shipped in public assets or deployment artifacts.

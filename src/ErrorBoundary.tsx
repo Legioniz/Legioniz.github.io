@@ -24,12 +24,10 @@ export class ErrorBoundary extends Component<Props, State> {
         <main className="runtime-fallback" role="alert">
           <p className="runtime-fallback-kicker">LEGIONIZ / FIELD NOTES</p>
           <h1>Something interrupted the interface.</h1>
-          <p>The portfolio's enhanced interface could not load. Your contact links and PDF CV/resume downloads are still available below.</p>
+          <p>The portfolio's enhanced interface could not load. Your contact options are still available below.</p>
           <div className="runtime-fallback-actions">
             <a href="/?view=recruiter">Open recruiter profile</a>
             <a href={`mailto:${siteConfig.email}`}>Email King Art</a>
-            <a href={siteConfig.resumeOriginalPath} download="King_Art_Pacumberto_Resume.pdf">Download resume (PDF)</a>
-            <a href={siteConfig.resumePdfPath} download="King_Art_D_Pacumberto_CV.pdf">Download public CV (PDF)</a>
             <a href={siteConfig.github} target="_blank" rel="noopener noreferrer">Visit GitHub</a>
           </div>
         </main>
