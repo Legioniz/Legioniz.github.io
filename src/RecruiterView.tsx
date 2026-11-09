@@ -120,7 +120,7 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
     <div className="recruiter-view" id="recruiter-view" ref={recruiterRootRef}>
       <a className="skip-link recruiter-skip" href="#recruiter-main" data-sfx="navigate">Skip to recruiter profile</a>
       <header className="recruiter-topbar">
-        <a className="recruiter-brand" href="#recruiter-top" aria-label={`KA RECRUITER BRIEF / 01 — ${siteConfig.fullName} recruiter profile home`} data-sfx="navigate">
+        <a className="recruiter-brand" href="#recruiter-top" data-sfx="navigate">
           <span className="recruiter-brand-lockup">KA</span>
           <small>RECRUITER BRIEF / 01</small>
         </a>
