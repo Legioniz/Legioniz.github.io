@@ -119,7 +119,8 @@ check('window.print' not in recruiter and '@media print' in css and '.recruiter-
 check(all(label in recruiter for label in ['PUP Quezon City', 'BSIT 1-2', '2026–2027']) and 'Synthetic-data demonstration' in data, 'Recruiter view uses supplied education and qualified project data')
 check('not presented as professional penetration-testing experience' in recruiter, 'Security experience is qualified as foundational and authorized-lab practice')
 
-check("import './layout-integrity.css'" in (ROOT / 'src/main.tsx').read_text(encoding='utf-8') and '--layout-gutter' in css and 'min-width: 0' in css and 'grid-template-columns: minmax(0, 1fr)' in css, 'Shared layout integrity layer is loaded and enforces shrink-safe grid geometry')\ncheck('@media (max-width: 760px)' in css and '@media (max-width: 420px)' in css and '.recruiter-project-card { grid-template-columns: 82px' in css, 'Recruiter layout includes compact-screen responsive rules')
+check("import './layout-integrity.css'" in (ROOT / 'src/main.tsx').read_text(encoding='utf-8') and '--layout-gutter' in css and 'min-width: 0' in css and 'grid-template-columns: minmax(0, 1fr)' in css, 'Shared layout integrity layer is loaded and enforces shrink-safe grid geometry')
+check('@media (max-width: 760px)' in css and '@media (max-width: 520px)' in css and '.recruiter-project-card { grid-template-columns: 76px minmax(0, 1fr); }' in css and '@media (max-width: 360px)' in css, 'Recruiter layout includes compact-screen responsive rules with narrower card tracks')
 check('@media (pointer: coarse)' in css and '.recruiter-jumps a { min-height: 44px; }' in css, 'Touch navigation and interactive targets have a 44px minimum')
 check('@media print' in css and '.recruiter-jumps, .recruiter-actions' in css, 'Print mode removes navigation controls and avoids sticky headers')
 check('prefers-reduced-motion: reduce' in css and ':focus-visible' in css, 'Reduced-motion and visible keyboard focus support remain present')
