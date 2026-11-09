@@ -3927,3 +3927,16 @@ body {
   font-size: clamp(10px, .72em, 12px);
   line-height: 1.5;
 }
+
+
+/* Final readable labels and explanatory copy across the interactive panels. */
+.site-shell :is(
+  .hero-actions .button, .about-signature, .aside-quote > span, .metric-card > span,
+  .research-practice-grid article > span, .achievement-title-link, .compare-row > p,
+  .exposure-result p, .energy-result > p, .packet-test p, .network-event p,
+  .hardware-formula p, .osint-caution p, .photo-local-note, .photo-editor-note,
+  .research-scope-note
+) {
+  font-size: clamp(12px, .88em, 14px);
+  line-height: 1.65;
+}
