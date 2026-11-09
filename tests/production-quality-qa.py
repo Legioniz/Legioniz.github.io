@@ -64,11 +64,11 @@ check(len(parser.metas.get('description', '')) >= 80, 'Meta description is prese
 check(parser.metas.get('robots', '').startswith('index, follow'), 'Search crawler indexing policy is explicit')
 check(parser.metas.get('referrer') == 'strict-origin-when-cross-origin', 'External referrer policy is restrictive')
 check(parser.metas.get('og:url') == 'https://legioniz.github.io/', 'Open Graph canonical URL is absolute and stable')
-check(parser.metas.get('twitter:card') == 'summary_large_image' and parser.metas.get('og:image') == 'https://legioniz.github.io/og-card.png?v=20261109-4' and parser.metas.get('twitter:image') == parser.metas.get('og:image') and parser.metas.get('og:image:type') == 'image/png', 'Social sharing metadata uses the current cache-busted PNG preview')
+check(parser.metas.get('twitter:card') == 'summary_large_image' and parser.metas.get('og:image') == 'https://legioniz.github.io/og-card.png?v=20261109-5' and parser.metas.get('twitter:image') == parser.metas.get('og:image') and parser.metas.get('og:image:type') == 'image/png', 'Social sharing metadata uses the current cache-busted PNG preview')
 check(any(link.get('rel') == 'canonical' and link.get('href') == 'https://legioniz.github.io/' for link in parser.links), 'Canonical URL is linked in document head')
-check(any(link.get('rel') == 'icon' and link.get('type') == 'image/x-icon' and 'favicon.ico?v=20261109-4' in link.get('href', '') for link in parser.links), 'Browser-first ICO favicon is linked with a fresh cache key')
-check(any(link.get('rel') == 'icon' and link.get('type') == 'image/png' and 'favicon-32.png?v=20261109-4' in link.get('href', '') for link in parser.links), '32px PNG favicon fallback is linked')
-check(any(link.get('rel') == 'icon' and link.get('type') == 'image/svg+xml' and 'favicon.svg?v=20261109-4' in link.get('href', '') for link in parser.links), 'Scalable SVG favicon is linked')
+check(any(link.get('rel') == 'icon' and link.get('type') == 'image/x-icon' and 'favicon.ico?v=20261109-5' in link.get('href', '') for link in parser.links), 'Browser-first ICO favicon is linked with a fresh cache key')
+check(any(link.get('rel') == 'icon' and link.get('type') == 'image/png' and 'favicon-32.png?v=20261109-5' in link.get('href', '') for link in parser.links), '32px PNG favicon fallback is linked')
+check(any(link.get('rel') == 'icon' and link.get('type') == 'image/svg+xml' and 'favicon.svg?v=20261109-5' in link.get('href', '') for link in parser.links), 'Scalable SVG favicon is linked')
 try:
     structured = json.loads(parser.jsonld)
     check(structured.get('@type') == 'Person' and structured.get('name') == 'King Art D. Pacumberto', 'Person structured data is valid JSON-LD and identifies the site owner')
@@ -171,15 +171,15 @@ edge = (ROOT / 'supabase/functions/portfolio-submit/index.ts').read_text(encodin
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'Frontend backend configuration contains no service-role credential')
 check('enable row level security' in sql.lower() and 'is_portfolio_admin' in sql, 'Database migration retains RLS and administrator policy enforcement')
 check('verifyTurnstile' in edge and 'consume_portfolio_quota' in edge and 'PORTFOLIO_ALLOWED_ORIGIN' in edge, 'Server-side intake retains CAPTCHA, rate quota, and origin restrictions')
-check("const CACHE_NAME = 'legion-portfolio-shell-v16'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker cache version is refreshed for the palette asset release')
+check("const CACHE_NAME = 'legion-portfolio-shell-v17'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker cache version is refreshed for the palette asset release')
 check('service_role' not in recruiter.lower(), 'Recruiter chunk has no privileged backend credential references')
 
 check('--content-measure: 68ch' in css and '--section-space: clamp(72px, 9vw, 132px)' in css and '--type-kicker' in css, 'Shared design system includes readable measure, responsive section spacing, and semantic typography tokens')
 check('#151719' in css and '#f3f0e9' in css and '#e87961' in css and '#a94837' in css, 'Editorial charcoal/ivory/coral palette is consistent across dark and light themes')
 check('--font-size-base: 16px' in css and '--font-size-sm: 14px' in css and 'font-size: clamp(10px, .72em, 12px)' in css, 'Editorial typography uses a readable body scale and legible metadata floor')
 check('editorial-emphasis-in' in css and 'editorial-heading-in' in css and ":root[data-motion='off']" in css, 'Heading text animation includes an explicit pause and static fallback')
-check("const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html and "const motionEnabled = motionPreference === 'on'" in app and "return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app,
-      'Motion defaults on before React starts and remains on until a visitor explicitly pauses it')
+check("const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html and "motionPreference === 'system' && !systemReducedMotion" in app and "legion-portfolio-motion-v8" in app,
+      'Motion follows the operating-system setting before React starts and supports explicit visitor overrides')
 check('::view-transition-new(project-visual)' in css and 'project-art-in' in css and 'runProjectViewTransition' in app and 'catch {' in app and "document.documentElement.dataset.motion !== 'off'" in app, 'Project visual uses guarded shared-element transitions, CSS fallback, and the explicit site motion state')
 check('.timeline.motion-active::after' in css and 'recruiter-timeline.motion-active::after' in css and 'data-motion-zone' in recruiter, 'Full and recruiter experience timelines animate only while in view')
 check('ArrowLeft' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8') and 'onTouchEnd' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8') and 'useMemo(() => photos.filter' in (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8'), 'Photography viewer supports keyboard, touch, and stable filtered-image lifecycle')
@@ -197,6 +197,37 @@ check('className="availability-line" role="group" aria-label=' in app and 'aria-
 check('HERO VISIBILITY GUARANTEE' in css and 'hero-line-enter' in css and ":root[data-motion='off'] .hero-section .hero-title .title-line" in css, 'Hero text remains visible in motion-on, motion-off, and interrupted-animation states')
 check(":root[data-motion='off'] .recruiter-view .recruiter-experience-card" in css and '@media (prefers-reduced-motion: reduce)' in css and ':focus-visible' in css, 'Reduced-motion mode keeps all recruiter content visible and keyboard focus clear')
 
+
+# 9. Interaction contracts and operating-system preference defaults.
+motion_html = html
+motion_app = app
+chrome = (ROOT / 'src/PortfolioChrome.tsx').read_text(encoding='utf-8')
+features = (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8')
+layout_css = (ROOT / 'src/layout-integrity.css').read_text(encoding='utf-8')
+check("legion-portfolio-motion-v8" in motion_html and "savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in motion_html and "motionOverride === 'system' && !systemReducedMotion" in motion_html,
+      'First paint respects prefers-reduced-motion unless a visitor explicitly overrides it')
+check("function readMotionPreference(): MotionPreference" in motion_app and "motionPreference === 'system' && !systemReducedMotion" in motion_app and "query.addEventListener?.('change', update)" in motion_app,
+      'React motion preference remains synchronized with operating-system changes')
+check(":root[data-motion='off'] *::before" in css and "transition-duration: .01ms !important" in css and "view-transition-name: none !important" in css,
+      'An explicit visitor motion pause stops CSS animation, transitions, smooth scroll, and view transitions')
+check("let systemReducedMotion = false" in html and "root.dataset.motion = systemReducedMotion ? 'off' : 'on'" in html,
+      'Reduced motion is initialized before theme, device, and optional UI setup')
+check("localStorage.getItem('legion-portfolio-sound-v2') === 'on'" in motion_app,
+      'Interface audio is opt-in instead of playing unexpectedly for first-time visitors')
+check('aria-labelledby="palette-title"' in motion_app and 'onCloseRef.current()' in motion_app and 'previousFocus?.focus()' in motion_app and 'getFocusable' in motion_app,
+      'Command palette is a labelled, keyboard-contained dialog that restores focus')
+check("document.body.style.overflow = 'hidden'" in motion_app and "document.body.style.overflow = previousOverflow" in motion_app,
+      'Command palette prevents background scrolling and restores the previous overflow state')
+check('mobileMenuButtonRef.current?.focus()' in motion_app and 'const restoreMobileFocus = mobileOpen' in motion_app,
+      'Mobile navigation returns focus to its trigger after Escape or destination selection')
+check('ArrowRight' in features and 'ArrowLeft' in features and "'Home'" in features and "'End'" in features and 'aria-controls="lab-panel-exposure"' in features and 'aria-labelledby="lab-tab-energy"' in features,
+      'Project Laboratory tabs implement expected arrow/Home/End navigation and explicit panel relationships')
+check('@media (forced-colors: active)' in layout_css and 'outline: 2px solid Highlight' in layout_css and 'textarea' in layout_css,
+      'Shared focus treatment includes textareas and Windows forced-colors visibility')
+check('@media (pointer: coarse)' in layout_css and 'min-width: 44px' in layout_css and 'min-height: 44px' in layout_css,
+      'Important coarse-pointer controls have comfortable 44px activation areas')
+check('UX-ACCESSIBILITY-PLAYBOOK.md' in (ROOT / 'scripts/portfolio.mjs').read_text(encoding='utf-8') and (ROOT / 'UX-ACCESSIBILITY-PLAYBOOK.md').is_file(),
+      'Source-backed UX and accessibility standards are included in the checked project inventory')
 
 failures = [label for ok, label in checks if not ok]
 print(f"\n{len(checks) - len(failures)}/{len(checks)} production-source checks passed.")

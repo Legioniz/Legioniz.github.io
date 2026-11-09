@@ -119,22 +119,22 @@ favicon_png = (ROOT / "public/favicon-32.png").read_bytes()
 favicon_ico = (ROOT / "public/favicon.ico").read_bytes()
 manifest = read("public/site.webmanifest")
 service_worker = read("public/sw.js")
-check(all(f'/favicon{suffix}?v=20261109-4' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
+check(all(f'/favicon{suffix}?v=20261109-5' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
       "HTML provides refreshed SVG, PNG, ICO, and mask-icon favicon references")
 check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([137, 80, 78, 71, 13, 10, 26, 10])) and favicon_ico[:4] == bytes([0, 0, 1, 0]),
       "All deployed favicon source formats have valid file signatures")
-check('favicon.svg?v=20261109-4' in manifest and 'favicon-32.png?v=20261109-4' in manifest,
+check('favicon.svg?v=20261109-5' in manifest and 'favicon-32.png?v=20261109-5' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v16" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v17" in service_worker and "favicon.ico?v=20261109-5" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
-check("legion-portfolio-motion-v7" in html_shell and "const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html_shell and "const motionEnabled = savedMotion !== 'off'" in html_shell,
-      "Early boot enables motion by default and applies only an explicit saved visitor pause")
+check("legion-portfolio-motion-v8" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "motionOverride === 'system' && !systemReducedMotion" in html_shell,
+      "Early boot honors system reduced motion before paint and allows explicit visitor overrides")
 app_source = read("src/App.tsx")
 intro_source = read("src/PortfolioChrome.tsx")
-check("return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app_source and "const motionEnabled = motionPreference === 'on'" in app_source,
-      "React motion controls default to on and preserve an explicit visitor pause")
-check("if (savedMotion === 'off') return false" in intro_source and "return true" in intro_source,
-      "The intro sequence follows the same default-on visitor motion preference")
+check("function readMotionPreference(): MotionPreference" in app_source and "motionPreference === 'system' && !systemReducedMotion" in app_source and "legion-portfolio-motion-v8" in app_source,
+      "React motion controls follow system preference until an explicit visitor override")
+check("document.documentElement.dataset.motion === 'off'" in intro_source and "return true" in intro_source,
+      "The intro sequence respects the shared system-or-visitor reduced-motion state")
 adaptive_source = read("src/adaptive.ts")
 check("document.documentElement.dataset.motion === 'off'" in adaptive_source and "prefers-reduced-motion" not in adaptive_source,
       "Adaptive motion load follows the explicit site pause state")
@@ -248,7 +248,7 @@ for name in unused_keyframes:
     print(f"  UNUSED KEYFRAME {name}")
 
 # 5. Documentation links, duplicated deploy guide, PDF-only policy, and design source ownership.
-active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "design-assets/README.md", "public/llms.txt", "public/profile.md", "public/projects.md", "public/experience.md"]
+active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "UX-ACCESSIBILITY-PLAYBOOK.md", "design-assets/README.md", "public/llms.txt", "public/profile.md", "public/projects.md", "public/experience.md"]
 missing_doc_links: list[str] = []
 for doc_name in active_docs:
     content = read(doc_name)

@@ -16,6 +16,27 @@ const PrivacyNotice = lazy(() => import('./BackendPanels').then((module) => ({ d
 const RecruiterView = lazy(() => import('./RecruiterView').then((module) => ({ default: module.RecruiterView })))
 
 type Theme = 'dark' | 'light'
+type MotionPreference = 'system' | 'on' | 'off'
+
+const MOTION_STORAGE_KEY = 'legion-portfolio-motion-v8'
+const LEGACY_MOTION_STORAGE_KEY = 'legion-portfolio-motion-v7'
+
+function readMotionPreference(): MotionPreference {
+  try {
+    const saved = localStorage.getItem(MOTION_STORAGE_KEY)
+    if (saved === 'on' || saved === 'off') return saved
+    const legacy = localStorage.getItem(LEGACY_MOTION_STORAGE_KEY)
+    if (legacy === 'on' || legacy === 'off') {
+      localStorage.setItem(MOTION_STORAGE_KEY, legacy)
+      return legacy
+    }
+  } catch { /* Use the operating-system preference when storage is unavailable. */ }
+  return 'system'
+}
+
+function systemPrefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+}
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (update: () => void) => { finished: Promise<void> }
@@ -517,14 +538,14 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <section ref={dialogRef} className="project-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabIndex={-1}>
+      <section ref={dialogRef} className="project-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" tabIndex={-1}>
         <div className="modal-topbar"><span>PROJECT FILE / {project.number}</span><button ref={closeButtonRef} className="icon-button" data-sfx="close" onClick={onClose} aria-label="Close project details"><Icon name="close"/></button></div>
         <div className="modal-art"><ProjectArt visual={project.visual}/></div>
         <div className="modal-body">
           <div className="eyebrow"><span className="eyebrow-line"/>{project.category} / {project.label}</div>
           <h2 id="modal-title">{project.name}</h2>
           <h3>{project.headline}</h3>
-          <p className="modal-overview">{project.overview}</p>
+          <p id="modal-description" className="modal-overview">{project.overview}</p>
           <div className="modal-grid">
             <div><span className="detail-label">ROLE / CONTRIBUTION</span><p>{project.role}</p></div>
             <div><span className="detail-label">PROJECT STATUS</span><p>{project.status}</p></div>
@@ -585,6 +606,8 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
 
   useEffect(() => {
     if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setQuery('')
     setActiveIndex(0)
@@ -602,14 +625,6 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
         event.preventDefault()
         const direction = event.key === 'ArrowDown' ? 1 : -1
         const next = (activeIndexRef.current + direction + items.length) % items.length
-        activeIndexRef.current = next
-        setActiveIndex(next)
-        return
-      }
-      if (event.key === 'Home' || event.key === 'End') {
-        if (!items.length) return
-        event.preventDefault()
-        const next = event.key === 'Home' ? 0 : items.length - 1
         activeIndexRef.current = next
         setActiveIndex(next)
         return
@@ -636,10 +651,10 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
       }
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
+      if (event.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) {
         event.preventDefault()
         last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
         event.preventDefault()
         first.focus()
       }
@@ -649,6 +664,7 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
     return () => {
       window.clearTimeout(focusTimer)
       window.removeEventListener('keydown', handle)
+      document.body.style.overflow = previousOverflow
       const previousFocus = previousFocusRef.current
       previousFocusRef.current = null
       window.requestAnimationFrame(() => {
@@ -670,7 +686,7 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
         <div className="palette-search">
           <Icon name="command"/>
           <input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0) }}
-            placeholder="Where do you want to go?" aria-label="Search portfolio commands"
+            placeholder="Where do you want to go?" role="combobox" aria-haspopup="listbox" aria-label="Search portfolio commands"
             aria-autocomplete="list" aria-expanded="true" aria-controls="command-results"
             aria-activedescendant={filtered[activeIndex] ? `command-option-${filtered[activeIndex].id}` : undefined}/>
           <kbd aria-hidden="true">ESC</kbd>
@@ -743,17 +759,15 @@ export default function App() {
   const [activeSection, setActiveSection] = useState('home')
   const progressRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const [headerHidden, setHeaderHidden] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(() => {
-    try { return localStorage.getItem('legion-portfolio-sound-v2') !== 'off' } catch { return true }
+    try { return localStorage.getItem('legion-portfolio-sound-v2') === 'on' } catch { return false }
   })
   const soundEnabledRef = useRef(soundEnabled)
-  const [motionPreference, setMotionPreference] = useState<'on' | 'off'>(() => {
-    try {
-      return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'
-    } catch { return 'on' }
-  })
-  const motionEnabled = motionPreference === 'on'
+  const [motionPreference, setMotionPreference] = useState<MotionPreference>(readMotionPreference)
+  const [systemReducedMotion, setSystemReducedMotion] = useState(systemPrefersReducedMotion)
+  const motionEnabled = motionPreference === 'on' || (motionPreference === 'system' && !systemReducedMotion)
   const [copied, setCopied] = useState(false)
 
   const categories: ('All' | ProjectCategory)[] = ['All', 'Software', 'Data & Systems', 'Embedded', 'Creative']
@@ -823,10 +837,12 @@ export default function App() {
   const toggleMotion = () => {
     const next = motionEnabled ? 'off' : 'on'
     setMotionPreference(next)
-    try { localStorage.setItem('legion-portfolio-motion-v7', next) } catch { /* Storage can be disabled. */ }
+    try { localStorage.setItem(MOTION_STORAGE_KEY, next) } catch { /* Storage can be disabled. */ }
   }
   const navigate = (id: string) => {
+    const restoreMobileFocus = mobileOpen
     setMobileOpen(false)
+    if (restoreMobileFocus) window.requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
     setPaletteOpen(false)
     if (id === 'admin-console') { setAdminOpen(true); return }
     if (id === 'recruiter-view') { openRecruiterView(); return }
@@ -846,6 +862,15 @@ export default function App() {
     root.dataset.motion = motionEnabled ? 'on' : 'off'
     root.dataset.motionOverride = motionPreference
   }, [motionEnabled, motionPreference])
+
+  useEffect(() => {
+    if (motionPreference !== 'system' || !window.matchMedia) return
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setSystemReducedMotion(query.matches)
+    update()
+    query.addEventListener?.('change', update)
+    return () => query.removeEventListener?.('change', update)
+  }, [motionPreference])
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled
@@ -997,6 +1022,18 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeys)
   }, [closeProject, recruiterView])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const handleMobileEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setMobileOpen(false)
+      window.requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
+    }
+    document.addEventListener('keydown', handleMobileEscape)
+    return () => document.removeEventListener('keydown', handleMobileEscape)
+  }, [mobileOpen])
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(siteConfig.github)
@@ -1014,14 +1051,14 @@ export default function App() {
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <div className="scroll-progress" ref={progressRef}/>
+      <div className="scroll-progress" ref={progressRef} aria-hidden="true"/>
       <IntroSequence/>
       <header ref={headerRef} className={`site-header ${headerHidden && !mobileOpen ? 'header-hidden' : ''} ${mobileOpen ? 'mobile-nav-active' : ''}`}>
         <a className="brand" href="#home" onClick={(event) => { event.preventDefault(); navigate('home') }}>
           <span className="brand-mark"><span className="brand-monogram">K<span>A</span></span></span><span className="brand-copy"><strong>KING ART</strong><small>DEVELOPER PORTFOLIO</small></span>
         </a>
         <nav id="primary-navigation" className={`main-nav ${mobileOpen ? 'nav-open' : ''}`} aria-label="Main navigation">
-          {navItems.map((item) => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? 'active' : ''} onClick={(event) => { event.preventDefault(); navigate(item.id) }}>{item.label}</a>)}
+          {navItems.map((item) => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? 'active' : ''} aria-current={activeSection === item.id ? 'location' : undefined} onClick={(event) => { event.preventDefault(); navigate(item.id) }}>{item.label}</a>)}
           <a className="nav-recruiter" href="?view=recruiter" onClick={(event) => { event.preventDefault(); openRecruiterView() }}>Recruiter view <span aria-hidden="true">↗</span></a>
           <a className="nav-resume nav-original-resume" data-sfx="download" href={siteConfig.resumeOriginalPath} download="King_Art_Pacumberto_Resume.pdf" aria-label="Download the original resume as a PDF">RESUME PDF <Icon name="download" size={13}/></a>
           <a className="nav-resume" data-sfx="download" href={siteConfig.resumePdfPath} download="King_Art_D_Pacumberto_CV.pdf" aria-label="Download the public-safe CV as a PDF">CV PDF <Icon name="download" size={13}/></a>
@@ -1040,7 +1077,7 @@ export default function App() {
             <Icon name={motionEnabled ? 'pause' : 'play'} size={16}/>
           </button>
           <button className="icon-button theme-toggle" data-sfx="toggle" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={17}/></button>
-          <button className="icon-button mobile-menu-button" data-sfx="toggle" onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen} aria-controls="primary-navigation" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}><Icon name={mobileOpen ? 'close' : 'menu'}/></button>
+          <button ref={mobileMenuButtonRef} className="icon-button mobile-menu-button" data-sfx="toggle" onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen} aria-controls="primary-navigation" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}><Icon name={mobileOpen ? 'close' : 'menu'}/></button>
         </div>
       </header>
 

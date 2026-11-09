@@ -142,7 +142,7 @@ with sync_playwright() as p:
     # The app's production markup is checked at source level; this fixture verifies the intended control contract.
     motion_markup = re.search(r'<button[\s\S]*?className="icon-button motion-toggle"[\s\S]*?</button>', APP)
     motion_markup = motion_markup.group(0) if motion_markup else ''
-    control_contract = {'disabled': bool(re.search(r'\bdisabled(?:\s|=|>)', motion_markup)), 'toggle': 'onClick={toggleMotion}' in motion_markup, 'versioned': 'legion-portfolio-motion-v7' in APP}
+    control_contract = {'disabled': bool(re.search(r'\bdisabled(?:\s|=|>)', motion_markup)), 'toggle': 'onClick={toggleMotion}' in motion_markup, 'versioned': 'legion-portfolio-motion-v8' in APP}
     assert not control_contract['disabled'] and control_contract['toggle'] and control_contract['versioned'], control_contract
 
     print('QA:dynamic project', flush=True)
@@ -292,10 +292,10 @@ with sync_playwright() as p:
         brand_metrics.append({'width':width,'docWidth':m['scrollWidth'],'monogramHeight':round(m['monoHeight'],1)})
 
     print('QA:preference migration', flush=True)
-    # Preference migration ignores v1-v6; v7 defaults to motion-on and stores explicit visitor choices.
-    assert "localStorage.getItem('legion-portfolio-motion-v7')" in INDEX
-    assert "localStorage.getItem('legion-portfolio-motion-v7')" in APP
-    assert "localStorage.setItem('legion-portfolio-motion-v7'" in APP
+    # New visitors inherit the OS preference. Explicit v7 choices migrate into v8.
+    assert "localStorage.getItem('legion-portfolio-motion-v8')" in INDEX
+    assert "legion-portfolio-motion-v7" in INDEX and "legion-portfolio-motion-v7" in APP
+    assert "localStorage.setItem(MOTION_STORAGE_KEY" in APP
     assert "legion-portfolio-motion-v6" not in INDEX + APP
     assert "updateScrollReveals" not in APP
     assert 'installScrollReveal' in APP and 'useLayoutEffect' in APP
@@ -307,14 +307,21 @@ with sync_playwright() as p:
     page.screenshot(path=str(Path(tempfile.gettempdir()) / 'motion-header-mobile.png'),full_page=False)
 
     print('QA:boot preference', flush=True)
-    # Validate boot behavior: motion defaults on in every system profile, and only an explicit v7 pause turns it off.
+    # Fresh visits inherit the OS setting; explicit v7 preferences migrate to v8.
     pref_page=browser.new_page(reduced_motion='no-preference')
     pref_page.set_content('<!doctype html><html><head><meta name=theme-color content=#101619></head><body></body></html>')
     import re
     inline_scripts=re.findall(r'<script>(.*?)</script>', INDEX, flags=re.S)
     assert inline_scripts, 'index.html must have an early preference bootstrap script'
     pref_page.evaluate('''() => {
-      const store = {'legion-portfolio-motion': 'off', 'legion-portfolio-motion-v2': 'off', 'legion-portfolio-motion-v3': 'off', 'legion-portfolio-motion-v4': 'off', 'legion-portfolio-motion-v5': 'off', 'legion-portfolio-motion-v6': 'off'};
+      const store = {
+        'legion-portfolio-motion': 'off',
+        'legion-portfolio-motion-v2': 'off',
+        'legion-portfolio-motion-v3': 'off',
+        'legion-portfolio-motion-v4': 'off',
+        'legion-portfolio-motion-v5': 'off',
+        'legion-portfolio-motion-v6': 'off'
+      };
       Object.defineProperty(window, 'localStorage', { configurable: true, value: {
         getItem: (key) => Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null,
         setItem: (key, value) => { store[key] = String(value); },
@@ -325,28 +332,51 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     default_motion=pref_page.locator('html').get_attribute('data-motion')
     default_override=pref_page.locator('html').get_attribute('data-motion-override')
-    assert default_motion == 'on' and default_override == 'on', {'stale-v1-v6-settings-ignored': True, 'data-motion': default_motion, 'override': default_override}
+    assert default_motion == 'on' and default_override == 'system', {
+      'old-v1-v6-settings-ignored': True, 'data-motion': default_motion, 'override': default_override
+    }
+
     pref_page.emulate_media(reduced_motion='reduce')
     pref_page.add_script_tag(content=inline_scripts[0])
     os_motion=pref_page.locator('html').get_attribute('data-motion')
-    assert os_motion == 'on' and pref_page.locator('html').get_attribute('data-motion-override') == 'on', {'system-reduced-motion-default': os_motion}
-    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'on'")
+    assert os_motion == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'system', {
+      'system-reduced-motion-applied': os_motion
+    }
+
+    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v8'] = 'on'")
     pref_page.add_script_tag(content=inline_scripts[0])
     explicit_on=pref_page.locator('html').get_attribute('data-motion')
-    assert explicit_on == 'on' and pref_page.locator('html').get_attribute('data-motion-override') == 'on', {'explicit-site-motion-on': explicit_on}
-    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'off'")
+    assert explicit_on == 'on' and pref_page.locator('html').get_attribute('data-motion-override') == 'on', {
+      'explicit-site-motion-on-overrides-os': explicit_on
+    }
+
+    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v8'] = 'off'")
     pref_page.add_script_tag(content=inline_scripts[0])
     explicit_off=pref_page.locator('html').get_attribute('data-motion')
-    assert explicit_off == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'off', {'explicit-site-pause': explicit_off}
+    assert explicit_off == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'off', {
+      'explicit-site-motion-off': explicit_off
+    }
+
+    pref_page.evaluate("delete window.__mockMotionStore['legion-portfolio-motion-v8']; window.__mockMotionStore['legion-portfolio-motion-v7'] = 'on'")
+    pref_page.add_script_tag(content=inline_scripts[0])
+    migrated_on=pref_page.locator('html').get_attribute('data-motion')
+    migrated_key_on=pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v8']")
+    assert migrated_on == 'on' and migrated_key_on == 'on', {'migrated-v7-on': migrated_on, 'v8': migrated_key_on}
+
+    pref_page.evaluate("delete window.__mockMotionStore['legion-portfolio-motion-v8']; window.__mockMotionStore['legion-portfolio-motion-v7'] = 'off'")
+    pref_page.add_script_tag(content=inline_scripts[0])
+    migrated_off=pref_page.locator('html').get_attribute('data-motion')
+    migrated_key_off=pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v8']")
+    assert migrated_off == 'off' and migrated_key_off == 'off', {'migrated-v7-off': migrated_off, 'v8': migrated_key_off}
     browser.close()
 
 print(json.dumps({
   'sectionReveal':{'initial':initial,'enter':entered,'exit':exited,'reenter':returned,'dynamicProject':dynamic_state,
-                   'disabledMotion':disabled,'noIntersectionObserver':no_io,'noMutationObserver':no_mo,'observerTimeoutFallback':timeout_fallback,'defaultMotionOn':default_motion,'explicitPause':paused_motion},
+                   'disabledMotion':disabled,'noIntersectionObserver':no_io,'noMutationObserver':no_mo,'observerTimeoutFallback':timeout_fallback,'defaultMotionSystem':default_motion,'explicitPause':paused_motion},
   'disclosures':disclosure_results,
   'KA_responsive':brand_metrics,
   'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
-  'preferenceMigration':'old v1-v6 keys ignored; motion defaults on across system profiles; v7 stores explicit visitor choices',
+  'preferenceMigration':'old v1-v6 keys ignored; OS preference inherited; explicit v7 choices migrated to v8; v8 overrides OS preference',
   'integration':'App uses real IntersectionObserver reveals and the separately browser-tested production masthead controller',
   'browserErrors':errors,
   'result':'PASS'

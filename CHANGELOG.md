@@ -1,3 +1,14 @@
+## 2026-11-09 — Deep UX and accessibility implementation
+
+- Changed motion to inherit the operating-system reduced-motion preference before first paint, then follow OS changes until the visitor explicitly selects Motion On or Off. Existing explicit v7 choices migrate to v8.
+- Changed synthesized interface audio to opt-in for new visitors.
+- Added a focus-contained, focus-restoring command palette dialog and WAI-ARIA APG keyboard behavior for the Project Laboratory tablist.
+- Added shared visible-focus, forced-colors, and coarse-pointer touch-target refinements across Full and Recruiter views.
+- Added `UX-ACCESSIBILITY-PLAYBOOK.md` with sourced usability, WCAG 2.2 AA, WAI-ARIA, responsive, Core Web Vitals, SEO, and security standards.
+- Extended automated release checks for the new interaction contracts and refreshed the service-worker shell cache to v17.
+
+Automated source and browser regression checks are included in the production release workflow. Manual keyboard, screen-reader, touch-device, zoom, and forced-colors review remains necessary; this work does not claim formal WCAG conformance.
+
 ## 2026-11-09 — Recruiter bundle, accessibility, and content-discovery upgrade
 
 - Split the full portfolio's interactive laboratory, owner console, and backend contact panels into route-specific JavaScript chunks so the recruiter route does not download features it never renders.
