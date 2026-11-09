@@ -119,17 +119,17 @@ favicon_png = (ROOT / "public/favicon-32.png").read_bytes()
 favicon_ico = (ROOT / "public/favicon.ico").read_bytes()
 manifest = read("public/site.webmanifest")
 service_worker = read("public/sw.js")
-check(all(f'/favicon{suffix}?v=20261109-1' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell,
+check(all(f'/favicon{suffix}?v=20261109-2' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
       "HTML provides versioned SVG, PNG, ICO, and mask-icon favicon references")
 check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([137, 80, 78, 71, 13, 10, 26, 10])) and favicon_ico[:4] == bytes([0, 0, 1, 0]),
       "All deployed favicon source formats have valid file signatures")
-check('favicon.svg?v=20261109-1' in manifest and 'favicon-32.png?v=20261109-1' in manifest,
+check('favicon.svg?v=20261109-2' in manifest and 'favicon-32.png?v=20261109-2' in manifest,
       "Web app manifest includes versioned vector and raster icons")
-check("legion-portfolio-shell-v8" in service_worker and "favicon.ico?v=20261109-1" in service_worker,
+check("legion-portfolio-shell-v9" in service_worker and "favicon.ico?v=20261109-2" in service_worker,
       "Service-worker cache version and precache list refresh the favicon set")
-check("legion-portfolio-motion-v5" in html_shell and "savedMotion === 'off' ? 'off' : 'on'" in html_shell,
+check("legion-portfolio-motion-v6" in html_shell and "systemPrefersReducedMotion" in html_shell and "motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell,
       "Early boot enables motion unless a visitor has explicitly paused it")
-check("legion-portfolio-motion-v5" in read("src/App.tsx") and "localStorage.getItem('legion-portfolio-motion-v5') !== 'off'" in read("src/PortfolioFeatures.tsx"),
+check("legion-portfolio-motion-v6" in read("src/App.tsx") and "localStorage.getItem('legion-portfolio-motion-v6')" in read("src/PortfolioFeatures.tsx") and "prefers-reduced-motion: reduce" in read("src/PortfolioFeatures.tsx"),
       "React motion controls and the intro sequence share the motion-on preference")
 adaptive_source = read("src/adaptive.ts")
 check("document.documentElement.dataset.motion === 'off'" in adaptive_source and "prefers-reduced-motion" not in adaptive_source,
