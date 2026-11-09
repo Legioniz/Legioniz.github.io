@@ -823,30 +823,9 @@ button, input, select, textarea { font: inherit; }
 
 .recruiter-snapshot:hover::after { transform: translate3d(110%, 0, 0); }
 
-.recruiter-snapshot-mark {
-  display: grid;
-  place-items: center;
-  flex: 0 0 64px;
-  width: 64px;
-  min-width: 64px;
-  height: 64px;
-  min-height: 64px;
-  padding: 0;
-  overflow: hidden;
-  isolation: isolate;
-}
 
-.recruiter-snapshot-lockup {
-  display: block;
-  width: max-content;
-  max-width: 100%;
-  white-space: nowrap;
-  color: var(--text-strong);
-  font: 700 27px/1 var(--font-display);
-  letter-spacing: -.105em;
-  line-height: 1;
-  transform: translateX(-1px);
-}
+
+
 
 .recruiter-portrait {
   position: relative;
@@ -1215,7 +1194,7 @@ button, input, select, textarea { font: inherit; }
 @media (max-width: 760px) {
   .recruiter-hero::after { right: -22vw; top: 3%; opacity: .32; }
   .recruiter-snapshot { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .recruiter-snapshot-mark { grid-column: 1 / -1; }
+
   .recruiter-portrait { grid-column: 1 / -1; }
   .recruiter-experience-card { grid-template-columns: minmax(0, 1fr); }
   .recruiter-project-card { min-width: 0; }
@@ -1287,48 +1266,11 @@ button, input, select, textarea { font: inherit; }
   --recruiter-spot-x: 50%;
   --recruiter-spot-y: 50%;
 }
-.recruiter-snapshot-mark {
-  display: grid;
-  place-items: center;
-  flex: 0 0 64px;
-  width: 64px;
-  min-width: 64px;
-  height: 64px;
-  min-height: 64px;
-  overflow: hidden;
-  isolation: isolate;
-}
-.recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup {
-  display: inline-block;
-  width: max-content;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  color: var(--text-strong);
-  font: 700 clamp(23px, 2.2vw, 28px)/1 var(--font-display);
-  letter-spacing: -.085em;
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: keep-all;
-  text-align: center;
-  transform: translateX(-.035em);
-}
-.recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup::before,
-.recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup::after {
-  content: none !important;
-  display: none !important;
-}
-.recruiter-snapshot-mark::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  z-index: -1;
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
-  border-radius: 9px 2px;
-  pointer-events: none;
-  opacity: .7;
-}
-.recruiter-snapshot-mark { position: relative; }
+
+
+
+
+
 
 .recruiter-scroll-progress {
   position: fixed;
@@ -1392,11 +1334,6 @@ button, input, select, textarea { font: inherit; }
 .recruiter-project-card > * { position: relative; z-index: 1; }
 .recruiter-project-card > .recruiter-project-art { z-index: 0; }
 .recruiter-project-card > .recruiter-project-body { z-index: 1; }
-
-@keyframes recruiter-mark-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
-  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 9%, transparent); }
-}
 @keyframes recruiter-section-rule {
   from { transform: scaleX(0); opacity: .35; }
   to { transform: scaleX(1); opacity: 1; }
@@ -1406,9 +1343,7 @@ button, input, select, textarea { font: inherit; }
   18% { opacity: .35; }
   52%, 100% { transform: translateX(240%) skewX(-16deg); opacity: 0; }
 }
-:root[data-motion="on"] .recruiter-view .recruiter-snapshot-mark {
-  animation: recruiter-mark-breathe 4.8s ease-in-out 1.2s infinite;
-}
+
 :root[data-motion="on"] .recruiter-view .recruiter-project-card.is-in-view .recruiter-project-art::after {
   animation: recruiter-card-glint 1.25s var(--recruiter-ease) 220ms both;
 }
@@ -1425,10 +1360,13 @@ button, input, select, textarea { font: inherit; }
 :root[data-motion="on"] .recruiter-view .recruiter-section.is-in-view .recruiter-section-heading > div::after {
   animation: recruiter-section-rule 620ms var(--recruiter-ease) 120ms both;
 }
-:root[data-motion="off"] .recruiter-view .recruiter-snapshot-mark,
+
 :root[data-motion="off"] .recruiter-view .recruiter-project-card::before,
+
 :root[data-motion="off"] .recruiter-view .recruiter-project-art::after,
+
 :root[data-motion="off"] .recruiter-view .recruiter-section-heading > div::after {
+
   animation: none !important;
   transition: none !important;
 }
@@ -1437,14 +1375,17 @@ button, input, select, textarea { font: inherit; }
   .recruiter-project-card::before { display: none; }
 }
 @media (max-width: 520px) {
-  .recruiter-snapshot-mark { width: 64px; min-width: 64px; }
-  .recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup { font-size: 26px; }
+
+
 }
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion-override="on"]) .recruiter-view .recruiter-snapshot-mark,
+
   :root:not([data-motion-override="on"]) .recruiter-view .recruiter-project-card::before,
+
   :root:not([data-motion-override="on"]) .recruiter-view .recruiter-project-art::after,
+
   :root:not([data-motion-override="on"]) .recruiter-view .recruiter-section-heading > div::after {
+
     animation: none !important;
     transition: none !important;
   }

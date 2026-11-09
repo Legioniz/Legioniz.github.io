@@ -98,20 +98,8 @@ def main() -> None:
             check(page.get_by_role('link', name='KA RECRUITER BRIEF / 01', exact=True).count() == 1,
                   'Recruiter brand accessible name is derived from its visible KA and brief text')
             recruiter_brand = page.locator('.recruiter-brand-lockup')
-            snapshot_mark = page.locator('.recruiter-snapshot-mark')
-            snapshot_lockup = page.locator('.recruiter-snapshot-lockup')
-            check(recruiter_brand.inner_text().strip() == 'KA' and snapshot_mark.inner_text().strip() == 'KA',
-                  'Both recruiter KA marks render without punctuation or an orphaned period')
-            monogram_geometry = snapshot_lockup.evaluate("""el => ({
-              whiteSpace: getComputedStyle(el).whiteSpace,
-              width: el.getBoundingClientRect().width,
-              height: el.getBoundingClientRect().height,
-              parentWidth: el.parentElement.getBoundingClientRect().width,
-              fits: el.scrollWidth <= el.clientWidth + 1
-            })""")
-            check(monogram_geometry['whiteSpace'] == 'nowrap' and monogram_geometry['fits']
-                  and monogram_geometry['width'] <= monogram_geometry['parentWidth'] + 1,
-                  f'Snapshot KA stays on one line and inside its 64px mark ({monogram_geometry})')
+            check(recruiter_brand.inner_text().strip() == 'KA' and page.locator('.recruiter-snapshot-mark').count() == 0,
+                  'Recruiter header keeps its KA identity while the duplicate snapshot monogram is removed')
             preferences = page.get_by_role('group', name='Display and sound preferences')
             check(preferences.count() == 1, 'Recruiter view exposes one named preference group')
             page.wait_for_function("document.querySelector('.recruiter-view')?.dataset.recruiterMotionReady === 'true'")
@@ -121,9 +109,6 @@ def main() -> None:
                   'Shared reveal controller is connected to recruiter sections and project evidence')
             check(page.locator('.recruiter-scroll-progress > span').count() == 1,
                   'Recruiter view mounts its dedicated scroll-progress indicator')
-            mark_animation = snapshot_mark.evaluate('(el) => getComputedStyle(el).animationName')
-            check(mark_animation == 'recruiter-mark-breathe',
-                  'The corrected KA monogram receives the motion-enabled accent animation')
             motion_toggle = preferences.get_by_role('button', name='Motion On — pause decorative motion')
             sound_toggle = preferences.get_by_role('button', name='Sound On — turn interface sounds off')
             check(motion_toggle.get_attribute('aria-pressed') == 'true',
@@ -177,6 +162,22 @@ def main() -> None:
             check(page.get_by_role('link', name='Download CV · PDF').count() == 2, 'Public-safe PDF CV is accessible in profile header and contact area')
             check(page.locator('a[href*="Resume.pdf"]').count() == 0, 'Recruiter profile does not expose the original phone-bearing resume')
             check(page.locator('.recruiter-portrait img').evaluate('(img) => img.complete && img.naturalWidth > 0'), 'Recruiter profile portrait loads successfully from the optimized responsive asset set')
+            portrait_geometry = page.locator('.recruiter-portrait').evaluate("""picture => {
+              const image = picture.querySelector('img')
+              const panel = picture.closest('.recruiter-snapshot')
+              const photo = picture.getBoundingClientRect()
+              const snapshot = panel.getBoundingClientRect()
+              return {
+                widthRatio: photo.width / snapshot.width,
+                naturalAspect: image.naturalWidth / image.naturalHeight,
+                renderedAspect: image.clientWidth / image.clientHeight,
+                height: image.clientHeight
+              }
+            }""")
+            check(portrait_geometry['widthRatio'] > 0.96
+                  and abs(portrait_geometry['naturalAspect'] - portrait_geometry['renderedAspect']) < 0.02
+                  and portrait_geometry['height'] > 280,
+                  f'Recruiter portrait fills the snapshot without stretching or distorting the source image ({portrait_geometry})')
 
             access = page.evaluate("""() => {
               const named = (element) => Boolean((element.getAttribute('aria-label') || element.getAttribute('title') || element.innerText || '').trim());
@@ -318,7 +319,7 @@ def main() -> None:
                     '.recruiter-awards p', '.recruiter-leadership-grid p',
                     '.recruiter-contact h2', '.recruiter-contact p',
                     '.recruiter-tags > span', '.recruiter-brand-lockup',
-                    '.recruiter-snapshot-lockup', '.recruiter-hero-links a',
+                    '.recruiter-hero-links a',
                     '.recruiter-contact-actions a'
                   ]
                   const textOverflow = textSelectors.flatMap((selector) =>
@@ -340,9 +341,16 @@ def main() -> None:
                     const element = document.querySelector(selector)
                     return element ? parseFloat(getComputedStyle(element).fontSize) : 0
                   }
+                  const snapshot = document.querySelector('.recruiter-snapshot')
+                  const portrait = document.querySelector('.recruiter-portrait')
+                  const portraitImage = portrait?.querySelector('img')
                   return {
                     pageOverflow:document.documentElement.scrollWidth > innerWidth + 1,
                     textOverflow, cardLayout,
+                    portraitWidthRatio: snapshot && portrait ? portrait.getBoundingClientRect().width / snapshot.getBoundingClientRect().width : 0,
+                    portraitAspectError: portraitImage?.naturalWidth && portraitImage?.naturalHeight
+                      ? Math.abs((portraitImage.naturalWidth / portraitImage.naturalHeight) - (portraitImage.clientWidth / portraitImage.clientHeight)) : 1,
+                    portraitHeight:portraitImage?.clientHeight ?? 0,
                     bodyCopy:copySize('.recruiter-project-body > p:not(.recruiter-project-type)'),
                     skillCopy:copySize('.recruiter-skill-card > p'),
                     projectLabel:copySize('.recruiter-project-type')
@@ -350,6 +358,8 @@ def main() -> None:
                 }""")
                 check(not metrics['pageOverflow'], f'{width}px viewport has no horizontal page overflow')
                 check(not metrics['textOverflow'], f'{width}px viewport has no overflowing recruiter text ({metrics["textOverflow"]})')
+                check(metrics['portraitWidthRatio'] > 0.96 and metrics['portraitAspectError'] < 0.02 and metrics['portraitHeight'] > 260,
+                      f'{width}px viewport keeps the portrait full-width and proportional ({metrics})')
                 check(metrics['bodyCopy'] >= 13 and metrics['skillCopy'] >= 13 and metrics['projectLabel'] >= 10,
                       f'{width}px viewport retains readable recruiter body and metadata sizes ({metrics})')
                 if width <= 760:

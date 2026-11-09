@@ -236,10 +236,9 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
           </div>
           <aside className="recruiter-snapshot" aria-label="Profile snapshot">
             <picture className="recruiter-portrait">
-              <source type="image/webp" srcSet="/profile/king-art-portrait-480.webp 480w, /profile/king-art-portrait-800.webp 800w, /profile/king-art-portrait-1023.webp 1023w" sizes="(max-width: 760px) 120px, 180px" />
-              <img src="/profile/king-art-portrait-800.jpg" srcSet="/profile/king-art-portrait-480.jpg 480w, /profile/king-art-portrait-800.jpg 800w, /profile/king-art-portrait-1023.jpg 1023w" sizes="(max-width: 760px) 120px, 180px" width="800" height="1203" alt="Portrait of King Art D. Pacumberto wearing black academic graduation attire with a navy blue stole and white shirt." loading="eager" decoding="async" fetchPriority="high" />
+              <source type="image/webp" srcSet="/profile/king-art-portrait-480.webp 480w, /profile/king-art-portrait-800.webp 800w, /profile/king-art-portrait-1023.webp 1023w" sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1024px) 240px, 320px" />
+              <img src="/profile/king-art-portrait-800.jpg" srcSet="/profile/king-art-portrait-480.jpg 480w, /profile/king-art-portrait-800.jpg 800w, /profile/king-art-portrait-1023.jpg 1023w" sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1024px) 240px, 320px" width="800" height="1203" alt="Portrait of King Art D. Pacumberto wearing black academic graduation attire with a navy blue stole and white shirt." loading="eager" decoding="async" fetchPriority="high" />
             </picture>
-            <div className="recruiter-snapshot-mark" aria-label="KA monogram"><span className="recruiter-snapshot-lockup">KA</span></div>
             <div><small>CURRENT STUDY</small><strong>PUP Quezon City</strong><span>BS Information Technology · BSIT 1-2</span></div>
             <div><small>ACADEMIC YEAR</small><strong>2026–2027</strong><span>Undergraduate student</span></div>
             <div><small>FOCUS AREAS</small><strong>Software · Systems · Embedded</strong><span>With technical support and production experience</span></div>
