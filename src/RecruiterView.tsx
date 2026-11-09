@@ -144,8 +144,17 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
     if (!root || !motionEnabled || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
 
     const cards = Array.from(root.querySelectorAll<HTMLElement>('.recruiter-project-card'))
+    // Delegate at the stable view root. Cards can be remounted during
+    // recruiter/full-view transitions, but the root listener remains reliable.
     const onMove = (event: PointerEvent) => {
-      const card = event.currentTarget as HTMLElement
+      const target = event.target
+      const card = target instanceof Element
+        ? target.closest<HTMLElement>('.recruiter-project-card')
+        : null
+      cards.forEach((item) => {
+        if (item !== card) delete item.dataset.spotlight
+      })
+      if (!card || !root.contains(card)) return
       const bounds = card.getBoundingClientRect()
       const x = Math.min(100, Math.max(0, ((event.clientX - bounds.left) / Math.max(1, bounds.width)) * 100))
       const y = Math.min(100, Math.max(0, ((event.clientY - bounds.top) / Math.max(1, bounds.height)) * 100))
@@ -153,19 +162,11 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
       card.style.setProperty('--recruiter-spot-y', `${y.toFixed(1)}%`)
       card.dataset.spotlight = 'active'
     }
-    const onLeave = (event: PointerEvent) => {
-      const card = event.currentTarget as HTMLElement
-      delete card.dataset.spotlight
-    }
 
-    cards.forEach((card) => {
-      card.addEventListener('pointermove', onMove, { passive: true })
-      card.addEventListener('pointerleave', onLeave, { passive: true })
-    })
+    root.addEventListener('pointermove', onMove, { passive: true })
     return () => {
+      root.removeEventListener('pointermove', onMove)
       cards.forEach((card) => {
-        card.removeEventListener('pointermove', onMove)
-        card.removeEventListener('pointerleave', onLeave)
         delete card.dataset.spotlight
         card.style.removeProperty('--recruiter-spot-x')
         card.style.removeProperty('--recruiter-spot-y')
