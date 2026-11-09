@@ -80,10 +80,12 @@ DOM_AUDIT = r"""() => {
   const unsafeExternalLinks = Array.from(document.querySelectorAll('a[target="_blank"]'))
     .filter((a) => !a.rel.toLowerCase().split(/\s+/).includes("noopener"))
     .map((a) => a.getAttribute("href") || "(unknown link)");
+  // Native [hidden] and [inert] already suppress focus. aria-hidden does not,
+  // so flag only controls that remain visibly exposed inside aria-hidden content.
   const hiddenFocusable = Array.from(document.querySelectorAll(
     'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]'
-  )).filter((el) => el.tabIndex >= 0 && !el.disabled
-    && Boolean(el.closest('[aria-hidden="true"], [inert], [hidden]')))
+  )).filter((el) => el.tabIndex >= 0 && !el.disabled && visible(el)
+    && Boolean(el.closest('[aria-hidden="true"]')))
     .map((el) => ({tag: el.tagName.toLowerCase(), label: name(el).slice(0, 80)}));
   const pointerTargets = Array.from(document.querySelectorAll(
     'button, [role="button"], input:not([type="hidden"]), select, textarea'
