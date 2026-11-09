@@ -4125,3 +4125,6 @@ body {
     animation: none !important;
   }
 }
+
+
+.feature-module-loading { min-height: 150px; display: grid; place-items: center; border: 1px solid var(--line); color: var(--muted); font: 10px var(--font-mono); letter-spacing: .14em; text-align: center; }

@@ -8,8 +8,11 @@ import { installInteractionSounds } from './sound'
 import { readAdaptiveProfile, observeAdaptiveProfile } from './adaptive'
 import { installScrollReveal } from './reveal'
 import { installMastheadScrollBehavior } from './masthead'
-import { IntroSequence, PortfolioFeatures, ProjectCompare, QuickNavigator, ServiceWorkerUpdateNotice } from './PortfolioFeatures'
-import { AdminPortal, InquiryAndComments, PrivacyNotice } from './BackendPanels'
+import { IntroSequence, ProjectCompare, QuickNavigator, ServiceWorkerUpdateNotice } from './PortfolioChrome'
+const PortfolioFeatures = lazy(() => import('./PortfolioFeatures').then((module) => ({ default: module.PortfolioFeatures })))
+const AdminPortal = lazy(() => import('./BackendPanels').then((module) => ({ default: module.AdminPortal })))
+const InquiryAndComments = lazy(() => import('./BackendPanels').then((module) => ({ default: module.InquiryAndComments })))
+const PrivacyNotice = lazy(() => import('./BackendPanels').then((module) => ({ default: module.PrivacyNotice })))
 const RecruiterView = lazy(() => import('./RecruiterView').then((module) => ({ default: module.RecruiterView })))
 
 type Theme = 'dark' | 'light'
@@ -420,7 +423,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: (project: 
   }
 
   return (
-    <article
+    <div
       className={`project-card project-${project.visual} ${project.featured ? 'project-featured' : 'project-independent'}`}
       data-project-id={project.id}
       data-reveal
@@ -448,7 +451,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: (project: 
         <div className="project-peek-tags">{project.stack.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}</div>
         <span className="project-peek-action">CLICK OR PRESS ENTER TO OPEN <Icon name="arrow" size={14}/></span>
       </aside>
-    </article>
+    </div>
   )
 }
 function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
@@ -1016,7 +1019,9 @@ export default function App() {
           </div>
         </section>
 
-        <PortfolioFeatures onOpenProject={openProject}/>
+        <Suspense fallback={<div className="feature-module-loading" role="status">Loading interactive project tools…</div>}>
+          <PortfolioFeatures onOpenProject={openProject}/>
+        </Suspense>
 
         <section className="skills-section section-pad page-width" id="skills">
           <SectionHeading index="11" kicker="THE TOOLKIT / METHODS" title="A toolkit for" accent="making things work." description="Technologies and practical capabilities used in academic, freelance, and independent projects. Skill levels are not self-rated; the project examples show where selected tools have been applied."/>
@@ -1115,7 +1120,7 @@ export default function App() {
             <div className="contact-aside"><div className="contact-aside-top"><span>DIRECTORY / 001</span><span>PUBLIC PROFILE</span></div><div className="contact-monogram">KA<span>.</span></div><div className="contact-handle">@{siteConfig.handle}</div><button className="copy-profile" data-sfx="copy" onClick={handleCopy}><span>{copied ? 'PROFILE LINK COPIED' : 'COPY GITHUB PROFILE'}</span><Icon name={copied ? 'check' : 'copy'} size={15}/></button><a className="contact-github" href={siteConfig.github} target="_blank" rel="noopener noreferrer"><Icon name="github"/> OPEN GITHUB <Icon name="external" size={13}/></a></div>
             <div className="contact-corner">OPEN TO GOOD QUESTIONS & PRACTICAL BUILDS.</div>
           </div>
-          <InquiryAndComments/>
+          <Suspense fallback={null}><InquiryAndComments/></Suspense>
         </section>
       </main>
 
@@ -1123,8 +1128,10 @@ export default function App() {
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} theme={theme} onTheme={toggleTheme}/>
       <QuickNavigator activeSection={activeSection} onNavigate={navigate}/>
-      <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>
-      <PrivacyNotice/>
+      <Suspense fallback={null}>
+        <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>
+        <PrivacyNotice/>
+      </Suspense>
       <ServiceWorkerUpdateNotice/>
       {selectedProject && <ProjectModal project={selectedProject} onClose={closeProject}/> }
     </div>

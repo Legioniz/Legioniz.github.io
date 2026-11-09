@@ -1,3 +1,13 @@
+## 2026-11-09 — Recruiter bundle, accessibility, and content-discovery upgrade
+
+- Split the full portfolio's interactive laboratory, owner console, and backend contact panels into route-specific JavaScript chunks so the recruiter route does not download features it never renders.
+- Moved the lightweight introduction, project comparison, quick navigator, and service-worker update notice into a small shared chrome module.
+- Replaced the interactive project card's `article` host with a generic button-role container, preserving keyboard activation while keeping the accessibility tree semantically appropriate.
+- Added an owner-maintained `llms.txt` discovery index and three concise Markdown references for the profile, projects, and experience. The HTML head advertises the index, the sitemap lists the references, and release checks validate their inclusion.
+- Kept scope boundaries explicit: synthetic energy data, early-stage photography, foundational authorized-lab security practice, and the public-safe CV link.
+
+The upgrade is covered by source checks, recruiter browser assertions for unloaded full-view chunks, Markdown/sitemap validation, and the existing production release gate.
+
 ## 2026-11-09 — Public comments wired through production
 
 - Corrected the Pages release gate and completed the public-comment integration work so the production build receives its Supabase public configuration and verifies the actual intake endpoint.

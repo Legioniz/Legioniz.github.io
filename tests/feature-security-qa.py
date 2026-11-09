@@ -12,6 +12,7 @@ def check(condition: bool, label: str) -> None:
 
 app = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
 features = (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8')
+chrome = (ROOT / 'src/PortfolioChrome.tsx').read_text(encoding='utf-8')
 backend_ui = (ROOT / 'src/BackendPanels.tsx').read_text(encoding='utf-8')
 backend = (ROOT / 'src/backend.ts').read_text(encoding='utf-8')
 recruiter = (ROOT / 'src/RecruiterView.tsx').read_text(encoding='utf-8')
@@ -30,10 +31,10 @@ for section_id, label in [
 ]:
     check(f'id="{section_id}"' in features, f'{label} section is present')
 
-check('project-compare' in features and 'Technologies' in features and 'Selected capabilities' in features, 'Project comparison uses documented project details')
+check('project-compare' in chrome and 'Technologies' in chrome and 'Selected capabilities' in chrome, 'Project comparison uses documented project details')
 check('new URLSearchParams(window.location.search).get(\'project\')' in app and "url.searchParams.set('project', project.id)" in app, 'Project case studies support direct, shareable query-string links')
 check("window.addEventListener('popstate', syncRouteFromUrl)" in app and 'Copy project link' in app and 'openProject' in app and 'closeProject' in app, 'Project links synchronize with browser history and expose a copy action')
-check("localStorage.getItem('legion-portfolio-motion-v7')" in features, 'Intro sequence defaults to motion on and respects an explicit saved pause')
+check("localStorage.getItem('legion-portfolio-motion-v7')" in chrome, 'Intro sequence defaults to motion on and respects an explicit saved pause')
 check("file.size > 12 * 1024 * 1024" in features and '48 * 1024 * 1024' in features and '45_000_000' in features, 'Local photo viewer caps file count, total bytes, per-file size, and decoded dimensions')
 check('URL.createObjectURL(file)' in features and 'URL.revokeObjectURL(url)' in features and 'Nothing has been uploaded' in features, 'Photography preview remains browser-local and releases object URLs')
 check(all(ip in features for ip in ['192.0.2.', '198.51.100.', '203.0.113.']), 'Network Lab uses documentation-only RFC 5737 addresses')
@@ -42,11 +43,15 @@ check('Northstar Tools' in features and 'fictional' in features.lower() and 'pri
 check('Math.log2' in features and 'monthlyKwh' in features and 'monthlyCost' in features, 'Exposure and energy demonstrations calculate from explicit input formulas')
 check('animationPlayState: fanSpeed === 0 ? \'paused\' : \'running\'' in features, 'Zero-output fan model remains stationary')
 check('QuickNavigator' in app and 'activeSection' in app and 'scroll-progress' in app, 'Section navigator and reading progress are integrated')
-check("const [hovered, setHovered] = useState(false)" in features and "onMouseEnter={() => setHovered(true)}" in features and "onMouseLeave={() => setHovered(false)}" in features, 'Section sidebar expands on pointer hover and collapses on pointer leave')
-check("const [pinned, setPinned] = useState(false)" in features and "aria-pressed={pinned}" in features and "aria-expanded={expanded}" in features, 'Section sidebar can be pinned open and exposes its expanded state accessibly')
-check("matches(':focus-visible')" in features and "onBlurCapture" in features and "tabIndex={expanded ? 0 : -1}" in features, 'Section sidebar expands for keyboard focus and removes hidden links from tab order')
-check('quick-navigator-rail-label' in features and 'quick-navigator-rail-index' in features and 'activeIndex / featureSections.length' in features, 'Collapsed sidebar preserves a compact active-section indicator')
-check("'(hover: none)'" in features and 'setPinned(false)' in features, 'Touch navigation uses a tap toggle rather than requiring hover')
+check("lazy(() => import('./PortfolioFeatures')" in app
+      and "lazy(() => import('./BackendPanels')" in app
+      and "from './PortfolioChrome'" in app,
+      'Full-site experiments and backend panels are split from the recruiter entry module')
+check("const [hovered, setHovered] = useState(false)" in chrome and "onMouseEnter={() => setHovered(true)}" in chrome and "onMouseLeave={() => setHovered(false)}" in chrome, 'Section sidebar expands on pointer hover and collapses on pointer leave')
+check("const [pinned, setPinned] = useState(false)" in chrome and "aria-pressed={pinned}" in chrome and "aria-expanded={expanded}" in chrome, 'Section sidebar can be pinned open and exposes its expanded state accessibly')
+check("matches(':focus-visible')" in chrome and "onBlurCapture" in chrome and "tabIndex={expanded ? 0 : -1}" in chrome, 'Section sidebar expands for keyboard focus and removes hidden links from tab order')
+check('quick-navigator-rail-label' in chrome and 'quick-navigator-rail-index' in chrome and 'activeIndex / featureSections.length' in chrome, 'Collapsed sidebar preserves a compact active-section indicator')
+check("'(hover: none)'" in chrome and 'setPinned(false)' in chrome, 'Touch navigation uses a tap toggle rather than requiring hover')
 check('.quick-navigator.is-expanded .quick-navigator-links' in (ROOT / 'src/styles.css').read_text(encoding='utf-8') and 'visibility: hidden' in (ROOT / 'src/styles.css').read_text(encoding='utf-8'), 'Collapsed links are visually hidden and reflow into the expanded sidebar')
 
 # Backend frontend contract.

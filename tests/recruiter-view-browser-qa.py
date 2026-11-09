@@ -92,6 +92,11 @@ def main() -> None:
             page.on('pageerror', lambda error: errors.append(str(error)))
             response = page.goto(BASE + '?view=recruiter', wait_until='domcontentloaded', timeout=30000)
             page.get_by_role('heading', name='King Art D. Pacumberto.', level=1).wait_for(timeout=15000)
+            full_view_chunks = page.evaluate("""() => performance.getEntriesByType('resource')
+              .map((entry) => entry.name)
+              .filter((url) => /PortfolioFeatures|BackendPanels/i.test(url))""")
+            check(not full_view_chunks,
+                  f'Recruiter route does not download full-portfolio labs or backend panels ({full_view_chunks})')
             check(response is not None and response.status == 200, 'Recruiter view loads directly from a shareable query URL')
             check('Recruiter Profile' in page.title(), 'Recruiter view receives a focused browser title')
             check(page.get_by_role('navigation', name='Recruiter profile sections').count() == 1, 'Recruiter navigation has an accessible name')

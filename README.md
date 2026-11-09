@@ -176,3 +176,7 @@ The service-worker shell cache is versioned as `legion-portfolio-shell-v7` for t
 ## Global layout integrity upgrade
 
 The shared `src/layout-integrity.css` layer is imported directly by `src/main.tsx` after the base design system. It normalizes box sizing, applies `min-width: 0` to grid/flex content, bounds site and recruiter containers, coordinates the responsive layout breakpoints, prevents reveal transforms from expanding the document, and separates fixed privacy/update notices from page content. It is not a disconnected override: the production-source and Chromium design checks load and inspect it as part of the release verification.
+
+## Public Markdown references
+
+The public site also serves [llms.txt](https://legioniz.github.io/llms.txt), a short discovery index for text-first clients, with separate [profile](https://legioniz.github.io/profile.md), [project](https://legioniz.github.io/projects.md), and [experience](https://legioniz.github.io/experience.md) summaries. These files are maintained alongside the React source and are included in the sitemap. They link to the public-safe CV only; the original resume is not listed.

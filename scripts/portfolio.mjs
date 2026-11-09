@@ -12,10 +12,10 @@ const command = process.argv[2] || 'help'
 const expectedFiles = [
   'index.html', 'package.json', 'vite.config.ts', '.lighthouserc.json', '.env.example', '.gitignore',
   'tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json', 'requirements-test.txt', 'START-PORTFOLIO.cmd',
-  'src/App.tsx', 'src/BackendPanels.tsx', 'src/ErrorBoundary.tsx', 'src/PortfolioFeatures.tsx', 'src/RecruiterView.tsx',
+  'src/App.tsx', 'src/BackendPanels.tsx', 'src/ErrorBoundary.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/RecruiterView.tsx',
   'src/adaptive.ts', 'src/backend.ts', 'src/config.ts', 'src/data.ts', 'src/main.tsx', 'src/masthead.ts', 'src/reveal.ts',
   'src/serviceWorker.ts', 'src/sound.ts', 'src/styles.css', 'src/layout-integrity.css',
-  'public/sw.js', 'public/favicon.svg', 'public/favicon-32.png', 'public/favicon.ico', 'public/og-card.png', 'public/robots.txt', 'public/sitemap.xml',
+  'public/sw.js', 'public/favicon.svg', 'public/favicon-32.png', 'public/favicon.ico', 'public/og-card.png', 'public/robots.txt', 'public/sitemap.xml', 'public/llms.txt', 'public/profile.md', 'public/projects.md', 'public/experience.md',
   'public/site.webmanifest', 'public/BACKEND-SETUP.md', 'public/King-Art-Pacumberto-Resume.pdf', 'public/King-Art-Pacumberto-CV.pdf',
   'public/profile/king-art-portrait-480.webp', 'public/profile/king-art-portrait-800.webp', 'public/profile/king-art-portrait-1023.webp',
   'public/profile/king-art-portrait-480.jpg', 'public/profile/king-art-portrait-800.jpg', 'public/profile/king-art-portrait-1023.jpg',
@@ -109,6 +109,7 @@ async function check() {
   log(data.includes('Data / traffic spoofing and IP-manipulation concepts (lab-based)') && data.includes('authorized lab environments'), 'Security claims are framed as foundational and authorized-lab practice')
 
   const features = await read('src/PortfolioFeatures.tsx')
+  const chrome = await read('src/PortfolioChrome.tsx')
   for (const section of ['lab', 'skills-map', 'photo-archive', 'network-lab', 'osint-journal', 'hardware-lab', 'notebook', 'building']) {
     log(features.includes(`id=\"${section}\"`), `Interactive portfolio section exists: ${section}`)
   }
@@ -116,7 +117,7 @@ async function check() {
   log(features.includes('192.0.2.10') && features.includes('198.51.100.20') && features.includes('203.0.113.15') && !features.includes('fetch('), 'Network Lab uses fictional documentation addresses without network requests')
   log(features.includes('Northstar Tools') && features.includes('fictional') && features.includes('private-data collection'), 'OSINT journal uses a fictional scenario with explicit safety boundaries')
   log(features.includes('URL.createObjectURL(file)') && features.includes('URL.revokeObjectURL(url)') && features.includes('48 * 1024 * 1024') && features.includes('45_000_000'), 'Photo workspace is local-only with image and memory limits')
-  log(features.includes("localStorage.getItem('legion-portfolio-motion-v7')") && features.includes("if (savedMotion === 'off') return false") && features.includes("return true"), 'Intro sequence follows the shared default-on motion preference and explicit visitor pause')
+  log(chrome.includes("localStorage.getItem('legion-portfolio-motion-v7')") && chrome.includes("if (savedMotion === 'off') return false") && chrome.includes("return true"), 'Intro sequence follows the shared default-on motion preference and explicit visitor pause')
   log(features.includes("animationPlayState: fanSpeed === 0 ? 'paused' : 'running'"), 'Hardware fan simulation pauses at zero output')
   const backendClient = await read('src/backend.ts')
   log(backendClient.includes('VITE_SUPABASE_ANON_KEY') && !backendClient.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Frontend backend client uses only public credentials')
@@ -242,11 +243,11 @@ async function check() {
   log(publicPdf.subarray(0, 5).toString('ascii') === '%PDF-' && publicPdf.length > 100_000, 'Latest redesigned public CV PDF is bundled (updated export)')
   log(!await exists('package-lock.json') ? true : (await read('package-lock.json')).includes('lockfileVersion'), 'Package lockfile is valid when present')
   log(await exists('src/RecruiterView.tsx'), 'Dedicated recruiter profile component is present')
-  log(await exists('public/robots.txt') && await exists('public/sitemap.xml') && await exists('public/site.webmanifest'), 'Crawler and install metadata files are present')
+  log(await exists('public/robots.txt') && await exists('public/sitemap.xml') && await exists('public/site.webmanifest') && await exists('public/llms.txt') && await exists('public/profile.md') && await exists('public/projects.md') && await exists('public/experience.md'), 'Crawler and install metadata files are present')
   log(await exists('.github/dependabot.yml'), 'Dependabot monitors npm and GitHub Actions dependencies')
   log(await exists('scripts/production-audit.mjs') && await exists('tests/production-quality-qa.py') && await exists('tests/recruiter-view-browser-qa.py'), 'Production budgets, source checks, and recruiter browser tests are included')
 
-  const sourceFiles = ['src/App.tsx', 'src/RecruiterView.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
+  const sourceFiles = ['src/App.tsx', 'src/RecruiterView.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
   let totalBytes = 0
   for (const relative of sourceFiles) totalBytes += (await stat(path.join(ROOT, relative))).size
   console.log(`\nSource footprint: ${(totalBytes / 1024).toFixed(1)} KB across ${sourceFiles.length} source, backend, and PWA files.`)

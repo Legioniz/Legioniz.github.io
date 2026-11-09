@@ -107,6 +107,11 @@ jobs:
           grep -q '/favicon-32.png?v=20261109-3' dist/index.html
           grep -q '/favicon.ico?v=20261109-3' dist/index.html
           test -s dist/site.webmanifest
+          test -s dist/llms.txt
+          test -s dist/profile.md
+          test -s dist/projects.md
+          test -s dist/experience.md
+          grep -q '^# King Art D. Pacumberto' dist/llms.txt
           test -d dist/assets
           test -s dist/King-Art-Pacumberto-CV.pdf
           test -s dist/King-Art-Pacumberto-Resume.pdf

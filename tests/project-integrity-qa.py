@@ -130,7 +130,7 @@ check("legion-portfolio-shell-v14" in service_worker and "favicon.ico?v=20261109
 check("legion-portfolio-motion-v7" in html_shell and "const motionOverride = savedMotion === 'off' ? 'off' : 'on'" in html_shell and "const motionEnabled = savedMotion !== 'off'" in html_shell,
       "Early boot enables motion by default and applies only an explicit saved visitor pause")
 app_source = read("src/App.tsx")
-intro_source = read("src/PortfolioFeatures.tsx")
+intro_source = read("src/PortfolioChrome.tsx")
 check("return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'" in app_source and "const motionEnabled = motionPreference === 'on'" in app_source,
       "React motion controls default to on and preserve an explicit visitor pause")
 check("if (savedMotion === 'off') return false" in intro_source and "return true" in intro_source,
@@ -248,7 +248,7 @@ for name in unused_keyframes:
     print(f"  UNUSED KEYFRAME {name}")
 
 # 5. Documentation links, duplicated deploy guide, PDF-only policy, and design source ownership.
-active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "design-assets/README.md"]
+active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "design-assets/README.md", "public/llms.txt", "public/profile.md", "public/projects.md", "public/experience.md"]
 missing_doc_links: list[str] = []
 for doc_name in active_docs:
     content = read(doc_name)
