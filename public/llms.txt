@@ -14,7 +14,6 @@ Use the linked Markdown references for concise, factual summaries. Project statu
 
 - [Full interactive portfolio](https://legioniz.github.io/): projects, learning tools, skills, experience, and contact.
 - [Recruiter profile](https://legioniz.github.io/?view=recruiter): concise professional profile and selected evidence.
-- [Public-safe CV (PDF)](https://legioniz.github.io/King-Art-Pacumberto-CV.pdf): recruiter-facing PDF without the personal phone number.
 
 ## Source and contact
 

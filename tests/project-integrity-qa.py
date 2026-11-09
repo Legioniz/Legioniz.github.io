@@ -134,7 +134,7 @@ check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([
       "All deployed favicon source formats have valid file signatures")
 check('favicon.svg?v=20261109-4' in manifest and 'favicon-32.png?v=20261109-4' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v17" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v18" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
 check("legion-portfolio-motion-v7" in html_shell and "prefers-reduced-motion: reduce" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)" in html_shell,
       "Early boot follows the OS reduced-motion preference unless a visitor explicitly overrides it")
@@ -151,8 +151,8 @@ check("cache: npm" in workflow and "npm ci --no-audit --no-fund" in workflow and
 check("needs: verify-and-package" in workflow and "id-token: write" in workflow and "pages: write" in workflow,
       "Pages deployment waits for verification and has the documented Pages/id-token permissions")
 release_runner = read("scripts/portfolio.mjs")
-check(all(f"['run', '{name}']" in release_runner for name in ["test:adaptive", "test:integrity", "test:features", "test:production-source", "test:design-browser", "typecheck", "build:app", "audit:bundle", "test:interactions", "test:motion", "test:recruiter-browser"]),
-      "Release verification runs source, security, build, bundle, desktop/touch, motion, and compiled recruiter browser suites")
+check(all(f"['run', '{name}']" in release_runner for name in ["test:adaptive", "test:integrity", "test:features", "test:production-source", "test:design-browser", "typecheck", "build:app", "audit:bundle", "test:interactions", "test:motion", "test:recruiter-browser", "test:accessibility-browser"]),
+      "Release verification runs source, security, build, bundle, desktop/touch, motion, and compiled recruiter/accessibility browser suites")
 
 # 3. Ensure static URLs used by HTML, TSX, CSS, and the service worker resolve.
 asset_sources = [ROOT / "index.html", *ROOT.glob("src/**/*.ts"), *ROOT.glob("src/**/*.tsx"), ROOT / "src/styles.css", ROOT / "src/layout-integrity.css", ROOT / "public/sw.js", ROOT / "tests/interaction-fixture.html"]
@@ -277,8 +277,8 @@ check((ROOT / "design-assets/og-card.svg").is_file() and (ROOT / "public/og-card
       "Social-card vector master is retained outside public assets; PNG is the deployed crawler image")
 public_files = [path for path in (ROOT / "public").rglob("*") if path.is_file()]
 check(not any(path.suffix.lower() in {".doc", ".docx", ".odt"} for path in public_files), "Public assets contain no editable Word/OpenDocument files")
-check((ROOT / "public/King-Art-Pacumberto-CV.pdf").read_bytes().startswith(b"%PDF") and (ROOT / "public/King-Art-Pacumberto-Resume.pdf").read_bytes().startswith(b"%PDF"),
-      "Both document downloads are valid PDF containers")
+check(not any(path.suffix.lower() in {".pdf", ".doc", ".docx", ".odt"} for path in public_files),
+      "Public assets contain no downloadable personal application documents")
 check(not any("private" in path.name.lower() for path in public_files), "No private-CV filename is present in public assets")
 
 # 6. No-unused compiler policy and exact direct dependency pins.

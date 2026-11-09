@@ -27,14 +27,14 @@ The portfolio should feel like a personal technical field journal: part engineer
 - Project filters and hero-map nodes should always produce the same category result.
 - Native `details`/`summary` disclosures remain independently openable and keyboard operable.
 - Ambient motion is optional. The header control pauses CSS animation and the Canvas particle loop; the state persists locally. The motion control remains independent from the opt-in sound control.
-- Sound is opt-in and remains separate from visual feedback.
+- Interface sound is off by default and starts only after a visitor explicitly enables it. The sound control remains independent from motion and never carries information that is unavailable visually.
 - Use short transitions for button response and longer, low-amplitude motion only for decorative geometry.
 - Avoid cursor-following card tilt, automatic carousels, flashing states, and perpetual scrolling text. The capability strip is static and uses spacing, separators, and small markers to communicate breadth without competing with the content.
 
 ## Accessibility and performance
 
 - Keep visible focus, skip-to-content, labels on controls, and contrast in both themes.
-- Decorative motion starts enabled. Keep the site-level pause/resume control available at all times, and ensure that disabling motion never hides information or blocks an interaction.
+- Decorative motion follows `prefers-reduced-motion` by default. The site-level control lets visitors explicitly enable or pause it; an explicit choice is stored locally. Disabling motion never hides information or blocks an interaction.
 - Prefer transform/opacity for transitions. Keep Canvas particle count and frame rate capped, pause off-screen, and avoid unnecessary runtime packages.
 - Do not convey state through color alone; use text and shape/state changes as well.
 - Keep layout responsive without horizontal scrolling at 320px and above. On tablet and phone widths, the hero changes from vertically centered desktop flex composition to normal block flow; its display headline and orbit scale down on very narrow screens.
@@ -72,7 +72,7 @@ The display / body / annotation roles remain Space Grotesk, Manrope, and DM Mono
 - Balanced quality shortens hero and reveal motion.
 - Economy quality removes nonessential card lifts and corner flourish animation.
 - Coarse-pointer layouts suppress hover-only depth and use touch-appropriate interactions.
-- The site's motion-off setting exposes all content immediately. Visitors can pause or resume decorative motion from the site control.
+- The default `system` setting follows the operating system's reduced-motion preference. Visitors can explicitly opt in to motion or pause it from the site control; motion-off exposes all content immediately.
 
 ## Color governance — canonical rules
 

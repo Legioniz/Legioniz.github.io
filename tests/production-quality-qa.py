@@ -78,6 +78,15 @@ except (json.JSONDecodeError, AttributeError):
 for asset in ['public/robots.txt', 'public/sitemap.xml', 'public/site.webmanifest', 'public/og-card.png']:
     check((ROOT / asset).is_file(), f'{asset} exists')
 
+package = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))
+portfolio_runner = (ROOT / 'scripts/portfolio.mjs').read_text(encoding='utf-8')
+check(
+    (ROOT / 'tests/accessibility-browser-qa.py').is_file()
+    and package['scripts'].get('test:accessibility-browser') == 'python tests/accessibility-browser-qa.py'
+    and "test:accessibility-browser" in portfolio_runner,
+    'Compiled full/recruiter accessibility browser regression is registered in the release gate',
+)
+
 lhci = json.loads((ROOT / '.lighthouserc.json').read_text(encoding='utf-8'))['ci']
 workflow = (ROOT / '.github/workflows/deploy.yml').read_text(encoding='utf-8')
 check(set(lhci['collect']['url']) == {'http://127.0.0.1:4174/', 'http://127.0.0.1:4174/?view=recruiter'}, 'Lighthouse CI audits both the full portfolio and recruiter view')
@@ -96,6 +105,7 @@ except (json.JSONDecodeError, OSError):
     check(False, 'Web app manifest has a valid root start URL and display mode')
 
 app = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
+check("aria-current={activeSection === item.id ? 'location' : undefined}" in app, 'Full portfolio navigation exposes its visually active section as the current location')
 check("getPropertyValue('--muted-2')" in app and 'ctx.globalAlpha = particle.a' in app and 'ctx.globalAlpha = opacity' in app, 'Decorative canvas particles inherit the active theme color token')
 check('aria-activedescendant' in app and 'role="combobox"' in app and "event.key === 'ArrowDown'" in app and "event.key === 'Enter'" in app, 'Command palette implements keyboard selection and combobox semantics')
 features_accessibility = (ROOT / 'src/PortfolioFeatures.tsx').read_text(encoding='utf-8')
@@ -111,9 +121,10 @@ check('}, [motionEnabled, recruiterView])' in app and "getElementById('main-cont
 check('previousRecruiterView !== nextRecruiterView' in app and 'window.scrollTo(0, 0)' in app, 'Browser history switches reset the offset when the page layout changes')
 check('const exitRecruiterView' in app and 'const openRecruiterView' in app and app.count('window.scrollTo(0, 0)') >= 3, 'Explicit recruiter/full/project transitions normalize scroll without a stale smooth-scroll offset')
 check("lazy(() => import('./RecruiterView')" in app and 'Suspense fallback' in app, 'Recruiter profile loads as a separate, on-demand JavaScript chunk')
+check('resumeOriginalPath' not in app and 'resumePdfPath' not in app and 'King-Art-Pacumberto-Resume.pdf' not in app and 'King-Art-Pacumberto-CV.pdf' not in app, 'Full portfolio contains no resume/CV download paths or document controls')
 check('aria-label="Recruiter profile sections"' in recruiter and 'id="recruiter-main"' in recruiter, 'Recruiter profile has named navigation and a distinct main landmark')
 check('Skip to recruiter profile' in recruiter and 'tabIndex={-1}' in recruiter, 'Recruiter profile includes a keyboard skip link and focused page heading')
-check('Download CV · PDF' in recruiter and 'siteConfig.resumePdfPath' in recruiter and 'resumeOriginalPath' not in recruiter, 'Recruiter mode exposes the public-safe PDF CV only')
+check(not re.search(r'href=["\'][^"\']+\.pdf(?:["\'])', recruiter, re.I) and 'resumeOriginalPath' not in recruiter and 'resumePdfPath' not in recruiter, 'Recruiter mode exposes no downloadable personal application documents')
 check(all(value in recruiter for value in ['featuredProjects', 'skillGroups.map', 'relevantExperience', 'education.map', 'achievements.map', 'extracurriculars.map']), 'Recruiter profile draws evidence from the portfolio source data')
 check("'Computer Support Specialist'" in recruiter and "startsWith('Student Teacher')" in recruiter, 'Recruiter profile prioritizes relevant support and teaching experience')
 check('onOpenProject(project)' in recruiter and 'openRecruiterProject' in app, 'Recruiter project cards lead into the full project case-study dialog')
@@ -174,7 +185,7 @@ edge = (ROOT / 'supabase/functions/portfolio-submit/index.ts').read_text(encodin
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'Frontend backend configuration contains no service-role credential')
 check('enable row level security' in sql.lower() and 'is_portfolio_admin' in sql, 'Database migration retains RLS and administrator policy enforcement')
 check('verifyTurnstile' in edge and 'consume_portfolio_quota' in edge and 'PORTFOLIO_ALLOWED_ORIGIN' in edge, 'Server-side intake retains CAPTCHA, rate quota, and origin restrictions')
-check("const CACHE_NAME = 'legion-portfolio-shell-v16'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker cache version is refreshed for the palette asset release')
+check("const CACHE_NAME = 'legion-portfolio-shell-v18'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker cache version is refreshed for the accessible interaction and preference release')
 check('service_role' not in recruiter.lower(), 'Recruiter chunk has no privileged backend credential references')
 
 check('--content-measure: 68ch' in css and '--section-space: clamp(72px, 9vw, 132px)' in css and '--type-kicker' in css, 'Shared design system includes readable measure, responsive section spacing, and semantic typography tokens')
@@ -193,7 +204,8 @@ check(all(value in recruiter for value in ['recruiter-preferences', 'motion-togg
 check('<span className="recruiter-brand-lockup">KA</span>' in recruiter and 'recruiter-snapshot-mark' not in recruiter and 'recruiter-snapshot-lockup' not in recruiter and 'KA<span>.</span>' not in recruiter and 'white-space: nowrap' in css, 'Recruiter header retains its single-line KA brand while the duplicate snapshot monogram is removed')
 check('<a className="recruiter-brand" href="#recruiter-top" data-sfx="navigate">' in recruiter and 'aria-label={`KA RECRUITER BRIEF' not in recruiter, 'Recruiter brand accessible name preserves its visible text for label-content-name matching')
 check('runLayoutViewTransition' in app and 'data-layout-transition="recruiter"' in (ROOT / "src/layout-integrity.css").read_text(encoding="utf-8"), 'Entering and leaving recruiter view uses a guarded native root transition with a CSS fallback')
-check('data-sfx="download"' in recruiter and 'data-sfx="open"' in recruiter and 'data-sfx="toggle"' in recruiter and 'installInteractionSounds' in app, 'Recruiter links, disclosures, and preference controls use the delegated global sound system')
+check('data-sfx="navigate"' in recruiter and 'data-sfx="open"' in recruiter and 'data-sfx="toggle"' in recruiter and 'installInteractionSounds' in app, 'Recruiter navigation, contact links, and preference controls use the delegated global sound system')
+check("localStorage.getItem('legion-portfolio-sound-v2') === 'on'" in app and "catch { return false }" in app, 'Interface sound is opt-in by default and remains disabled when browser storage is unavailable')
 check(":root[data-quality='economy'][data-motion='on'] .hero-section .hero-title .title-line" in css and ":root[data-quality='balanced'][data-motion='on'] .hero-section .hero-title .title-line" in css and '@media (pointer: coarse)' in css, 'Motion is budgeted for economy, balanced, desktop, and touch profiles')
 check('data-hero-line' in app and 'aria-label="From a question to working systems."' in app and 'data-reveal' not in re.search(r'<h1 className="hero-title"[\s\S]*?</h1>', app).group(0), 'Hero headline uses a fail-open dedicated sequence with a complete accessible label')
 check('className="availability-line" role="group" aria-label=' in app and 'aria-hidden="true">BSIT STUDENT / SOFTWARE &amp; SYSTEMS</span>' in app, 'Hero location and discipline metadata has a readable visual gap and one coherent accessible label')
