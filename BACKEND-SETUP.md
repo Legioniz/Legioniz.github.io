@@ -1,6 +1,6 @@
 # Secure portfolio backend setup
 
-The frontend contains private inquiry and public-note forms, a moderated comment feed, an owner dashboard, and an opt-in analytics view. The comments workflow supports the complete lifecycle: visitors create pending notes; the public feed reads approved notes only; the owner can review, edit, approve, hide, archive, export, or permanently delete records. The backend is deliberately **inactive until configured**. This repository contains the database migration and Edge Function, but it does not contain Supabase credentials, an administrator account, or a deployed Supabase project.
+The frontend contains private inquiry and public-note forms, a moderated comment feed, an owner dashboard, and an opt-in analytics view. The comments workflow supports the complete lifecycle: visitors create pending notes; the public feed reads approved notes only; the owner can review, edit, approve, hide, archive, export, or permanently delete records. The production repository is connected to a dedicated Supabase project in Singapore, with the database migrations applied and the `portfolio-submit` Edge Function deployed. GitHub Actions supplies the public project URL and publishable key to the frontend build. The one-time owner Auth invitation is still required before the private admin console can be used; visitors can submit notes before then, but they remain pending and are not publicly visible.
 
 ## Architecture
 
@@ -87,4 +87,4 @@ The current analytics are deliberately minimal and approximate. A visitor may bl
 
 ## Unconfigured state
 
-The source distribution has no Supabase URL, keys, deployed function, or allowlisted owner ID. Until a Supabase project is created, the migration is applied, the Edge Function is deployed with server-only secrets, an owner is allowlisted, and the public Vite values are added to the GitHub Pages build, the public-notes composer stays disabled and shows a backend-offline state; no comment is stored in browser storage. The inquiry form uses its honest mailto fallback, analytics remain off, and the admin panel shows setup instructions. This is intentional: the browser must never simulate a database or moderation queue.
+When running a separate copy without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the public-notes composer stays disabled and shows a backend-offline state; no comment is stored in browser storage. The inquiry form uses its honest mailto fallback, analytics remain off, and the admin panel shows setup instructions. The production repository has these public values configured by its GitHub Actions workflow. The owner must still accept the Auth invitation and verify the email before admin moderation becomes available.
