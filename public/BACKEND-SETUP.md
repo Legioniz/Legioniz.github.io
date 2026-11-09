@@ -2,6 +2,8 @@
 
 The frontend contains private inquiry and public-note forms, a moderated comment feed, an owner dashboard, and an opt-in analytics view. The comments workflow supports the complete lifecycle: visitors create pending notes; the public feed reads approved notes only; the owner can review, edit, approve, hide, archive, export, or permanently delete records. The production repository is connected to a dedicated Supabase project in Singapore, with the database migrations applied and the `portfolio-submit` Edge Function deployed. GitHub Actions supplies the public project URL and publishable key to the frontend build. The one-time owner Auth invitation is still required before the private admin console can be used; visitors can submit notes before then, but they remain pending and are not publicly visible.
 
+For password recovery, set the Supabase **Authentication → URL Configuration** Site URL to `https://legioniz.github.io/` and add `https://legioniz.github.io/**` to the allowed Redirect URLs. The admin console sends password-reset emails back to `https://legioniz.github.io/?auth=recovery`; the portfolio then consumes the recovery token and presents a new-password form. Recovery tokens are kept only in tab-scoped session storage and removed from the address bar.
+
 ## Architecture
 
 - **Static frontend:** React/Vite hosted on GitHub Pages.

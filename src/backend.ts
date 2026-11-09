@@ -114,6 +114,26 @@ export async function fetchApprovedComments(): Promise<PortfolioComment[]> {
   return request<PortfolioComment[]>('/rest/v1/comments?select=id,display_name,body,status,created_at,updated_at&status=eq.approved&order=created_at.desc&limit=30')
 }
 
+const ADMIN_PASSWORD_RECOVERY_REDIRECT = 'https://legioniz.github.io/?auth=recovery'
+
+export async function requestAdminPasswordRecovery(email: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) throw new BackendError('Enter the administrator email address first.')
+  await request<unknown>(`/auth/v1/recover?redirect_to=${encodeURIComponent(ADMIN_PASSWORD_RECOVERY_REDIRECT)}`, {
+    method: 'POST',
+    body: JSON.stringify({ email: normalizedEmail }),
+  })
+}
+
+export async function updateAdminPassword(accessToken: string, password: string): Promise<void> {
+  if (!accessToken) throw new BackendError('The password-reset session is missing. Request a fresh recovery email.')
+  if (password.length < 8) throw new BackendError('Choose a password with at least 8 characters.')
+  await request<unknown>('/auth/v1/user', {
+    method: 'PUT',
+    body: JSON.stringify({ password }),
+  }, accessToken)
+}
+
 export async function signInAdmin(email: string, password: string): Promise<AdminSession> {
   const payload = await request<{
     access_token: string; refresh_token: string; expires_in: number;

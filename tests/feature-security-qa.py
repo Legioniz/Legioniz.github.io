@@ -80,6 +80,12 @@ check('useCallback((token: string) => setCaptcha(token), [])' in backend_ui, 'Tu
 check('.photo-lightbox-panel' in features and "event.key === 'Escape'" in features and "event.key !== 'Tab'" in features, 'Photo viewer traps keyboard focus and closes on Escape')
 check('allowlist' in backend_ui.lower() and 'verifyAdmin' in backend and 'Row Level Security' in backend_ui, 'Admin UI checks a database allowlist and leaves authorization to RLS')
 check('dialogRef' in backend_ui and 'onCloseRef.current()' in backend_ui and "event.key !== 'Tab'" in backend_ui, 'Admin dialog traps keyboard focus and closes on Escape')
+check('requestAdminPasswordRecovery' in backend and 'auth/v1/recover?redirect_to=' in backend and 'https://legioniz.github.io/?auth=recovery' in backend, 'Password recovery requests target the production portfolio callback')
+check('updateAdminPassword' in backend and "'/auth/v1/user'" in backend and "method: 'PUT'" in backend, 'Recovery session updates the password through Supabase Auth rather than local storage')
+check('consumeAdminAuthRedirect' in backend_ui and "type === 'recovery'" in backend_ui and 'error_code' in backend_ui and 'history.replaceState' in backend_ui, 'Recovery callback consumes Supabase hash tokens and removes credentials from the address bar')
+check('sessionStorage.setItem(ADMIN_RECOVERY_SESSION_KEY' in backend_ui and 'sessionStorage.removeItem(ADMIN_RECOVERY_SESSION_KEY)' in backend_ui, 'Recovery token is kept tab-scoped and cleared after use or link failure')
+check('handleRecoveryRequest' in backend_ui and 'handlePasswordUpdate' in backend_ui and 'FORGOT PASSWORD?' in backend_ui and 'SET NEW PASSWORD' in backend_ui, 'Admin login offers password recovery and a working new-password form')
+check("get('auth') === 'recovery'" in app and "hash.get('error_code')" in app, 'Recovery email return automatically opens the admin recovery screen')
 
 # PostgreSQL security model.
 for table in ['admin_users', 'inquiries', 'comments', 'page_views', 'submission_rate_limits', 'admin_activity']:
@@ -100,7 +106,7 @@ check("message.length < 10 || message.length > 5000" in edge and "body.length < 
 check('crypto.subtle.importKey' in edge and 'HMAC' in edge and 'raw address is neither stored nor logged' in edge, 'Rate-limit network identifier is HMAC-derived rather than stored raw')
 check('readLimitedBody' in edge and 'Array.isArray(parsed)' in edge and 'JSON.parse(rawBody)' in edge, 'Edge Function bounds streamed request bodies and rejects non-object JSON')
 check("'/rest/v1/'" in sw and "'/auth/v1/'" in sw and "'/functions/v1/'" in sw and "'/storage/v1/'" in sw, 'Service worker explicitly bypasses database, auth, function, and storage APIs')
-check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v14' in sw and "'/og-card.png'" in sw and "'/favicon.ico?v=20261109-3'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the comments release')
+check("request.method !== 'GET'" in sw and 'legion-portfolio-shell-v15' in sw and "'/og-card.png'" in sw and "'/favicon.ico?v=20261109-3'" in sw, 'Service worker caches only GET static resources and refreshes the shell cache for the comments release')
 check("const isSoundToggle = interactive.classList.contains('sound-toggle')" in sound and '!isSoundToggle && now - lastActionAt < 35' in sound, 'Sound mute confirmation bypasses rapid-action debounce so the final cue is not lost')
 
 failures = [label for ok, label in checks if not ok]

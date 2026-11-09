@@ -4,8 +4,8 @@ import { siteConfig } from './config'
 import {
   backendConfig, deleteAdminComment, deleteAdminInquiry, exportRecords,
   fetchApprovedComments, getAdminActivity, getAdminComments, getAdminInquiries,
-  getAnalyticsSummary, readStoredAdminSession, refreshAdminSession, signInAdmin,
-  storeAdminSession, submitPublicRecord, updateAdminComment, updateAdminInquiry,
+  getAnalyticsSummary, readStoredAdminSession, refreshAdminSession, requestAdminPasswordRecovery, signInAdmin,
+  storeAdminSession, submitPublicRecord, updateAdminComment, updateAdminInquiry, updateAdminPassword,
 } from './backend'
 import type { AdminActivity, AdminSession, PortfolioComment, PortfolioInquiry } from './backend'
 
@@ -336,9 +336,45 @@ export function PrivacyNotice() {
   return <aside className="privacy-notice" aria-label="Privacy settings"><div><span>PRIVACY / ANALYTICS</span><p>Analytics are off by default. Optional analytics store only a random session ID, page path, and timestamp—no IP address, fingerprint, or precise location.</p>{trackingStatus && <small>{trackingStatus}</small>}</div><div className="privacy-actions"><button onClick={() => choose('declined')}>KEEP OFF</button><button onClick={() => choose('accepted')}>ALLOW ANONYMOUS COUNTS</button><button className="privacy-close" onClick={() => setShowSettings(false)} aria-label="Close privacy settings">×</button></div></aside>
 }
 
+const ADMIN_RECOVERY_SESSION_KEY = 'legion-portfolio-admin-recovery-v1'
+
+function consumeAdminAuthRedirect(): { accessToken: string | null; notice: string } {
+  if (typeof window === 'undefined') return { accessToken: null, notice: '' }
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const type = hash.get('type')
+  const accessToken = hash.get('access_token')
+  const errorCode = hash.get('error_code')
+  const errorDescription = hash.get('error_description')
+  let notice = ''
+
+  if (type === 'recovery' && accessToken) {
+    try { window.sessionStorage.setItem(ADMIN_RECOVERY_SESSION_KEY, accessToken) } catch { /* Keep the token in memory if storage is unavailable. */ }
+  } else if (errorCode || hash.get('error')) {
+    try { window.sessionStorage.removeItem(ADMIN_RECOVERY_SESSION_KEY) } catch { /* Storage may be unavailable. */ }
+    notice = errorCode === 'otp_expired'
+      ? 'That password-reset link has expired or was already used. Request a fresh one below.'
+      : errorDescription || 'The authentication link could not be verified. Request a fresh password-reset link.'
+  }
+
+  const shouldCleanHash = hash.has('access_token') || hash.has('error') || hash.has('error_code')
+  if (shouldCleanHash) {
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
+  }
+
+  let storedToken: string | null = null
+  try { storedToken = window.sessionStorage.getItem(ADMIN_RECOVERY_SESSION_KEY) } catch { /* Storage may be unavailable. */ }
+  return { accessToken: type === 'recovery' && accessToken ? accessToken : storedToken, notice }
+}
+
 export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [authRedirect] = useState(consumeAdminAuthRedirect)
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(authRedirect.accessToken)
+  const [authNotice, setAuthNotice] = useState(authRedirect.notice)
+  const [recoveryRequestOpen, setRecoveryRequestOpen] = useState(Boolean(authRedirect.notice))
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [session, setSession] = useState<AdminSession | null>(null)
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(siteConfig.email)
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -437,6 +473,40 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
     } finally { setBusy(false) }
   }
 
+  async function handleRecoveryRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy) return
+    setBusy(true); setLoginError(''); setAuthNotice('')
+    try {
+      await requestAdminPasswordRecovery(email.trim())
+      setRecoveryRequestOpen(false)
+      setAuthNotice('If an account matches that address, a password-reset link has been sent. Check your inbox and spam folder.')
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : 'The recovery email could not be sent. Please try again.')
+    } finally { setBusy(false) }
+  }
+
+  async function handlePasswordUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy || !recoveryToken) return
+    if (newPassword.length < 8) { setLoginError('Choose a password with at least 8 characters.'); return }
+    if (newPassword !== confirmPassword) { setLoginError('The passwords do not match.'); return }
+    setBusy(true); setLoginError(''); setAuthNotice('')
+    try {
+      await updateAdminPassword(recoveryToken, newPassword)
+      setRecoveryToken(null)
+      try { window.sessionStorage.removeItem(ADMIN_RECOVERY_SESSION_KEY) } catch { /* Storage may be unavailable. */ }
+      const url = new URL(window.location.href)
+      url.searchParams.delete('auth')
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}`)
+      setNewPassword(''); setConfirmPassword(''); setPassword('')
+      setRecoveryRequestOpen(false)
+      setAuthNotice('Your password has been updated. Sign in below with your new password.')
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : 'The password could not be updated. Request a fresh recovery link and try again.')
+    } finally { setBusy(false) }
+  }
+
   async function refresh() { if (session) await loadDashboard(session) }
   async function updateInquiry(id: string, patch: Partial<PortfolioInquiry>) {
     if (!session) return
@@ -473,7 +543,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
     <div className="admin-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <section ref={dialogRef} className="admin-panel" role="dialog" aria-modal="true" aria-labelledby="admin-title" tabIndex={-1}>
         <header className="admin-head"><div><span className="feature-code">OWNER CONSOLE / PRIVATE</span><h2 id="admin-title">Portfolio <em>control room.</em></h2></div><button className="feature-close" onClick={onClose} aria-label="Close admin panel">×</button></header>
-        {!backendConfig.configured ? <div className="admin-unconfigured"><strong>Backend connection required.</strong><p>No administrator mode is enabled in this build. Configure <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, apply the SQL schema, deploy the Edge Function, and add the owner’s Auth user ID to the admin allowlist. The site deliberately does not use a client-side password or fake administrator switch.</p><a href="/BACKEND-SETUP.md" target="_blank" rel="noopener noreferrer">Open backend setup instructions ↗</a></div> : !session ? <form className="admin-login" onSubmit={handleLogin}><p>Sign in with the owner account created in Supabase Auth. Access is checked against the database allowlist and enforced again by Row Level Security.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" required/></label><label>PASSWORD<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'VERIFYING…' : 'SIGN IN SECURELY ↗'}</button>{(loginError || dashboardError) && <p className="form-status" role="alert">{loginError || dashboardError}</p>}</form> : <>
+        {!backendConfig.configured ? <div className="admin-unconfigured"><strong>Backend connection required.</strong><p>No administrator mode is enabled in this build. Configure <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, apply the SQL schema, deploy the Edge Function, and add the owner’s Auth user ID to the admin allowlist. The site deliberately does not use a client-side password or fake administrator switch.</p><a href="/BACKEND-SETUP.md" target="_blank" rel="noopener noreferrer">Open backend setup instructions ↗</a></div> : !session ? recoveryToken ? <form className="admin-login" onSubmit={handlePasswordUpdate}><p>Your email has been verified. Choose a new password for the private portfolio administrator account.</p><label>NEW PASSWORD<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength={8} required/></label><label>CONFIRM NEW PASSWORD<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'UPDATING…' : 'SET NEW PASSWORD ↗'}</button>{(loginError || authNotice) && <p className="form-status" role="alert">{loginError || authNotice}</p>}</form> : recoveryRequestOpen ? <form className="admin-login" onSubmit={handleRecoveryRequest}><p>Enter the administrator email address. We’ll send a secure, time-limited link to choose a new password.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'SENDING…' : 'SEND PASSWORD RESET LINK ↗'}</button><button className="admin-auth-link" type="button" onClick={() => { setRecoveryRequestOpen(false); setLoginError('') }}>BACK TO SIGN IN</button>{(loginError || authNotice) && <p className="form-status" role="status">{loginError || authNotice}</p>}</form> : <form className="admin-login" onSubmit={handleLogin}><p>Sign in with the owner account created in Supabase Auth. Access is checked against the database allowlist and enforced again by Row Level Security.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" required/></label><label>PASSWORD<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'VERIFYING…' : 'SIGN IN SECURELY ↗'}</button><button className="admin-auth-link" type="button" onClick={() => { setRecoveryRequestOpen(true); setLoginError('') }}>FORGOT PASSWORD?</button>{(loginError || dashboardError || authNotice) && <p className="form-status" role="alert">{loginError || dashboardError || authNotice}</p>}</form> : <>
           <div className="admin-session-bar"><span>AUTHENTICATED / {session.user.email ?? session.user.id}</span><div><button onClick={() => void refresh()}>REFRESH</button><button onClick={() => { setSession(null); storeAdminSession(null); setInquiries([]); setComments([]); setActivity([]); setAnalytics(null) }}>SIGN OUT</button></div></div>
           <div className="admin-metrics"><span><small>NEW INQUIRIES</small><b>{newInquiryCount}</b></span><span><small>PENDING COMMENTS</small><b>{pendingCommentCount}</b></span><span><small>RECORDED VIEWS</small><b>{analytics?.views ?? '—'}</b></span></div>
           <nav className="admin-tabs" aria-label="Admin data views">{(['inquiries', 'comments', 'analytics', 'activity'] as const).map((item) => <button key={item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>{item.toUpperCase()}</button>)}</nav>

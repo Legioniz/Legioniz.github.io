@@ -134,7 +134,7 @@ async function check() {
   log(edge.includes('PORTFOLIO_ALLOWED_ORIGIN') && edge.includes('verifyTurnstile') && edge.includes('consume_portfolio_quota') && edge.includes('payload.website.trim()'), 'Submission Edge Function includes origin, CAPTCHA, quota, and honeypot controls')
   const serviceWorker = await read('public/sw.js')
   log(['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'].every((prefix) => serviceWorker.includes(prefix)), 'Service worker excludes backend API paths from caching')
-  log(serviceWorker.includes("legion-portfolio-shell-v14") && serviceWorker.includes("/favicon.svg?v=20261109-3") && serviceWorker.includes("/favicon-32.png?v=20261109-3") && serviceWorker.includes("/favicon.ico?v=20261109-3"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
+  log(serviceWorker.includes("legion-portfolio-shell-v15") && serviceWorker.includes("/favicon.svg?v=20261109-3") && serviceWorker.includes("/favicon-32.png?v=20261109-3") && serviceWorker.includes("/favicon.ico?v=20261109-3"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
 
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')

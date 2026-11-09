@@ -626,7 +626,13 @@ export default function App() {
   const [filter, setFilter] = useState<'All' | ProjectCategory>('All')
   const [recruiterView, setRecruiterView] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'recruiter')
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [adminOpen, setAdminOpen] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    return new URLSearchParams(window.location.search).get('auth') === 'recovery'
+      || hash.get('type') === 'recovery'
+      || Boolean(hash.get('error') || hash.get('error_code'))
+  })
   const [activeSection, setActiveSection] = useState('home')
   const progressRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
