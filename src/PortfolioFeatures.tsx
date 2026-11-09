@@ -22,7 +22,7 @@ export function IntroSequence() {
     if (typeof window === 'undefined') return false
     try {
       if (sessionStorage.getItem('legion-intro-seen-v1') === 'yes') return false
-      const savedMotion = localStorage.getItem('legion-portfolio-motion-v6')
+      const savedMotion = localStorage.getItem('legion-portfolio-motion-v7')
       if (savedMotion === 'off') return false
       return true
     } catch { /* Storage may be unavailable; keep the default introduction enabled. */ }
