@@ -15,7 +15,7 @@ The browser only receives the Supabase URL, anon/publishable key, and Turnstile 
 ## 1. Create the Supabase project
 
 1. Create a Supabase project and keep the project URL and anon/publishable key available for the frontend.
-2. Open SQL Editor and apply `supabase/migrations/202611090001_portfolio_backend.sql`.
+2. Apply **all** SQL migrations in `supabase/migrations/` in timestamp order. With the Supabase CLI, run `supabase db push` from the repository root. When using SQL Editor, execute each migration file in order. The later `portfolio_security_hardening` migration moves the admin predicate and audit trigger into the non-exposed `private` schema, removes unused public helper functions, tightens function grants, and separates anonymous approved-comment reads from authenticated admin moderation. Do not skip it.
 3. Create the owner account in **Authentication → Users**. Disable public user sign-ups if no visitor account flow is required.
 4. Copy the owner's Auth user UUID and manually insert it into the allowlist:
 
@@ -24,7 +24,12 @@ The browser only receives the Supabase URL, anon/publishable key, and Turnstile 
    values ('REPLACE-WITH-THE-OWNER-AUTH-USER-UUID');
    ```
 
-5. Do not create public policies for inquiry inserts, comment updates, analytics reads, or allowlist writes. The provided migration intentionally grants the public only approved-comment reads.
+5. Do not create public policies for inquiry inserts, comment updates, analytics reads, or allowlist writes. The migrations intentionally grant anonymous visitors only approved-comment reads.
+
+
+## Security hardening migration
+
+The `portfolio_security_hardening` migration is required after the initial schema migration. It keeps authorization and audit `SECURITY DEFINER` helpers in the non-exposed `private` schema, explicitly restricts the server-only quota function to `service_role`, and prevents anonymous users from reaching administrator helper RPCs. The administrator predicate is available only to signed-in roles for RLS evaluation. The `private` schema must remain excluded from the project's exposed Data API schemas.
 
 ## 2. Configure and deploy the Edge Function
 
