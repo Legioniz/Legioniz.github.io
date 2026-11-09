@@ -2980,21 +2980,7 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
 .recruiter-section-heading > p { max-width: 430px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.8; }
 .recruiter-project-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
 .recruiter-project-card { position: relative; isolation: isolate; min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
-.recruiter-project-card::before {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  content: '';
-  opacity: 0;
-  background: radial-gradient(
-    340px circle at var(--recruiter-spot-x, 50%) var(--recruiter-spot-y, 50%),
-    color-mix(in srgb, var(--accent) 15%, transparent),
-    transparent 68%
-  );
-  transition: opacity 220ms ease;
-}
-.recruiter-project-card[data-spotlight='active']::before { opacity: 1; }
+
 .recruiter-project-art { position: relative; display: grid; place-items: center; min-height: 130px; overflow: hidden; border-bottom: 1px solid var(--line); background: var(--bg-2); }
 .recruiter-project-art > span { position: absolute; top: 12px; left: 14px; z-index: 1; color: var(--muted-2); font: 9px var(--font-mono); }
 .recruiter-project-art > i { position: relative; display: block; width: 76px; height: 76px; border: 1px solid var(--line-strong); border-radius: 50%; }
@@ -3003,7 +2989,14 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
 .recruiter-art-meter > i { border-radius: 10px; transform: rotate(45deg); }
 .recruiter-art-meter > i::before { border-radius: 7px; }
 .recruiter-art-fan > i { border-radius: 50%; background: repeating-conic-gradient(from 20deg, transparent 0 38deg, var(--line-strong) 39deg 41deg); }
-.recruiter-project-body { display: flex; flex-direction: column; align-items: flex-start; min-height: 295px; padding: 18px; }
+.recruiter-project-body { position: relative; display: flex; flex-direction: column; align-items: flex-start; min-height: 295px; padding: 18px; background-color: var(--surface); }
+.recruiter-project-card[data-spotlight='active'] .recruiter-project-body {
+  background-image: radial-gradient(
+    340px circle at var(--recruiter-spot-x, 50%) var(--recruiter-spot-y, 50%),
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent 70%
+  );
+}
 .recruiter-project-type { margin: 0 0 8px; color: var(--accent); font: 8px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 .recruiter-project-body h3 { margin: 0 0 9px; color: var(--text-strong); font: 600 20px/1.15 var(--font-display); letter-spacing: -.04em; }
 .recruiter-project-body > p:not(.recruiter-project-type) { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.75; }
