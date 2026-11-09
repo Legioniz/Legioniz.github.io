@@ -119,13 +119,13 @@ favicon_png = (ROOT / "public/favicon-32.png").read_bytes()
 favicon_ico = (ROOT / "public/favicon.ico").read_bytes()
 manifest = read("public/site.webmanifest")
 service_worker = read("public/sw.js")
-check(all(f'/favicon{suffix}?v=20261109-4' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
+check(all(f'/favicon{suffix}?v=20261109-5' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
       "HTML provides refreshed SVG, PNG, ICO, and mask-icon favicon references")
 check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([137, 80, 78, 71, 13, 10, 26, 10])) and favicon_ico[:4] == bytes([0, 0, 1, 0]),
       "All deployed favicon source formats have valid file signatures")
-check('favicon.svg?v=20261109-4' in manifest and 'favicon-32.png?v=20261109-4' in manifest,
+check('favicon.svg?v=20261109-5' in manifest and 'favicon-32.png?v=20261109-5' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v17" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v17" in service_worker and "favicon.ico?v=20261109-5" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
 check("legion-portfolio-motion-v8" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "motionOverride === 'system' && !systemReducedMotion" in html_shell,
       "Early boot honors system reduced motion before paint and allows explicit visitor overrides")
