@@ -6,6 +6,7 @@ from __future__ import annotations
 import struct
 from pathlib import Path
 
+from PIL import Image
 from playwright.sync_api import sync_playwright
 
 
@@ -26,6 +27,25 @@ svg {{ display: block; width: {width}px; height: {height}px; }}
     page.set_viewport_size({"width": width, "height": height})
     page.set_content(document, wait_until="load")
     page.screenshot(path=str(destination), full_page=True, omit_background=transparent)
+
+
+def optimize_social_preview(destination: Path) -> None:
+    """Quantize the editorial vector preview and enforce its crawler transfer budget."""
+    with Image.open(destination) as rendered:
+        if rendered.size != (1200, 630):
+            raise RuntimeError(f"Social preview must be 1200x630, got {rendered.size}")
+        rgb = rendered.convert("RGB")
+        for color_count in (256, 192, 128):
+            indexed = rgb.quantize(
+                colors=color_count,
+                method=Image.Quantize.MEDIANCUT,
+                dither=Image.Dither.NONE,
+            )
+            indexed.save(destination, format="PNG", optimize=True, compress_level=9)
+            if destination.stat().st_size <= 250 * 1024:
+                print(f"Optimized social preview to {color_count} colors")
+                return
+    raise RuntimeError("Optimized social preview still exceeds the 250 KiB crawler budget")
 
 
 def build_ico(destination: Path, images: list[tuple[int, bytes]]) -> None:
@@ -65,6 +85,8 @@ def main() -> None:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(device_scale_factor=1)
         render_svg(page, social_source, social_target, 1200, 630, transparent=False)
+
+        optimize_social_preview(social_target)
 
         favicon_16 = ROOT / ".favicon-16.png"
         render_svg(page, icon_source, favicon_16, 16, 16, transparent=True)
