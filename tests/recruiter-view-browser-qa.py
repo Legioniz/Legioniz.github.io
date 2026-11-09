@@ -198,8 +198,15 @@ def main() -> None:
             first_card = page.locator('.recruiter-project-card').first
             fine_pointer = page.evaluate("window.matchMedia('(hover: hover) and (pointer: fine)').matches")
             if fine_pointer:
-                first_card.hover(position={'x': 24, 'y': 28})
-                page.wait_for_timeout(40)
+                first_card.evaluate("""el => {
+                    const bounds = el.getBoundingClientRect()
+                    el.dispatchEvent(new PointerEvent('pointermove', {
+                        bubbles: true,
+                        pointerType: 'mouse',
+                        clientX: bounds.left + 24,
+                        clientY: bounds.top + 28
+                    }))
+                }""")
                 spotlight = first_card.get_attribute('data-spotlight')
                 spotlight_opacity = first_card.evaluate("(el) => getComputedStyle(el, '::before').opacity")
                 check(spotlight == 'active' and float(spotlight_opacity) > 0,
