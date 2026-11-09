@@ -607,7 +607,7 @@ export default function App() {
   const soundEnabledRef = useRef(soundEnabled)
   const [motionPreference, setMotionPreference] = useState<'on' | 'off'>(() => {
     try {
-      return localStorage.getItem('legion-portfolio-motion-v6') === 'off' ? 'off' : 'on'
+      return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'
     } catch { return 'on' }
   })
   const motionEnabled = motionPreference === 'on'
@@ -676,7 +676,7 @@ export default function App() {
   const toggleMotion = () => {
     const next = motionEnabled ? 'off' : 'on'
     setMotionPreference(next)
-    try { localStorage.setItem('legion-portfolio-motion-v6', next) } catch { /* Storage can be disabled. */ }
+    try { localStorage.setItem('legion-portfolio-motion-v7', next) } catch { /* Storage can be disabled. */ }
   }
   const navigate = (id: string) => {
     setMobileOpen(false)
