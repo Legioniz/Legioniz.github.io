@@ -596,6 +596,8 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
   useEffect(() => {
     if (!open) return
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     setQuery('')
     const focusFrame = window.requestAnimationFrame(() => inputRef.current?.focus())
     const getFocusable = () => Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
@@ -631,6 +633,7 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
     return () => {
       window.cancelAnimationFrame(focusFrame)
       document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = previousOverflow
       previousFocus?.focus()
     }
   }, [open])
@@ -700,6 +703,7 @@ export default function App() {
   const [activeSection, setActiveSection] = useState('home')
   const progressRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const [headerHidden, setHeaderHidden] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(() => {
     try { return localStorage.getItem('legion-portfolio-sound-v2') === 'on' } catch { return false }
@@ -960,6 +964,18 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeys)
   }, [closeProject, recruiterView])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const handleMobileEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setMobileOpen(false)
+      window.requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
+    }
+    document.addEventListener('keydown', handleMobileEscape)
+    return () => document.removeEventListener('keydown', handleMobileEscape)
+  }, [mobileOpen])
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(siteConfig.github)
@@ -1003,7 +1019,7 @@ export default function App() {
             <Icon name={motionEnabled ? 'pause' : 'play'} size={16}/>
           </button>
           <button className="icon-button theme-toggle" data-sfx="toggle" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={17}/></button>
-          <button className="icon-button mobile-menu-button" data-sfx="toggle" onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen} aria-controls="primary-navigation" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}><Icon name={mobileOpen ? 'close' : 'menu'}/></button>
+          <button ref={mobileMenuButtonRef} className="icon-button mobile-menu-button" data-sfx="toggle" onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen} aria-controls="primary-navigation" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}><Icon name={mobileOpen ? 'close' : 'menu'}/></button>
         </div>
       </header>
 
