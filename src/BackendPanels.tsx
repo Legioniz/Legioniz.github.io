@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { siteConfig } from './config'
 import {
@@ -18,6 +18,7 @@ type TurnstileAPI = {
     theme?: 'light' | 'dark' | 'auto'
   }) => string
   reset: (widgetId?: string) => void
+  remove?: (widgetId?: string) => void
 }
 
 declare global { interface Window { turnstile?: TurnstileAPI } }
@@ -26,37 +27,63 @@ function resetTurnstile() {
   try { window.turnstile?.reset() } catch { /* A blocked or expired widget should not prevent the email fallback. */ }
 }
 
-function TurnstileChallenge({ onToken }: { onToken: (token: string) => void }) {
+function TurnstileChallenge({ onToken, resetSignal }: { onToken: (token: string) => void; resetSignal: number }) {
   const [error, setError] = useState('')
+  const elementId = useId().replace(/:/g, '')
+  const widgetIdRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!backendConfig.turnstileSiteKey) return
-    const mount = (container: HTMLElement) => {
-      if (!window.turnstile || container.dataset.widgetMounted === 'yes') return
-      container.dataset.widgetMounted = 'yes'
-      window.turnstile.render(container, {
-        sitekey: backendConfig.turnstileSiteKey,
-        theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
-        callback: onToken,
-        'expired-callback': () => onToken(''),
-        'error-callback': () => { onToken(''); setError('Verification could not be completed. Please retry.') },
-      })
+    let cancelled = false
+    let script: HTMLScriptElement | null = null
+    const mount = () => {
+      const container = document.getElementById(elementId)
+      if (cancelled || !window.turnstile || !container || container.dataset.widgetMounted === 'yes') return
+      try {
+        container.dataset.widgetMounted = 'yes'
+        widgetIdRef.current = window.turnstile.render(container, {
+          sitekey: backendConfig.turnstileSiteKey,
+          theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
+          callback: onToken,
+          'expired-callback': () => onToken(''),
+          'error-callback': () => { onToken(''); setError('Verification could not be completed. Please retry.') },
+        })
+      } catch {
+        container.dataset.widgetMounted = 'no'
+        setError('Verification could not start. Please reload and try again.')
+      }
     }
-    const existing = document.querySelector<HTMLScriptElement>('script[data-portfolio-turnstile]')
-    const script = existing ?? document.createElement('script')
-    if (!existing) {
+    const onError = () => { if (!cancelled) setError('Verification could not load. Check your content blocker or try again later.') }
+    script = document.querySelector<HTMLScriptElement>('script[data-portfolio-turnstile]') ?? document.createElement('script')
+    script.addEventListener('load', mount, { once: true })
+    script.addEventListener('error', onError, { once: true })
+    if (window.turnstile) mount()
+    else if (!script.dataset.portfolioTurnstile) {
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
       script.async = true
       script.defer = true
       script.dataset.portfolioTurnstile = 'yes'
       document.head.append(script)
     }
-    const element = document.getElementById('portfolio-turnstile')
-    if (window.turnstile && element) mount(element)
-    else script.addEventListener('load', () => { const target = document.getElementById('portfolio-turnstile'); if (target) mount(target) }, { once: true })
-    script.addEventListener('error', () => setError('Verification could not load. Disable content blockers or use the email fallback.'), { once: true })
-  }, [onToken])
+    return () => {
+      cancelled = true
+      script?.removeEventListener('load', mount)
+      script?.removeEventListener('error', onError)
+      if (widgetIdRef.current) {
+        try { window.turnstile?.remove?.(widgetIdRef.current) } catch { /* Widget cleanup is best-effort. */ }
+        widgetIdRef.current = null
+      }
+    }
+  }, [elementId, onToken])
+
+  useEffect(() => {
+    if (resetSignal > 0 && widgetIdRef.current) {
+      try { window.turnstile?.reset(widgetIdRef.current) } catch { /* Expired challenges can be retried manually. */ }
+    }
+  }, [resetSignal])
+
   if (!backendConfig.turnstileSiteKey) return null
-  return <div className="turnstile-wrap"><div id="portfolio-turnstile"/><small>{error || 'Protected submission verification.'}</small></div>
+  return <div className="turnstile-wrap"><div id={elementId}/><small>{error || 'Protected submission verification.'}</small></div>
 }
 
 export function InquiryAndComments() {
@@ -66,19 +93,38 @@ export function InquiryAndComments() {
   const [message, setMessage] = useState('')
   const [honeypot, setHoneypot] = useState('')
   const [captcha, setCaptcha] = useState('')
+  const [captchaReset, setCaptchaReset] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [formStatus, setFormStatus] = useState('')
   const [commentName, setCommentName] = useState('')
   const [commentBody, setCommentBody] = useState('')
   const [commentStatus, setCommentStatus] = useState('')
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const [commentCaptcha, setCommentCaptcha] = useState('')
+  const [commentCaptchaReset, setCommentCaptchaReset] = useState(0)
+  const [commentHoneypot, setCommentHoneypot] = useState('')
   const [comments, setComments] = useState<PortfolioComment[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(backendConfig.configured)
+  const [commentsError, setCommentsError] = useState('')
 
-  useEffect(() => {
-    let active = true
-    if (backendConfig.configured) fetchApprovedComments().then((rows) => { if (active) setComments(rows) }).catch(() => { if (active) setComments([]) })
-    return () => { active = false }
+  const refreshComments = useCallback(async () => {
+    if (!backendConfig.configured) {
+      setComments([])
+      setCommentsLoading(false)
+      return
+    }
+    setCommentsLoading(true)
+    setCommentsError('')
+    try {
+      setComments(await fetchApprovedComments())
+    } catch (error) {
+      setCommentsError(error instanceof Error ? error.message : 'The public notes could not be loaded.')
+    } finally {
+      setCommentsLoading(false)
+    }
   }, [])
+
+  useEffect(() => { void refreshComments() }, [refreshComments])
 
   async function handleInquiry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -106,7 +152,7 @@ export function InquiryAndComments() {
     } catch (error) {
       setFormStatus(error instanceof Error ? error.message : 'The message could not be sent. Please use the email link instead.')
     } finally {
-      if (backendConfig.configured && backendConfig.turnstileSiteKey) { resetTurnstile(); setCaptcha('') }
+      if (backendConfig.configured && backendConfig.turnstileSiteKey) { setCaptcha(''); setCaptchaReset((value) => value + 1) }
       setSubmitting(false)
     }
   }
@@ -121,13 +167,14 @@ export function InquiryAndComments() {
     setCommentSubmitting(true)
     setCommentStatus('')
     try {
-      await submitPublicRecord('comment', { display_name: commentName.trim(), body: commentBody.trim(), website: honeypot, turnstileToken: captcha })
-      setCommentName(''); setCommentBody(''); setCaptcha('')
-      setCommentStatus('Submitted for moderation. It will appear here only after approval.')
+      await submitPublicRecord('comment', { display_name: commentName.trim(), body: commentBody.trim(), website: commentHoneypot, turnstileToken: commentCaptcha })
+      setCommentName(''); setCommentBody(''); setCommentHoneypot(''); setCommentCaptcha('')
+      setCommentCaptchaReset((value) => value + 1)
+      setCommentStatus('Your note is in the moderation queue. It will appear publicly after approval.')
     } catch (error) {
       setCommentStatus(error instanceof Error ? error.message : 'The comment could not be submitted.')
     } finally {
-      if (backendConfig.configured && backendConfig.turnstileSiteKey) { resetTurnstile(); setCaptcha('') }
+      if (backendConfig.configured && backendConfig.turnstileSiteKey) { setCommentCaptcha(''); setCommentCaptchaReset((value) => value + 1) }
       setCommentSubmitting(false)
     }
   }
@@ -145,22 +192,81 @@ export function InquiryAndComments() {
           <label className="inquiry-full">SUBJECT<input value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={140} required placeholder="What would you like to discuss?"/></label>
           <label className="inquiry-full">MESSAGE<textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={5} minLength={10} maxLength={5000} required placeholder="Give a little context, goal, and any useful details."/></label>
           <label className="honeypot-field" aria-hidden="true">Leave this field empty<input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(event) => setHoneypot(event.target.value)}/></label>
-          <div className="inquiry-submit-row inquiry-full"><TurnstileChallenge onToken={captchaTokenHandler}/><button className="feature-button" type="submit" disabled={submitting}>{submitting ? 'SENDING…' : backendConfig.configured ? 'SEND PRIVATE INQUIRY ↗' : 'OPEN PREFILLED EMAIL ↗'}</button></div>
+          <div className="inquiry-submit-row inquiry-full"><TurnstileChallenge onToken={captchaTokenHandler} resetSignal={captchaReset}/><button className="feature-button" type="submit" disabled={submitting}>{submitting ? 'SENDING…' : backendConfig.configured ? 'SEND PRIVATE INQUIRY ↗' : 'OPEN PREFILLED EMAIL ↗'}</button></div>
           {formStatus && <p className="form-status inquiry-full" role="status">{formStatus}</p>}
         </form>
         <p className="privacy-microcopy">{backendConfig.configured ? 'Stored privately and visible only to the approved site administrator.' : 'Backend not configured: this form opens your email application as a fallback. No message is stored by the website.'}</p>
       </div>
-      <aside className="comments-panel">
-        <div className="feature-eyebrow"><span>PUBLIC NOTES</span><i/> MODERATED</div>
-        <h3>Leave a <em>thought.</em></h3>
-        <p>Comments are reviewed before publication. Contact details are not requested for public notes.</p>
-        {backendConfig.configured && comments.length > 0 ? <div className="approved-comments">{comments.map((comment) => <article key={comment.id}><p>“{comment.body}”</p><small>{comment.display_name} · {new Date(comment.created_at).toLocaleDateString()}</small></article>)}</div> : <div className="comments-empty">{backendConfig.configured ? 'No approved public notes yet.' : 'The moderated comment feed will appear here after backend setup.'}</div>}
-        <form className="comment-form" onSubmit={handleComment}>
-          <label>DISPLAY NAME<input value={commentName} onChange={(event) => setCommentName(event.target.value)} maxLength={60} required placeholder="How should this appear?" disabled={!backendConfig.configured}/></label>
-          <label>YOUR COMMENT<textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={3} maxLength={1000} required placeholder="Share a short, constructive note…" disabled={!backendConfig.configured}/></label>
-          <button className="feature-button feature-button-quiet" type="submit" disabled={!backendConfig.configured || commentSubmitting}>{commentSubmitting ? 'SUBMITTING…' : 'SUBMIT FOR REVIEW'}</button>
-          {commentStatus && <p className="form-status" role="status">{commentStatus}</p>}
-        </form>
+      <aside className="comments-panel" aria-labelledby="comments-title">
+        <header className="comments-heading">
+          <div className="feature-eyebrow"><span>PUBLIC NOTES</span><i/><span className="comments-moderated">MODERATED FEED</span></div>
+          <div className="comments-title-row">
+            <h3 id="comments-title">Leave a <em>thought.</em></h3>
+            <span className="comments-count"><b>{String(comments.length).padStart(2, '0')}</b><small>PUBLISHED</small></span>
+          </div>
+          <p>Comments are reviewed before publication. No email address or contact details are requested for public notes.</p>
+        </header>
+
+        <section className="comments-feed" aria-label="Approved public notes">
+          <div className="comments-feed-toolbar">
+            <span><i className="comments-live-dot"/> COMMUNITY NOTES / {String(comments.length).padStart(2, '0')}</span>
+            <button type="button" onClick={() => void refreshComments()} disabled={!backendConfig.configured || commentsLoading} aria-label="Refresh public notes">
+              {commentsLoading ? 'LOADING…' : '↻ REFRESH'}
+            </button>
+          </div>
+          {!backendConfig.configured ? (
+            <div className="comments-empty comments-system-state">
+              <span className="comments-state-code">BACKEND / OFFLINE</span>
+              <strong>Public notes are not connected yet.</strong>
+              <p>Once the Supabase project and submission function are configured, approved notes will appear here. Submissions are not stored in this preview.</p>
+            </div>
+          ) : commentsLoading ? (
+            <div className="comments-loading" role="status" aria-label="Loading approved public notes">
+              <span/><span/><span/>
+            </div>
+          ) : commentsError ? (
+            <div className="comments-empty comments-system-state" role="status">
+              <strong>Could not load public notes.</strong>
+              <p>{commentsError}</p>
+              <button type="button" onClick={() => void refreshComments()}>TRY AGAIN ↗</button>
+            </div>
+          ) : comments.length ? (
+            <div className="approved-comments">
+              {comments.map((comment) => (
+                <article className="approved-comment" key={comment.id}>
+                  <span className="comment-quote-mark" aria-hidden="true">“</span>
+                  <p>{comment.body}</p>
+                  <footer><strong>{comment.display_name}</strong><time dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time></footer>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="comments-empty comments-system-state">
+              <span className="comments-state-code">NO PUBLIC NOTES / YET</span>
+              <strong>The board is quiet.</strong>
+              <p>Be the first to leave a note. It will join the feed after a quick moderation review.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="comment-composer" aria-label="Write a public note">
+          <div className="comment-composer-heading">
+            <span>ADD TO THE CONVERSATION</span>
+            <small>PUBLIC AFTER APPROVAL</small>
+          </div>
+          <form className="comment-form" onSubmit={handleComment}>
+            <label htmlFor="public-note-name">DISPLAY NAME<input id="public-note-name" value={commentName} onChange={(event) => setCommentName(event.target.value)} maxLength={60} autoComplete="nickname" required placeholder="How should this appear?" disabled={!backendConfig.configured}/></label>
+            <label htmlFor="public-note-body">YOUR COMMENT<textarea id="public-note-body" value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={4} minLength={3} maxLength={1000} required placeholder="Share a short, constructive note…" disabled={!backendConfig.configured}/></label>
+            <div className="comment-compose-meta"><span>NO CONTACT DETAILS REQUIRED</span><small>{commentBody.length.toLocaleString()} / 1,000</small></div>
+            <label className="honeypot-field" aria-hidden="true">Leave this field empty<input tabIndex={-1} autoComplete="off" value={commentHoneypot} onChange={(event) => setCommentHoneypot(event.target.value)}/></label>
+            <TurnstileChallenge onToken={setCommentCaptcha} resetSignal={commentCaptchaReset}/>
+            <button className="feature-button feature-button-quiet comment-submit" type="submit" disabled={!backendConfig.configured || commentSubmitting || !commentName.trim() || commentBody.trim().length < 3}>
+              {commentSubmitting ? 'SENDING TO MODERATION…' : 'SUBMIT FOR REVIEW ↗'}
+            </button>
+            {commentStatus && <p className="form-status comment-form-status" role="status">{commentStatus}</p>}
+            {!backendConfig.configured && <p className="comment-disabled-note">The form becomes active when the public moderation backend is configured.</p>}
+          </form>
+        </section>
       </aside>
     </div>
   )
