@@ -82,7 +82,7 @@ async function request<T>(path: string, options: RequestInit = {}, accessToken?:
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`)
   else headers.delete('Authorization')
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
-  const response = await fetch(`${backendConfig.url}${path}`, { ...options, headers })
+  const response = await fetch(`${backendConfig.url}${path}`, { ...options, headers, cache: options.cache ?? 'no-store' })
   const raw = await response.text()
   let payload: unknown = null
   if (raw) {
@@ -99,10 +99,14 @@ async function request<T>(path: string, options: RequestInit = {}, accessToken?:
 
 export async function submitPublicRecord(kind: 'inquiry' | 'comment' | 'page_view', payload: Record<string, unknown>) {
   requireBackend()
-  return request<{ ok: boolean; message?: string }>('/functions/v1/portfolio-submit', {
+  const result = await request<{ ok: boolean; message?: string }>('/functions/v1/portfolio-submit', {
     method: 'POST',
     body: JSON.stringify({ kind, ...payload }),
   })
+  if (result?.ok !== true) {
+    throw new BackendError(result?.message || 'The submission service did not confirm that the record was saved.')
+  }
+  return result
 }
 
 export async function fetchApprovedComments(): Promise<PortfolioComment[]> {
