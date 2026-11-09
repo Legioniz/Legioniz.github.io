@@ -605,11 +605,16 @@ export default function App() {
     try { return localStorage.getItem('legion-portfolio-sound-v2') !== 'off' } catch { return true }
   })
   const soundEnabledRef = useRef(soundEnabled)
-  const [motionEnabled, setMotionEnabled] = useState(() => {
+  const [motionPreference, setMotionPreference] = useState<'system' | 'on' | 'off'>(() => {
     try {
-      return localStorage.getItem('legion-portfolio-motion-v5') !== 'off'
-    } catch { return true }
+      const saved = localStorage.getItem('legion-portfolio-motion-v6')
+      return saved === 'on' || saved === 'off' ? saved : 'system'
+    } catch { return 'system' }
   })
+  const [systemReducedMotion, setSystemReducedMotion] = useState(() => (
+    typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
+  ))
+  const motionEnabled = motionPreference === 'on' || (motionPreference === 'system' && !systemReducedMotion)
   const [copied, setCopied] = useState(false)
 
   const categories: ('All' | ProjectCategory)[] = ['All', 'Software', 'Data & Systems', 'Embedded', 'Creative']
@@ -673,9 +678,9 @@ export default function App() {
     try { localStorage.setItem('legion-portfolio-sound-v2', next ? 'on' : 'off') } catch { /* Storage can be disabled. */ }
   }
   const toggleMotion = () => {
-    const next = !motionEnabled
-    setMotionEnabled(next)
-    try { localStorage.setItem('legion-portfolio-motion-v5', next ? 'on' : 'off') } catch { /* Storage can be disabled. */ }
+    const next = motionEnabled ? 'off' : 'on'
+    setMotionPreference(next)
+    try { localStorage.setItem('legion-portfolio-motion-v6', next) } catch { /* Storage can be disabled. */ }
   }
   const navigate = (id: string) => {
     setMobileOpen(false)
@@ -696,8 +701,22 @@ export default function App() {
   useEffect(() => {
     const root = document.documentElement
     root.dataset.motion = motionEnabled ? 'on' : 'off'
-    root.dataset.motionOverride = motionEnabled ? 'on' : 'off'
-  }, [motionEnabled])
+    root.dataset.motionOverride = motionPreference
+  }, [motionEnabled, motionPreference])
+
+  useEffect(() => {
+    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (!query) return
+    const syncSystemPreference = (event: MediaQueryListEvent | MediaQueryList) => {
+      setSystemReducedMotion(event.matches)
+    }
+    if (typeof query.addEventListener === 'function') {
+      query.addEventListener('change', syncSystemPreference)
+      return () => query.removeEventListener('change', syncSystemPreference)
+    }
+    query.addListener(syncSystemPreference)
+    return () => query.removeListener(syncSystemPreference)
+  }, [])
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled
