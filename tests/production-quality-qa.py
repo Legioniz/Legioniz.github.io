@@ -208,6 +208,10 @@ check("legion-portfolio-motion-v8" in motion_html and "savedMotion === 'on' || s
       'First paint respects prefers-reduced-motion unless a visitor explicitly overrides it')
 check("function readMotionPreference(): MotionPreference" in motion_app and "motionPreference === 'system' && !systemReducedMotion" in motion_app and "query.addEventListener?.('change', update)" in motion_app,
       'React motion preference remains synchronized with operating-system changes')
+check(":root[data-motion='off'] *::before" in css and "transition-duration: .01ms !important" in css and "view-transition-name: none !important" in css,
+      'An explicit visitor motion pause stops CSS animation, transitions, smooth scroll, and view transitions')
+check("let systemReducedMotion = false" in html and "root.dataset.motion = systemReducedMotion ? 'off' : 'on'" in html,
+      'Reduced motion is initialized before theme, device, and optional UI setup')
 check("localStorage.getItem('legion-portfolio-sound-v2') === 'on'" in motion_app,
       'Interface audio is opt-in instead of playing unexpectedly for first-time visitors')
 check('aria-labelledby="palette-title"' in motion_app and 'onCloseRef.current()' in motion_app and 'previousFocus?.focus()' in motion_app and 'getFocusable' in motion_app,
