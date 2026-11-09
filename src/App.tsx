@@ -784,7 +784,9 @@ export default function App() {
     try { localStorage.setItem(MOTION_STORAGE_KEY, next) } catch { /* Storage can be disabled. */ }
   }
   const navigate = (id: string) => {
+    const restoreMobileFocus = mobileOpen
     setMobileOpen(false)
+    if (restoreMobileFocus) window.requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
     setPaletteOpen(false)
     if (id === 'admin-console') { setAdminOpen(true); return }
     if (id === 'recruiter-view') { openRecruiterView(); return }
