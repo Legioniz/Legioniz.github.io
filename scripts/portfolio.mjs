@@ -134,7 +134,7 @@ async function check() {
   log(edge.includes('PORTFOLIO_ALLOWED_ORIGIN') && edge.includes('verifyTurnstile') && edge.includes('consume_portfolio_quota') && edge.includes('payload.website.trim()'), 'Submission Edge Function includes origin, CAPTCHA, quota, and honeypot controls')
   const serviceWorker = await read('public/sw.js')
   log(['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'].every((prefix) => serviceWorker.includes(prefix)), 'Service worker excludes backend API paths from caching')
-  log(serviceWorker.includes("legion-portfolio-shell-v15") && serviceWorker.includes("/favicon.svg?v=20261109-3") && serviceWorker.includes("/favicon-32.png?v=20261109-3") && serviceWorker.includes("/favicon.ico?v=20261109-3"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
+  log(serviceWorker.includes("legion-portfolio-shell-v16") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
 
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')
@@ -223,7 +223,7 @@ async function check() {
   log(html.includes('id="root"') && html.includes('boot-fallback') && html.includes('<noscript>'), 'Boot and no-JavaScript fallbacks exist')
   log(html.includes("localStorage.getItem('legion-portfolio-motion-v7')") && html.includes("const motionOverride = savedMotion === 'off' ? 'off' : 'on'") && html.includes("const motionEnabled = savedMotion !== 'off'") && html.includes('dataset.motionOverride'), 'Early boot script enables motion by default and applies an explicit saved visitor pause before paint')
   log(html.includes('/King-Art-Pacumberto-Resume.pdf'), 'Original resume is available before React starts and without JavaScript')
-  log(html.includes('/favicon.svg?v=20261109-3') && html.includes('/favicon-32.png?v=20261109-3') && html.includes('/favicon.ico?v=20261109-3'), 'Cache-busted SVG, PNG, and ICO favicon fallbacks are linked from the HTML shell')
+  log(html.includes('/favicon.svg?v=20261109-4') && html.includes('/favicon-32.png?v=20261109-4') && html.includes('/favicon.ico?v=20261109-4'), 'Cache-busted SVG, PNG, and ICO favicon fallbacks are linked from the HTML shell')
   const faviconPng = await readFile(path.join(ROOT, 'public', 'favicon-32.png'))
   const faviconIco = await readFile(path.join(ROOT, 'public', 'favicon.ico'))
   log(faviconPng.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), '32px PNG favicon is a valid PNG image')
