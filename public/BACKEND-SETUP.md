@@ -10,7 +10,7 @@ The frontend contains private inquiry and public-note forms, a moderated comment
 - **Owner dashboard:** Supabase Auth password sign-in, followed by an allowlist check against `admin_users`. All database authorization is enforced again by RLS.
 - **Analytics:** off by default. When a visitor opts in, the site records only a random session UUID, the path, and timestamp. Raw IPs, precise location, browser fingerprints, and user-agent strings are not stored. A one-way HMAC of the request network address is used only for rate limiting and is not reversible without the server secret.
 
-The browser only receives the Supabase URL, anon/publishable key, and Turnstile site key. **Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET_KEY`, or `PORTFOLIO_RATE_LIMIT_SECRET` in a Vite variable, GitHub Pages artifact, source file, or browser storage.**
+The browser only receives the Supabase URL, anon/publishable key, and Turnstile site key. **Never expose `SUPABASE_SECRET_KEYS`, `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET_KEY`, or `PORTFOLIO_RATE_LIMIT_SECRET` in a Vite variable, GitHub Pages artifact, source file, or browser storage.**
 
 ## 1. Create the Supabase project
 
@@ -75,6 +75,17 @@ The footer's **ADMIN** link or the command palette's “Open admin console” op
 
 The dashboard does not grant access because of a hidden URL, local-storage flag, or client-side role. It is only a user interface; RLS remains the real security boundary.
 
+## Public comment lifecycle
+
+1. A visitor enters a display name and a 3–1,000 character note. No account or email address is requested.
+2. The browser sends the payload to `portfolio-submit` with the public publishable key. It does not write to the comments table directly.
+3. The Edge Function checks the exact production Origin, request size, honeypot, per-network quota, optional Turnstile verification, and field lengths. It inserts the comment with `status = 'pending'`.
+4. The owner opens **ADMIN → COMMENTS**, reviews the pending queue, and uses **APPROVE / PUBLISH** to make a note public. Editing, hiding, archiving, exporting, and deletion are also available.
+5. Anonymous feed reads are restricted twice: PostgREST requests ask for `status=approved`, and the database RLS policy independently permits anonymous SELECT only for approved rows. Pending submissions never appear in the visitor feed.
+6. Visitors can press **REFRESH** to request the latest approved notes. If there are no approved notes, the empty feed is a normal state; it does not disable the composer.
+
+The repository includes a production-build browser test for the composer, approved-feed rendering, refresh request, publishable-key headers, and pending-submission confirmation. The deployment workflow also checks the live Edge Function's CORS preflight and a safe honeypot POST that intentionally creates no record.
+
 ## 6. Retention and maintenance
 
 Review inquiry retention and delete records that are no longer needed. Export only when necessary and store exports securely. Remove expired quota buckets periodically:
@@ -87,4 +98,4 @@ The current analytics are deliberately minimal and approximate. A visitor may bl
 
 ## Unconfigured state
 
-When running a separate copy without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the public-notes composer stays disabled and shows a backend-offline state; no comment is stored in browser storage. The inquiry form uses its honest mailto fallback, analytics remain off, and the admin panel shows setup instructions. The production repository has these public values configured by its GitHub Actions workflow. The owner must still accept the Auth invitation and verify the email before admin moderation becomes available.
+When running a separate local development copy without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the public-notes composer stays disabled and shows a backend-offline state; no comment is stored in browser storage. The inquiry form uses its honest mailto fallback and the admin panel shows setup instructions. The production repository receives the public URL and publishable key from its GitHub Actions build configuration. Visitor comment submission does not require an Auth account; only the owner moderation console does.
