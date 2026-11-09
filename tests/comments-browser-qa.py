@@ -144,6 +144,10 @@ def main() -> None:
             while len(comment_reads) < 2 and time.time() < deadline:
                 page.wait_for_timeout(50)
             check(len(comment_reads) >= 2, "Manual refresh issues a fresh uncached approved-comment request")
+            page.wait_for_function(
+                "document.querySelector('button[aria-label=\"Refresh public notes\"]')?.disabled === false",
+                timeout=5000,
+            )
 
             reads_before_focus = len(comment_reads)
             page.evaluate("window.dispatchEvent(new Event('focus'))")

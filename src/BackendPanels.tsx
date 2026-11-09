@@ -103,6 +103,7 @@ export function InquiryAndComments() {
   const [commentsLoading, setCommentsLoading] = useState(backendConfig.configured)
   const [commentsError, setCommentsError] = useState('')
   const commentsRequestInFlight = useRef(false)
+  const commentsRefreshPending = useRef(false)
 
   const refreshComments = useCallback(async (silent = false) => {
     if (!backendConfig.configured) {
@@ -110,8 +111,11 @@ export function InquiryAndComments() {
       setCommentsLoading(false)
       return
     }
-    // Prevent overlapping refresh, focus, and polling requests from racing.
-    if (commentsRequestInFlight.current) return
+    // Coalesce overlapping focus/poll events, then run one fresh read after the current request.
+    if (commentsRequestInFlight.current) {
+      if (silent) commentsRefreshPending.current = true
+      return
+    }
     commentsRequestInFlight.current = true
     if (!silent) setCommentsLoading(true)
     setCommentsError('')
@@ -122,6 +126,10 @@ export function InquiryAndComments() {
     } finally {
       commentsRequestInFlight.current = false
       if (!silent) setCommentsLoading(false)
+      if (commentsRefreshPending.current && !document.hidden) {
+        commentsRefreshPending.current = false
+        void refreshComments(true)
+      }
     }
   }, [])
 
