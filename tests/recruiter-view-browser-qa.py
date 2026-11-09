@@ -119,6 +119,11 @@ def main() -> None:
             check(page.locator('.recruiter-section[data-reveal]').count() >= 5
                   and page.locator('.recruiter-project-card[data-reveal]').count() == 3,
                   'Shared reveal controller is connected to recruiter sections and project evidence')
+            check(page.locator('.recruiter-scroll-progress > span').count() == 1,
+                  'Recruiter view mounts its dedicated scroll-progress indicator')
+            mark_animation = snapshot_mark.evaluate('(el) => getComputedStyle(el).animationName')
+            check(mark_animation == 'recruiter-mark-breathe',
+                  'The corrected KA monogram receives the motion-enabled accent animation')
             motion_toggle = preferences.get_by_role('button', name='Motion On — pause decorative motion')
             sound_toggle = preferences.get_by_role('button', name='Sound On — turn interface sounds off')
             check(motion_toggle.get_attribute('aria-pressed') == 'true',
@@ -136,6 +141,14 @@ def main() -> None:
             page.wait_for_function("document.documentElement.dataset.motion === 'on'")
             check(preferences.get_by_role('button', name='Pause decorative motion').get_attribute('aria-pressed') == 'true',
                   'Recruiter motion control resumes the reveal and artwork system')
+            page.evaluate("window.scrollTo({top:document.documentElement.scrollHeight / 2,behavior:'instant'})")
+            page.wait_for_timeout(90)
+            scroll_progress = page.locator('.recruiter-view').evaluate(
+                "(el) => Number.parseFloat(getComputedStyle(el).getPropertyValue('--recruiter-scroll-progress'))")
+            check(scroll_progress > 0 and scroll_progress < 1,
+                  f'Recruiter scroll progress tracks the current document position ({scroll_progress:.3f})')
+            page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+            page.wait_for_timeout(80)
 
             sound_toggle.click()
             check(preferences.get_by_role('button', name='Sound Off — turn interface sounds on').get_attribute('aria-pressed') == 'false',
@@ -182,6 +195,13 @@ def main() -> None:
 
             first_art = page.locator('.recruiter-project-art').first
             first_art.scroll_into_view_if_needed()
+            first_card = page.locator('.recruiter-project-card').first
+            first_card.hover(position={'x': 24, 'y': 28})
+            page.wait_for_timeout(40)
+            spotlight = first_card.get_attribute('data-spotlight')
+            spotlight_opacity = first_card.evaluate("(el) => getComputedStyle(el, '::before').opacity")
+            check(spotlight == 'active' and float(spotlight_opacity) > 0,
+                  'Fine-pointer movement activates the project-card spotlight without a separate stale script')
             page.wait_for_function("document.querySelector('.recruiter-project-art')?.classList.contains('motion-active')")
             art_animation = first_art.locator('i').evaluate("(el) => getComputedStyle(el, '::before').animationName")
             check(art_animation == 'recruiter-project-ring',
