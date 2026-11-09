@@ -3591,3 +3591,209 @@ body { text-rendering: optimizeLegibility; }
 :root[data-motion='on'] .hero-section .hero-title .title-line:nth-child(3) { animation-delay: 160ms; }
 :root[data-motion='on'][data-quality='balanced'] .hero-section .hero-title .title-line { animation-duration: 520ms; }
 :root[data-motion='on'][data-quality='economy'] .hero-section .hero-title .title-line { animation-duration: 360ms; }
+
+/* -------------------------------------------------------------------------
+   EDITORIAL TYPOGRAPHY 3.0
+   One readable scale across the full portfolio and recruiter presentation.
+   ------------------------------------------------------------------------- */
+:root {
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 20px;
+  --type-kicker: 600 10px/1.5 var(--font-mono);
+  --type-label: 600 11px/1.5 var(--font-mono);
+}
+
+body {
+  font-size: var(--font-size-base);
+  line-height: 1.72;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+:where(h1, h2, h3, h4) { text-wrap: balance; }
+:where(p, li) { text-wrap: pretty; }
+
+:where(
+  small,
+  .detail-label,
+  .feature-code,
+  .feature-eyebrow,
+  .section-kicker,
+  .project-meta,
+  .project-stack > span,
+  .timeline-period,
+  .timeline-organization,
+  .timeline-tags > span,
+  .skill-group-meta,
+  .skill-pills > span,
+  .education-type,
+  .education-foot,
+  .education-record > span,
+  .achievement-source,
+  .activity-summary-copy > span,
+  .footer-links a,
+  .footer-links button,
+  .modal-grid,
+  .capability-list,
+  .modal-detail,
+  .palette-index,
+  .palette-item-copy small,
+  .orbit-coordinate,
+  .orbit-node small,
+  .hero-index,
+  .hero-footnote,
+  .hero-bottomline,
+  .availability-line,
+  .visual-plate-head,
+  .visual-plate-foot,
+  .photo-viewer-count,
+  .recruiter-eyebrow,
+  .recruiter-tags > span,
+  .recruiter-experience-card > div > span,
+  .recruiter-experience-card > div > small,
+  .recruiter-education-item > span,
+  .journey-label,
+  .metric-card > span,
+  .research-practice-grid article > span,
+  .research-tags > b,
+  .project-peek-kicker,
+  .project-peek-action,
+  .building-card-top,
+  .network-topology-head,
+  .network-safe-label,
+  .network-port-list,
+  .network-log > span,
+  .network-event time,
+  .osint-source-types,
+  .photo-archive-filters,
+  .photo-tile > i,
+  .photo-before-label,
+  .photo-after-label,
+  .photo-split-control,
+  .range-control label,
+  .range-control output
+) {
+  font-size: clamp(10px, .72em, 12px);
+  line-height: 1.5;
+}
+
+.hero-description,
+.section-heading > p,
+.feature-header > p,
+.about-main p,
+.research-practice-grid article p,
+.contact-content > p,
+.recruiter-contact p,
+.recruiter-section-heading > p,
+.recruiter-scope-note,
+.recruiter-intro,
+.modal-overview,
+.modal-grid p,
+.modal-detail,
+.capability-list div {
+  font-size: 15px;
+  line-height: 1.78;
+}
+
+.project-card-content > p,
+.recruiter-project-body > p,
+.timeline-content p,
+.activity-content p,
+.recruiter-skill-card > p,
+.recruiter-experience-card p,
+.recruiter-education-item p,
+.recruiter-awards p,
+.recruiter-leadership-grid p {
+  font-size: 14.5px;
+  line-height: 1.78;
+}
+
+.skill-group-copy small {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.hero-description {
+  max-width: 62ch;
+  line-height: 1.76;
+}
+
+.section-heading > p,
+.feature-header > p,
+.recruiter-section-heading > p {
+  max-width: 68ch;
+}
+
+.about-main p + p,
+.timeline-content p + p,
+.activity-content p + p {
+  margin-top: 1rem;
+}
+
+:root[data-motion='on'] [data-reveal].is-visible .section-heading h2 em,
+:root[data-motion='on'] [data-reveal].is-visible .feature-header h2 em {
+  display: inline-block;
+  animation: editorial-emphasis-in 560ms var(--ease-expressive) 90ms both;
+}
+
+:root[data-motion='on'] .recruiter-section.is-in-view .recruiter-section-heading h2 {
+  animation: editorial-heading-in 520ms var(--ease-expressive) 80ms both;
+}
+
+@keyframes editorial-emphasis-in {
+  from { opacity: .68; transform: translate3d(0, .12em, 0); filter: blur(1px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+@keyframes editorial-heading-in {
+  from { opacity: .78; transform: translate3d(0, 7px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+:root[data-motion='off'] [data-reveal].is-visible .section-heading h2 em,
+:root[data-motion='off'] [data-reveal].is-visible .feature-header h2 em,
+:root[data-motion='off'] .recruiter-section.is-in-view .recruiter-section-heading h2 {
+  animation: none !important;
+  filter: none !important;
+}
+
+@media (max-width: 760px) {
+  body { font-size: 15px; line-height: 1.7; }
+  .hero-description,
+  .section-heading > p,
+  .feature-header > p,
+  .about-main p,
+  .research-practice-grid article p,
+  .contact-content > p,
+  .recruiter-contact p,
+  .recruiter-section-heading > p,
+  .recruiter-scope-note,
+  .recruiter-project-body > p,
+  .project-card-content > p,
+  .timeline-content p,
+  .activity-content p,
+  .recruiter-skill-card > p,
+  .recruiter-experience-card p,
+  .recruiter-education-item p,
+  .recruiter-awards p,
+  .recruiter-leadership-grid p,
+  .modal-overview,
+  .modal-grid p,
+  .modal-detail,
+  .capability-list div {
+    font-size: 14px;
+    line-height: 1.72;
+  }
+  .skill-group-copy small { font-size: 12.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion-override='on']) [data-reveal].is-visible .section-heading h2 em,
+  :root:not([data-motion-override='on']) [data-reveal].is-visible .feature-header h2 em,
+  :root:not([data-motion-override='on']) .recruiter-section.is-in-view .recruiter-section-heading h2 {
+    animation: none !important;
+    filter: none !important;
+  }
+}
