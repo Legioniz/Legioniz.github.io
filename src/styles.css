@@ -3445,6 +3445,17 @@ button, input, textarea, select { font-family: var(--font-body); }
 }
 
 
+/* Explicit visitor pause and inherited OS preference share one complete motion stop. */
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  view-transition-name: none !important;
+}
+
 /* DESIGN + MOTION POLISH — final consistency and safety layer */
 :root {
   --content-measure: 68ch;
