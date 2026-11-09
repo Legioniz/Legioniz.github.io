@@ -146,7 +146,7 @@ check(all(f"['run', '{name}']" in release_runner for name in ["test:adaptive", "
       "Release verification runs source, security, build, bundle, desktop/touch, motion, and compiled recruiter browser suites")
 
 # 3. Ensure static URLs used by HTML, TSX, CSS, and the service worker resolve.
-asset_sources = [ROOT / "index.html", *ROOT.glob("src/**/*.ts"), *ROOT.glob("src/**/*.tsx"), ROOT / "src/styles.css", ROOT / "public/sw.js", ROOT / "tests/interaction-fixture.html"]
+asset_sources = [ROOT / "index.html", *ROOT.glob("src/**/*.ts"), *ROOT.glob("src/**/*.tsx"), ROOT / "src/styles.css", ROOT / "src/layout-integrity.css", ROOT / "public/sw.js", ROOT / "tests/interaction-fixture.html"]
 asset_refs: set[str] = set()
 for file in asset_sources:
     text = file.read_text(encoding="utf-8")
@@ -172,7 +172,7 @@ for item in missing_assets:
     print(f"  MISSING {item}")
 
 # 4. CSS syntax, classes, custom properties, and keyframes.
-css = read("src/styles.css")
+css = read("src/styles.css") + "\n" + read("src/layout-integrity.css")
 parsed_sheet = tinycss2.parse_stylesheet(css, skip_whitespace=True, skip_comments=True)
 orbit_source = read("src/App.tsx")
 orbit_categories = ["Software", "Data & Systems", "Embedded", "Creative"]
