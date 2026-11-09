@@ -10,12 +10,12 @@
     <meta name="author" content="King Art D. Pacumberto" />
     <link rel="canonical" href="https://legioniz.github.io/" />
     <link rel="describedby" href="/llms.txt" />
-    <link rel="manifest" href="/site.webmanifest?v=20261109-4" />
+    <link rel="manifest" href="/site.webmanifest?v=20261109-5" />
     <script>
       (() => {
         const root = document.documentElement
-        // Motion is on by default. Only a saved, explicit visitor pause disables it.
-        root.dataset.motionOverride = 'on'
+        // Respect reduced-motion before first paint; explicit visitor choices override the OS.
+        root.dataset.motionOverride = 'system'
         root.dataset.motion = 'on'
         try {
           const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
@@ -31,9 +31,20 @@
           document.documentElement.dataset.quality = reducedGraphics ? 'economy' : (coarsePointer ? 'balanced' : 'full')
           document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
 
-          const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v7') } catch { return null } })()
-          const motionOverride = savedMotion === 'off' ? 'off' : 'on'
-          const motionEnabled = savedMotion !== 'off'
+          let savedMotion = null
+          try {
+            savedMotion = localStorage.getItem('legion-portfolio-motion-v8')
+            if (savedMotion !== 'on' && savedMotion !== 'off') {
+              const legacyMotion = localStorage.getItem('legion-portfolio-motion-v7')
+              if (legacyMotion === 'on' || legacyMotion === 'off') {
+                savedMotion = legacyMotion
+                localStorage.setItem('legion-portfolio-motion-v8', legacyMotion)
+              }
+            }
+          } catch { /* The operating-system preference remains available without storage. */ }
+          const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
+          const systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+          const motionEnabled = motionOverride === 'on' || (motionOverride === 'system' && !systemReducedMotion)
           root.dataset.motionOverride = motionOverride
           root.dataset.motion = motionEnabled ? 'on' : 'off'
         } catch {
@@ -47,7 +58,7 @@
     <meta property="og:type" content="profile" />
     <meta property="og:site_name" content="Legioniz Portfolio" />
     <meta property="og:url" content="https://legioniz.github.io/" />
-    <meta property="og:image" content="https://legioniz.github.io/og-card.png?v=20261109-4" />
+    <meta property="og:image" content="https://legioniz.github.io/og-card.png?v=20261109-5" />
     <meta property="og:image:alt" content="King Art D. Pacumberto — developer portfolio" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
@@ -55,12 +66,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="King Art D. Pacumberto — Field Notes & Portfolio" />
     <meta name="twitter:description" content="BSIT student building software, data, and embedded projects." />
-    <meta name="twitter:image" content="https://legioniz.github.io/og-card.png?v=20261109-4" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20261109-4" sizes="16x16 32x32" />
-    <link rel="icon" type="image/png" href="/favicon-32.png?v=20261109-4" sizes="32x32" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261109-4" sizes="any" />
-    <link rel="shortcut icon" href="/favicon.ico?v=20261109-4" />
-    <link rel="mask-icon" href="/favicon.svg?v=20261109-4" color="#e87961" />
+    <meta name="twitter:image" content="https://legioniz.github.io/og-card.png?v=20261109-5" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20261109-5" sizes="16x16 32x32" />
+    <link rel="icon" type="image/png" href="/favicon-32.png?v=20261109-5" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261109-5" sizes="any" />
+    <link rel="shortcut icon" href="/favicon.ico?v=20261109-5" />
+    <link rel="mask-icon" href="/favicon.svg?v=20261109-5" color="#e87961" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
