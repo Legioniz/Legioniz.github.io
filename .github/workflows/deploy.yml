@@ -42,6 +42,13 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Verify Supabase portfolio backend readiness
+        run: |
+          set -euo pipefail
+          response="$(curl --fail-with-body --silent --show-error \
+            https://pjuwrngnrrvdiwqspkic.supabase.co/functions/v1/portfolio-submit)"
+          echo "$response" | jq -e '.ok == true and .status == "ready"'
+
       - name: Set up Python test environment
         uses: actions/setup-python@v5
         with:
