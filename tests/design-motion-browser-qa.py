@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CSS = (ROOT / 'src/styles.css').read_text(encoding='utf-8')
 HTML = r'''<!doctype html><html lang="en" data-theme="dark" data-motion="on" data-motion-override="on" data-quality="full" data-pointer="fine"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
 <div class="site-shell"><main class="page-width">
-  <section class="hero-section"><div class="hero-content"><p class="hero-pretitle" data-hero-sequence="eyebrow">FIELD NOTES / 001</p><h1 class="hero-title" aria-label="From a question to working systems."><span class="title-line" data-hero-line aria-hidden="true">From a question</span><span class="title-line" data-hero-line aria-hidden="true">to working</span><span class="title-line" data-hero-line aria-hidden="true">systems.</span></h1><p data-hero-sequence="description">Hero description</p><div data-hero-sequence="actions"><button>Explore</button></div></div><div class="hero-visual motion-active" data-motion-zone><div class="visual-plate">
+  <section class="hero-section"><div class="hero-content"><div class="hero-copy"><p class="hero-pretitle" data-hero-sequence="eyebrow">FIELD NOTES / 001</p><h1 class="hero-title" aria-label="From a question to working systems."><span class="title-line" data-hero-line aria-hidden="true">From a question</span><span class="title-line" data-hero-line aria-hidden="true">to working</span><span class="title-line" data-hero-line aria-hidden="true">systems.</span></h1><p data-hero-sequence="description">Hero description</p><div data-hero-sequence="actions"><button>Explore</button></div></div><div class="hero-visual motion-active" data-motion-zone><div class="visual-plate">
     <div class="systems-orbit" id="systems-orbit" role="group" aria-label="Interactive areas of interest: software, data, embedded systems, and creative technology">
       <div class="orbit-grid" aria-hidden="true"></div>
       <div class="orbit-ring ring-outer" aria-hidden="true"></div><div class="orbit-ring ring-middle" aria-hidden="true"></div><div class="orbit-ring ring-inner" aria-hidden="true"></div>
@@ -26,7 +26,7 @@ HTML = r'''<!doctype html><html lang="en" data-theme="dark" data-motion="on" dat
       <div class="orbit-satellite satellite-one" aria-hidden="true"></div><div class="orbit-satellite satellite-two" aria-hidden="true"></div>
       <div class="orbit-coordinate coord-a" aria-hidden="true">14°40' N<br/>121°02' E</div><div class="orbit-coordinate coord-b" aria-hidden="true">FIELD NOTES / 2026</div>
     </div>
-  </div></div></section>
+  </div></div></div></section>
   <div class="timeline motion-active"><article class="timeline-item"><span class="timeline-marker"></span></article></div>
   <section class="recruiter-view" data-recruiter-motion-ready="true"><div class="recruiter-timeline motion-active"><article class="recruiter-experience-card is-in-view"><span class="recruiter-timeline-marker"></span><div><span>2026</span><h3>Experience</h3></div><div><p>Technical support and project work.</p></div></article></div><article class="recruiter-education-item is-in-view"><span>2026</span><div><h3>Education</h3></div></article><div class="recruiter-project-card"><div class="recruiter-project-art"><i></i></div></div></section>
   <div class="network-path motion-active"><div class="network-link is-traversed"><i></i></div><button class="network-node active">Selected</button><div class="network-node-detail" aria-live="polite">Selected node details</div></div>
@@ -80,6 +80,8 @@ def main() -> None:
             x:Math.round(x*10)/10, y:Math.round(y*10)/10, width:Math.round(r.width*10)/10, height:Math.round(r.height*10)/10}
         })""")
         print('ORBIT_POINTER_HIT_TEST ' + str(pointer_targets))
+        desktop_metrics = inspect_orbit_geometry(1440, 950)
+        print('ORBIT_DESKTOP_GEOMETRY ' + str(desktop_metrics))
         check(all(item['hitCategory'] == item['category'] for item in pointer_targets), 'Each orbit button owns its visible center hit point without overlap from another node')
         for item in pointer_targets:
             page.mouse.click(item['x'], item['y'])
@@ -181,7 +183,10 @@ def main() -> None:
         network_motion = page.locator('.network-link.is-traversed i').evaluate('(e)=>getComputedStyle(e).animationName')
         check(network_motion == 'network-packet', 'Selected Network Lab route uses its viewport-scoped packet animation')
         check(page.locator('.network-node.active').evaluate('(e)=>getComputedStyle(e).borderColor') != 'rgba(0, 0, 0, 0)', 'Network selection has a visible non-motion state')
-        page.locator('#focus-test').focus()
+        page.keyboard.press('Tab')
+        page.keyboard.press('Tab')
+        focused_id = page.evaluate('document.activeElement?.id ?? ""')
+        check(focused_id == 'focus-test', 'Keyboard traversal reaches the focus-test control after the orbit and network buttons')
         outline = page.locator('#focus-test').evaluate('(e)=>getComputedStyle(e).outlineStyle')
         check(outline != 'none', 'Keyboard focus receives a visible outline')
 
