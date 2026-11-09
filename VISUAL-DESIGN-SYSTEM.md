@@ -7,7 +7,7 @@ The portfolio should feel like a personal technical field journal: part engineer
 ## Visual identity
 
 - **Primary structure:** warm paper/ink surfaces, fine rules, chapter labels, folio numbers, and grid annotations.
-- **Primary accent:** signal coral, used for focus, actions, active states, and selected labels. Dark mode uses bright coral (`#ff765e`); light mode uses a deeper coral (`#a34b36`) to maintain text contrast against warm paper.
+- **Primary accent:** signal coral, used for focus, actions, active states, and selected labels. Dark mode uses bright coral (`#e87961`); light mode uses a deeper coral (`#a94837`) to maintain text contrast against warm paper.
 - **Secondary accent:** muted sea-glass blue/teal, used for technical diagrams and secondary emphasis.
 - **Typography:** Space Grotesk for display, Manrope for readable body copy, and DM Mono for annotations and metadata.
 - **Geometry:** rectangular cards with small corner radii, crosshair marks, dashed separators, circular system maps, and an asymmetric 12-column project layout. Each portfolio area uses a different composition: cover page, editorial profile, case-study board, parts-tray toolkit, timeline/index cards, and studio contact panel.
