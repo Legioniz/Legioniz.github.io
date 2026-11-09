@@ -22,7 +22,8 @@
     "audit:bundle": "node scripts/production-audit.mjs",
     "test:recruiter-browser": "python tests/recruiter-view-browser-qa.py",
     "test:design-browser": "python tests/design-motion-browser-qa.py",
-    "test:integrity": "python tests/project-integrity-qa.py"
+    "test:integrity": "python tests/project-integrity-qa.py",
+    "test:comments-browser": "python tests/comments-browser-qa.py"
   },
   "dependencies": {
     "react": "19.3.1",
