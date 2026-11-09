@@ -16,7 +16,7 @@ const expectedFiles = [
   'src/adaptive.ts', 'src/backend.ts', 'src/config.ts', 'src/data.ts', 'src/main.tsx', 'src/masthead.ts', 'src/reveal.ts',
   'src/serviceWorker.ts', 'src/sound.ts', 'src/styles.css', 'src/layout-integrity.css',
   'public/sw.js', 'public/favicon.svg', 'public/favicon-32.png', 'public/favicon.ico', 'public/og-card.png', 'public/robots.txt', 'public/sitemap.xml', 'public/llms.txt', 'public/profile.md', 'public/projects.md', 'public/experience.md',
-  'public/site.webmanifest', 'public/BACKEND-SETUP.md', 'public/King-Art-Pacumberto-Resume.pdf', 'public/King-Art-Pacumberto-CV.pdf',
+  'public/site.webmanifest', 'public/BACKEND-SETUP.md',
   'public/profile/king-art-portrait-480.webp', 'public/profile/king-art-portrait-800.webp', 'public/profile/king-art-portrait-1023.webp',
   'public/profile/king-art-portrait-480.jpg', 'public/profile/king-art-portrait-800.jpg', 'public/profile/king-art-portrait-1023.jpg',
   'design-assets/README.md', 'design-assets/og-card.svg',
@@ -24,7 +24,7 @@ const expectedFiles = [
   'scripts/portfolio.mjs', 'scripts/production-audit.mjs',
   'tests/adaptive-smoke.ts', 'tests/feature-security-qa.py', 'tests/production-quality-qa.py', 'tests/project-integrity-qa.py',
   'tests/design-motion-browser-qa.py', 'tests/interactions-browser-qa.py', 'tests/portfolio-motion-qa.py',
-  'tests/recruiter-view-browser-qa.py', 'tests/comments-browser-qa.py', 'tests/layout_integrity_browser_qa.py', 'tests/interaction-fixture.html',
+  'tests/recruiter-view-browser-qa.py', 'tests/accessibility-browser-qa.py', 'tests/comments-browser-qa.py', 'tests/layout_integrity_browser_qa.py', 'tests/interaction-fixture.html',
   '.github/workflows/deploy.yml', '.github/dependabot.yml',
   'README.md', 'SOURCES.md', 'BACKEND-SETUP.md', 'CONTENT-CHECKLIST.md', 'PRODUCTION-QUALITY.md', 'RECRUITER-VIEW.md',
   'UI-MOTION-DESIGN.md', 'VISUAL-DESIGN-SYSTEM.md', 'VIEW-TRANSITION-LIFECYCLE.md',
@@ -102,7 +102,7 @@ async function check() {
   log(ids.length > 0 && new Set(ids).size === ids.length, `Project IDs are unique (${ids.length})`)
   log((data.match(/visual:\s*'(?:lens|meter|fan|game|toki)'\s*,/g) || []).length === ids.length, 'Every project has a recognized illustration fallback')
   for (const claim of ['Grade Level Representative', 'Public Information Officer', 'bass guitarist', 'Technical Team Leader', 'Mobile Legends: Bang Bang', 'Call of Duty: Mobile', 'Mathematics Club & Science Club', 'Badminton Club & Volunteer Photographer', 'OSINT & cybersecurity foundations', 'Nmap host / port discovery', 'Medusa authorized login-audit labs']) {
-    log(data.includes(claim), `Resume detail represented: ${claim}`)
+    log(data.includes(claim), `Profile detail represented: ${claim}`)
   }
   log(data.includes('Candidate No. 1005463') && data.includes('Gold Award'), 'TIMO award details retained')
   log(data.includes('Freelance / Project-based'), 'Freelance IT support is not presented as a full-time position')
@@ -117,7 +117,7 @@ async function check() {
   log(features.includes('192.0.2.10') && features.includes('198.51.100.20') && features.includes('203.0.113.15') && !features.includes('fetch('), 'Network Lab uses fictional documentation addresses without network requests')
   log(features.includes('Northstar Tools') && features.includes('fictional') && features.includes('private-data collection'), 'OSINT journal uses a fictional scenario with explicit safety boundaries')
   log(features.includes('URL.createObjectURL(file)') && features.includes('URL.revokeObjectURL(url)') && features.includes('48 * 1024 * 1024') && features.includes('45_000_000'), 'Photo workspace is local-only with image and memory limits')
-  log(chrome.includes("localStorage.getItem('legion-portfolio-motion-v7')") && chrome.includes("if (savedMotion === 'off') return false") && chrome.includes("return true"), 'Intro sequence follows the shared default-on motion preference and explicit visitor pause')
+  log(chrome.includes("localStorage.getItem('legion-portfolio-motion-v7')") && chrome.includes("if (savedMotion === 'off') return false") && chrome.includes("window.matchMedia?.('(prefers-reduced-motion: reduce)')") && chrome.includes("savedMotion === 'on' || !systemReducedMotion"), 'Intro sequence follows the OS motion preference unless explicitly overridden')
   log(features.includes("animationPlayState: fanSpeed === 0 ? 'paused' : 'running'"), 'Hardware fan simulation pauses at zero output')
   const backendClient = await read('src/backend.ts')
   log(backendClient.includes('VITE_SUPABASE_ANON_KEY') && !backendClient.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Frontend backend client uses only public credentials')
@@ -134,7 +134,7 @@ async function check() {
   log(edge.includes('PORTFOLIO_ALLOWED_ORIGIN') && edge.includes('verifyTurnstile') && edge.includes('consume_portfolio_quota') && edge.includes('payload.website.trim()'), 'Submission Edge Function includes origin, CAPTCHA, quota, and honeypot controls')
   const serviceWorker = await read('public/sw.js')
   log(['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'].every((prefix) => serviceWorker.includes(prefix)), 'Service worker excludes backend API paths from caching')
-  log(serviceWorker.includes("legion-portfolio-shell-v16") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
+  log(serviceWorker.includes("legion-portfolio-shell-v18") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
 
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')
@@ -160,7 +160,7 @@ async function check() {
   log(app.includes('education-history') && app.includes('achievement-summary') && app.includes('skill-disclosure-panel'), 'Skills, academic history, achievements, work history, and extracurriculars use consistent native disclosures')
   log(app.includes('legion-portfolio-motion-v7') && !app.includes('legion-portfolio-motion-v6') && !app.includes('updateScrollReveals'), 'Versioned motion preference defaults on and preserves an explicit visitor pause')
   log(app.includes("headerHidden && !mobileOpen") && app.includes('mobile-nav-active'), 'Mobile navigation keeps the masthead visible while open')
-  log(app.includes('const motionIsPaused') && app.includes('setMotionPreference(next)') && app.includes("useState<'on' | 'off'>") && app.includes("const motionEnabled = motionPreference === 'on'"), 'Decorative motion defaults on and can be explicitly paused or resumed')
+  log(app.includes('const motionIsPaused') && app.includes('setMotionPreference(next)') && app.includes("useState<'system' | 'on' | 'off'>") && app.includes("motionPreference === 'system' && !systemMotionReduced"), 'Decorative motion follows system preference and allows an explicit visitor override')
   log(app.includes('installInteractionSounds') && app.includes('legion-portfolio-sound-v2') && app.includes('soundEnabledRef'), 'Global interaction sound manager is mounted and uses a versioned visitor preference')
   log(app.includes('role="button"') && app.includes('aria-haspopup="dialog"') && app.includes('onKeyDown={handleKeyDown}'), 'Project cards are clickable, keyboard-operable project launch surfaces')
   log(app.includes('className="project-peek"') && app.includes('CLICK OR PRESS ENTER TO OPEN'), 'Project cards include a quick-view pop-out that previews the project before opening it')
@@ -204,25 +204,19 @@ async function check() {
   log((await read('src/App.tsx')).includes('Public-source research') || (await read('src/App.tsx')).includes('OPEN-SOURCE RESEARCH'), 'OSINT profile section is present')
 
   const config = await read('src/config.ts')
-  const originalResumePath = config.match(/resumeOriginalPath:\s*'([^']+)'/)?.[1]
-  log(Boolean(originalResumePath && await exists(path.join('public', originalResumePath.replace(/^\//, '')))), 'Exact owner-supplied resume PDF resolves to a bundled file')
-  if (originalResumePath) {
-    const originalBytes = await readFile(path.join(ROOT, 'public', originalResumePath.replace(/^\//, '')))
-    log(originalBytes.subarray(0, 5).toString('ascii') === '%PDF-' && originalBytes.length < 600_000, 'Original resume is a valid, compact PDF resource')
-  }
-  const resumePath = config.match(/resumePdfPath:\s*'([^']+)'/)?.[1]
-  log(Boolean(resumePath && await exists(path.join('public', resumePath.replace(/^\//, '')))), 'Public-safe CV PDF link resolves to a bundled file')
   const appLinks = await read('src/App.tsx')
-  const publicDocumentAssets = await readdir(path.join(ROOT, 'public'))
-  log(!config.includes('resumeDocxPath') && !appLinks.includes('resumeDocxPath') && !publicDocumentAssets.some((file) => /\.(docx?|odt)$/i.test(file)), 'No editable Word document is configured, linked, or shipped in public assets')
-  log((appLinks.match(/siteConfig\.resumeOriginalPath/g) || []).length >= 3 && appLinks.includes('siteConfig.resumePdfPath'), 'Resume and public-safe CV are integrated as PDF-only downloads in the header, hero, and contact')
+  const recruiter = await read('src/RecruiterView.tsx')
   const fallback = await read('src/ErrorBoundary.tsx')
-  log(fallback.includes('siteConfig.resumeOriginalPath'), 'Original resume remains available in the React error fallback')
+  const portfolioSources = [config, appLinks, recruiter, fallback].join('\n')
+  log(!/resumeOriginalPath|resumePdfPath|King-Art-Pacumberto-(?:Resume|CV)\.pdf|Download (?:public )?CV|Original Resume · PDF/i.test(portfolioSources), 'No downloadable resume/CV controls or file paths remain in the portfolio interface')
+  const publicDocumentAssets = await readdir(path.join(ROOT, 'public'))
+  log(!publicDocumentAssets.some((file) => /\.(?:pdf|docx?|odt)$/i.test(file)), 'No personal application documents are shipped in public assets')
+
 
   const html = await read('index.html')
   log(html.includes('id="root"') && html.includes('boot-fallback') && html.includes('<noscript>'), 'Boot and no-JavaScript fallbacks exist')
-  log(html.includes("localStorage.getItem('legion-portfolio-motion-v7')") && html.includes("const motionOverride = savedMotion === 'off' ? 'off' : 'on'") && html.includes("const motionEnabled = savedMotion !== 'off'") && html.includes('dataset.motionOverride'), 'Early boot script enables motion by default and applies an explicit saved visitor pause before paint')
-  log(html.includes('/King-Art-Pacumberto-Resume.pdf'), 'Original resume is available before React starts and without JavaScript')
+  log(html.includes("localStorage.getItem('legion-portfolio-motion-v7')") && html.includes("const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'") && html.includes("const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)") && html.includes('prefers-reduced-motion: reduce') && html.includes('dataset.motionOverride'), 'Early boot follows system reduced motion before paint while preserving explicit saved overrides')
+  log(!/King-Art-Pacumberto-(?:Resume|CV)\.pdf|resume PDF|CV PDF/i.test(html), 'Startup and no-JavaScript fallbacks contain no personal-document downloads')
   log(html.includes('/favicon.svg?v=20261109-4') && html.includes('/favicon-32.png?v=20261109-4') && html.includes('/favicon.ico?v=20261109-4'), 'Cache-busted SVG, PNG, and ICO favicon fallbacks are linked from the HTML shell')
   const faviconPng = await readFile(path.join(ROOT, 'public', 'favicon-32.png'))
   const faviconIco = await readFile(path.join(ROOT, 'public', 'favicon.ico'))
@@ -237,15 +231,12 @@ async function check() {
   log(workflow.includes('npm run verify') && workflow.includes('actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b') && workflow.includes('actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e') && workflow.includes('actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b') && workflow.includes('path: ./dist') && workflow.includes('test -s dist/index.html') && workflow.includes('test -s dist/favicon.svg') && workflow.includes('test -s dist/favicon-32.png') && workflow.includes('test -s dist/favicon.ico') && workflow.includes('test -d dist/assets') && workflow.includes('test -f dist/.nojekyll') && !workflow.includes('actions/jekyll-build-pages@v1') && !workflow.includes('destination: ./_site'), 'GitHub Pages workflow validates and uploads compiled Vite dist output directly without Jekyll packaging')
   log(workflow.indexOf('npm run verify') < workflow.indexOf('Validate the production Pages artifact') && workflow.indexOf('Validate the production Pages artifact') < workflow.indexOf('actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b'), 'Vite verification/build and production artifact validation complete before Pages upload')
 
-  const publicFiles = await readdir(path.join(ROOT, 'public'))
-  log(!publicFiles.some((name) => /private|phone|personal-cv/i.test(name)), 'No private CV file is stored in public/')
-  const publicPdf = await readFile(path.join(ROOT, 'public', 'King-Art-Pacumberto-CV.pdf'))
-  log(publicPdf.subarray(0, 5).toString('ascii') === '%PDF-' && publicPdf.length > 100_000, 'Latest redesigned public CV PDF is bundled (updated export)')
+  log(!publicDocumentAssets.some((name) => /private|phone|personal-cv/i.test(name)), 'No private personal-document asset is stored in public/')
   log(!await exists('package-lock.json') ? true : (await read('package-lock.json')).includes('lockfileVersion'), 'Package lockfile is valid when present')
   log(await exists('src/RecruiterView.tsx'), 'Dedicated recruiter profile component is present')
   log(await exists('public/robots.txt') && await exists('public/sitemap.xml') && await exists('public/site.webmanifest') && await exists('public/llms.txt') && await exists('public/profile.md') && await exists('public/projects.md') && await exists('public/experience.md'), 'Crawler and install metadata files are present')
   log(await exists('.github/dependabot.yml'), 'Dependabot monitors npm and GitHub Actions dependencies')
-  log(await exists('scripts/production-audit.mjs') && await exists('tests/production-quality-qa.py') && await exists('tests/recruiter-view-browser-qa.py'), 'Production budgets, source checks, and recruiter browser tests are included')
+  log(await exists('scripts/production-audit.mjs') && await exists('tests/production-quality-qa.py') && await exists('tests/recruiter-view-browser-qa.py') && await exists('tests/accessibility-browser-qa.py'), 'Production budgets, source checks, and full/recruiter accessibility browser tests are included')
 
   const sourceFiles = ['src/App.tsx', 'src/RecruiterView.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
   let totalBytes = 0
@@ -335,6 +326,7 @@ try {
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:interactions'])
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:motion'])
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:recruiter-browser'])
+    run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:accessibility-browser'])
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:comments-browser'])
     if (command === 'release') await verifyLatestBackup()
     console.log(command === 'release' ? '\nRelease checks passed. Review dist/ before deployment.' : '\nFull typecheck and production build passed.')

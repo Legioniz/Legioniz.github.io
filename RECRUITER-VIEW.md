@@ -9,7 +9,7 @@ It is intentionally a concise reading mode, not a second manually maintained CV.
 ## What it includes
 
 - Professional introduction, optimized responsive portrait, current PUP BSIT study, location, and availability note.
-- A single public-safe PDF CV download. The original resume PDF—which contains the phone number printed in the supplied file—is not exposed in this mode.
+- Direct contact links for email, GitHub, and LinkedIn; this view does not offer downloadable personal application documents.
 - Three featured technical projects with repository links and hand-off into the full project case-study dialog.
 - Evidence-led skills grouped by practice area, without invented proficiency percentages.
 - Relevant technical support and teaching experience first, with remaining employment history disclosed below.
@@ -23,7 +23,7 @@ The mode is controlled by the `view=recruiter` query parameter. It supports dire
 
 Edit the underlying arrays in `src/data.ts` and the public profile fields in `src/config.ts`. Do not add unverified dates, metrics, responsibilities, qualifications, or claims. The TIMO result links to a public result where available; other achievements remain owner-supplied unless a source is provided.
 
-The public-safe CV is `public/King-Art-Pacumberto-CV.pdf`. Keep phone-bearing or otherwise private versions out of `public/`.
+The repository and deployed site intentionally contain no downloadable resume/CV files. Keep personal application documents outside the public repository and direct visitors to the on-page profile and contact links.
 
 
 ## Presentation and motion refinement

@@ -37,6 +37,7 @@ npm run test:features  # feature integration and backend security source checks
 npm run test:production-source # recruiter, SEO, accessibility, mobile, privacy, and production-source checks
 npm run test:design-browser # Chromium stylesheet, motion, and reduced-motion checks
 npm run test:recruiter-browser # real Chromium recruiter-view routing, layout, print, and keyboard tests
+npm run test:accessibility-browser # compiled full/recruiter views, keyboard semantics, and 320px reflow
 # CI additionally runs Lighthouse CI against both the full site and recruiter view
 npm run test:interactions # Chromium/Playwright project interaction and UI sound tests
 npm run test:motion       # Chromium/Playwright section, masthead, disclosure, and reduced-motion tests
@@ -46,7 +47,7 @@ npm run verify         # preflight + all source/security/browser suites + TypeSc
 npm run preview        # preview production output
 ```
 
-Install the test-only Python dependencies with `python -m pip install -r requirements-test.txt` and install the matching Chromium browser with `python -m playwright install chromium`. For a release-ready local run, use `npm run release`. It creates a verified backup first, then runs the preflight, adaptive, cross-file integrity, feature/security, production-source, design-browser, strict TypeScript project, Vite production build, bundle-budget checks, desktop/touch interactions, scroll/motion regressions, and compiled Recruiter View browser tests. The production site is generated in `dist/`; the preview server uses `http://localhost:4174/`. The backup tool retains the five newest snapshots under `.portfolio-backups/` and records SHA-256 checksums. That local backup directory is ignored by Git and is never deployed.
+Install the test-only Python dependencies with `python -m pip install -r requirements-test.txt` and install the matching Chromium browser with `python -m playwright install chromium`. For a release-ready local run, use `npm run release`. It creates a verified backup first, then runs the preflight, adaptive, cross-file integrity, feature/security, production-source, design-browser, strict TypeScript project, Vite production build, bundle-budget checks, desktop/touch interactions, scroll/motion regressions, compiled Recruiter View browser tests, and full/recruiter accessibility checks across eight viewport widths and both themes. The production site is generated in `dist/`; the preview server uses `http://localhost:4174/`. The backup tool retains the five newest snapshots under `.portfolio-backups/` and records SHA-256 checksums. That local backup directory is ignored by Git and is never deployed.
 
 ## Deploy to GitHub Pages
 
@@ -58,9 +59,9 @@ The public URLs are `https://legioniz.github.io/` (full portfolio) and `https://
 
 ## Recruiter view and production checks
 
-Open the concise, shareable recruiter profile with `/?view=recruiter`. It reuses the same project, skills, experience, education, achievements, and contact data as the full site, exposes the public-safe CV PDF only, and can hand visitors into the full project case studies.
+Open the concise, shareable recruiter profile with `/?view=recruiter`. It reuses the same project, skills, experience, education, achievements, and contact data as the full site, presents concise professional information and direct contact links, and can hand visitors into the full project case studies.
 
-The production workflow includes source-level SEO, privacy, responsive, accessibility, and security checks; a compiled asset and bundle-size audit; Lighthouse CI against both the full portfolio and recruiter view; and Chromium browser checks for recruiter routes, keyboard behavior, print styling, and narrow-screen overflow. Lighthouse HTML/JSON reports are written to `.lighthouseci/reports` in CI rather than uploaded to public temporary storage. Passing these checks is a release gate, not a claim of live deployment or full WCAG certification.
+The production workflow includes source-level SEO, privacy, responsive, accessibility, and security checks; a compiled asset and bundle-size audit; Lighthouse CI against both the full portfolio and recruiter view; and Chromium browser checks for recruiter routes, keyboard behavior, print styling, narrow-screen overflow, and accessibility regressions on both compiled views. Lighthouse HTML/JSON reports are written to `.lighthouseci/reports` in CI rather than uploaded to public temporary storage. Passing these checks is a release gate, not a claim of live deployment or full WCAG certification.
 
 ## Site features
 
@@ -89,20 +90,15 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Project dialogs animate into view, manage focus, support Escape-to-close, and restore focus to the project card
 - Visible keyboard focus states in both themes, a skip-to-content link, and explicit light-theme contrast tuning
 - One-line `KA` monogram lockup with nowrap layout rules and a responsive brand header
-- Synthesized, target-specific interface sounds for navigation and link hover, project hover, controls, disclosures, keyboard focus, form fields, submits, project open/close, downloads, and copy; enabled by default on this release, persistent sound toggle in the header, no audio assets
+- Synthesized, target-specific interface sounds for navigation and link hover, project hover, controls, disclosures, keyboard focus, form fields, submits, project open/close, downloads, and copy; off by default and enabled only by an explicit visitor choice, persistent sound toggle in the header, no audio assets
 - Responsive profile portrait with WebP/JPEG source sets, intrinsic dimensions, lazy loading, and initials fallback
 - Versioned, opt-in service-worker updates and a same-origin static-asset cache; form, auth, database, and storage API traffic is excluded from caching
 - Dedicated OSINT and defensive network-practice note with explicit authorized-lab scope
-- Direct GitHub, LinkedIn, and email links; PDF-only downloads for the exact owner-supplied resume and redesigned public-safe CV, integrated into the header, hero, contact section, and progressive fallbacks
+- Direct GitHub, LinkedIn, and email links across the full portfolio, recruiter profile, and progressive fallbacks
 
-## CV and privacy
+## Personal documents
 
-The portfolio exposes PDF downloads only. The editable Word/DOCX version has been removed from the public interface and release assets.
-
-- `public/King-Art-Pacumberto-Resume.pdf` is the exact original resume PDF supplied by the owner. It contains the phone number printed on that resume. Publishing the site makes this file publicly downloadable, so replace it with a redacted PDF before deployment if the phone number should remain private.
-- `public/King-Art-Pacumberto-CV.pdf` is the redesigned public-safe CV PDF and omits the phone number.
-
-The two PDF downloads are integrated into the site header, hero actions, contact section, and progressive fallbacks. Do not add private application documents to the public repository.
+The portfolio intentionally does not publish downloadable resumes, CVs, or other personal application documents. Visitors can review the information presented directly in the Full Portfolio and Recruiter View, then use the contact links to get in touch.
 
 ## Inquiries, moderated comments, analytics, and owner administration
 
@@ -124,13 +120,13 @@ CSS owns the layout through fluid sizing, breakpoints, orientation rules, dynami
 
 ## Interaction sounds and project previews
 
-The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close, downloads, and copy actions have distinct action cues. Sound is enabled by default for first-time visitors in this release, but browsers require a real user gesture before Web Audio can play; the first click, tap, or keyboard action unlocks the context and subsequent hover cues become audible. The speaker control can mute sound persistently. The setting is stored as `legion-portfolio-sound-v2`.
+The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close, and copy actions have distinct action cues. Sound is off by default and remains silent until a visitor explicitly enables it. Browsers still require a real user gesture before Web Audio can play; the sound-toggle action itself gives a short confirmation cue, and the first click, tap, or keyboard action unlocks the context for subsequent cues. The preference is stored as `legion-portfolio-sound-v2`.
 
 On fine-pointer desktop layouts, hovering or keyboard-focusing a project card slides a quick-view panel in from the right. Clicking anywhere on the card, or pressing Enter/Space while focused, opens the complete project introduction. Touch layouts skip the hover-only panel and open the same introduction on tap. Projects without a live demo only expose the documented overview and repository link; no fake launch destinations are shown.
 
 ## Content maintenance
 
-- `src/config.ts`: name, public contact links, location, exact original resume PDF path, and public-safe CV PDF path.
+- `src/config.ts`: name, public contact links, location, and availability note.
 - `src/data.ts`: projects, core skills (including OSINT/security foundations), experience, education, achievements, and activities. Project-specific technologies stay in each project's stack rather than being presented as self-rated proficiency.
 - `src/App.tsx`: page structure, shareable project case studies, project launch cards, modal introductions, and adaptive UI hooks.
 - `src/PortfolioFeatures.tsx`: learning labs, skill map, local photography workspace, fictional Network Lab, OSINT workflow, hardware model, developer notes, current work, quick navigator, and service-worker update notice.
@@ -149,7 +145,7 @@ On fine-pointer desktop layouts, hovering or keyboard-focusing a project card sl
 - `tests/portfolio-motion-qa.py`: Chromium/Playwright test that compiles and loads the exact production reveal and masthead controllers, verifies section enter/exit/re-entry, dynamic project insertion, skill/education/achievement disclosure open-close transitions, motion-on-by-default behavior, explicit visitor pause, header movement by scroll direction, fallback behavior, and the one-line `KA` lockup at seven viewport widths. Requires global TypeScript (`tsc`), Python Playwright, and Chromium outside the deployed runtime. Run it with `npm run test:motion`.
 - `SOURCES.md`: evidence and editorial notes for public-facing claims.
 
-Smart Electrical Monitoring is described as a local demonstration using synthetic data, not a live utility integration. The TIMO award links to its published ranking. The current education and experience details follow the latest supplied resume. The OSINT and security-practice descriptions are owner-reported, self-directed experience and are labeled foundational; the named Medusa tool is described only in an authorized authentication-audit lab context. The uploaded profile image is stored as responsive, optimized WebP/JPEG derivatives under `public/profile/`, not as a large original PNG. Leadership responsibilities and event-production details are included from the owner's direct confirmation; no missing dates or titles have been invented. The light-theme coral and secondary metadata tokens have been darkened to maintain contrast on the warm paper background. The adaptive effect key intentionally ignores one-pixel layout changes so CSS/ResizeObserver can handle geometry without repeatedly rebuilding optional effects.
+Smart Electrical Monitoring is described as a local demonstration using synthetic data, not a live utility integration. The TIMO award links to its published ranking. The current education and experience details follow the latest owner-supplied information. The OSINT and security-practice descriptions are owner-reported, self-directed experience and are labeled foundational; the named Medusa tool is described only in an authorized authentication-audit lab context. The uploaded profile image is stored as responsive, optimized WebP/JPEG derivatives under `public/profile/`, not as a large original PNG. Leadership responsibilities and event-production details are included from the owner's direct confirmation; no missing dates or titles have been invented. The light-theme coral and secondary metadata tokens have been darkened to maintain contrast on the warm paper background. The adaptive effect key intentionally ignores one-pixel layout changes so CSS/ResizeObserver can handle geometry without repeatedly rebuilding optional effects.
 
 
 ### Collapsible section navigator
@@ -183,4 +179,4 @@ The shared `src/layout-integrity.css` layer is imported directly by `src/main.ts
 
 ## Public Markdown references
 
-The public site also serves [llms.txt](https://legioniz.github.io/llms.txt), a short discovery index for text-first clients, with separate [profile](https://legioniz.github.io/profile.md), [project](https://legioniz.github.io/projects.md), and [experience](https://legioniz.github.io/experience.md) summaries. These files are maintained alongside the React source and are included in the sitemap. They link to the public-safe CV only; the original resume is not listed.
+The public site also serves [llms.txt](https://legioniz.github.io/llms.txt), a short discovery index for text-first clients, with separate [profile](https://legioniz.github.io/profile.md), [project](https://legioniz.github.io/projects.md), and [experience](https://legioniz.github.io/experience.md) summaries. These files are maintained alongside the React source and are included in the sitemap. They provide text-first profile information and direct contact links; no personal documents are distributed.

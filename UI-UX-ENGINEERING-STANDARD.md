@@ -22,7 +22,7 @@ Use Nielsen Norman Group's ten usability heuristics as the interaction baseline:
 9. Explain errors in plain language and provide a recovery path.
 10. Add help where a task is complex; do not force visitors to learn the interface before using it.
 
-**Portfolio application:** first-screen content should quickly explain who the owner is, what is being built, what evidence exists, and how to contact or download the public-safe CV. Long-form experiments remain secondary to the profile, work evidence, and contact path. Simulation labels, project status, assumptions, and boundaries must remain explicit.
+**Portfolio application:** first-screen content should quickly explain who the owner is, what is being built, what evidence exists, and how to contact the owner. Long-form experiments remain secondary to the profile, work evidence, and contact path. Simulation labels, project status, assumptions, and boundaries must remain explicit.
 
 Reference: [Nielsen Norman Group — 10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/).
 
@@ -40,10 +40,14 @@ The implementation target is WCAG 2.2 Level AA. A successful automated audit is 
 ### Operable
 - Every primary action must work with keyboard, touch, mouse, and assistive technology.
 - Provide a visible focus indicator; focused controls must not be hidden beneath sticky headers, notices, or dialogs.
+- Expose the visually active in-page navigation destination programmatically with exactly one `aria-current="location"` item in the navigation set; keep the visual active state and announced state synchronized.
 - Use native links, buttons, inputs, selects, and disclosures whenever they fit the task.
 - For custom widgets, implement the complete keyboard pattern rather than adding ARIA roles alone. Tabs use one active tab stop, arrow-key movement, Home/End, associated panels, and correct selected state.
 - Dialogs move focus inside on open, contain Tab navigation, close on Escape where appropriate, and return focus to the invoking control.
 - Meet WCAG 2.2 target-size minimums (24 × 24 CSS px or a valid spacing/equivalent exception). Aim for 44 × 44 CSS px on important touch controls where layout permits.
+- Ensure keyboard focus is not entirely hidden behind author-created sticky, fixed, or overlay content (WCAG 2.2 SC 2.4.11).
+- Test the 320 CSS-pixel reflow threshold for vertically scrolling content (SC 1.4.10); horizontal scrolling is reserved for content whose two-dimensional layout is essential.
+- Review every undersized pointer target against the spacing and other exceptions in SC 2.5.8 rather than treating 24 × 24 as an unconditional rule.
 
 ### Understandable and robust
 - Use consistent labels and navigation, explicit field labels, plain-language errors, and actionable recovery guidance.
@@ -51,7 +55,7 @@ The implementation target is WCAG 2.2 Level AA. A successful automated audit is 
 - Keep ARIA names aligned with visible text; avoid duplicate or conflicting roles.
 - Test with keyboard-only navigation, zoom/reflow, a screen reader, and both pointer and touch interaction.
 
-References: [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/), [WAI — What's New in WCAG 2.2](https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/), [WAI-ARIA APG Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), [WAI-ARIA Keyboard Interface](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/).
+References: [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/), [WAI — What's New in WCAG 2.2](https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/), [WAI-ARIA APG Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/), [WAI-ARIA Keyboard Interface](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/), [WCAG 2.2 Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html), [Target Size Minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), and [Focus Not Obscured](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html).
 
 ## 3. Layout, visual design, and responsive behavior
 
@@ -81,7 +85,7 @@ Every component must define its states before styling:
 | Data feed | loading, loaded, empty, failure, retry, stale/offline where relevant |
 | Privacy/auth | undecided, accepted/declined, signed out, authenticated, expired, recovery |
 
-Feedback must be timely and located near the control or content that changed. Avoid silent failures, fake destinations, fake service integrations, misleading progress, or labels that promise a keyboard action that is not implemented.
+Feedback must be timely and located near the control or content that changed. Ambient interface sound is off by default, requires an explicit visitor choice, and must never be the only way to communicate a state. Avoid silent failures, fake destinations, fake service integrations, misleading progress, or labels that promise a keyboard action that is not implemented.
 
 ## 5. Performance and resilience
 
@@ -134,9 +138,12 @@ A change is not complete until:
 - Imports, references, assets, semantics, and state transitions remain connected.
 - TypeScript, source/security checks, browser suites, build, bundle audit, Lighthouse, and deployment artifact validation pass.
 - Keyboard behavior is tested for each custom interaction and the visible state is announced correctly.
+- The compiled full and recruiter views pass the browser accessibility regression at 320, 360, 390, 430, 768, 1024, 1280, and 1440 CSS pixels in both color themes.
 - No secret, private document, or unverified personal claim enters the public artifact.
 - The release is committed to `main`, and the GitHub Actions deployment is confirmed successful.
 
 Review this standard during feature work and after major dependency, browser, hosting, content, and security changes. Run a focused keyboard/zoom/mobile review monthly and a full dependency/security/performance review at least quarterly.
+
+The automated browser suite checks rendered semantics, accessible-name smoke coverage, image alternatives, ID references, keyboard focus, opener isolation, hidden focusables, and page-level reflow. It is a regression detector, not a complete accessible-name computation or conformance test; manual screen-reader, zoom, contrast, and target-spacing review remains necessary. See [tests/accessibility-browser-qa.py](./tests/accessibility-browser-qa.py).
 
 **Important:** these requirements define an engineering target. They do not constitute a third-party accessibility audit, penetration test, legal privacy review, or a guarantee of Google ranking.
