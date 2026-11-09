@@ -42,12 +42,35 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Verify Supabase portfolio backend readiness
+      - name: Verify Supabase backend and public comment intake
+        env:
+          SUPABASE_PUBLIC_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_PRGb0-smtTzCm9VHuM9NOQ_ZFh1wKRS' }}
         run: |
           set -euo pipefail
-          response="$(curl --fail-with-body --silent --show-error \
-            https://pjuwrngnrrvdiwqspkic.supabase.co/functions/v1/portfolio-submit)"
+          endpoint="https://pjuwrngnrrvdiwqspkic.supabase.co/functions/v1/portfolio-submit"
+          response="$(curl --fail-with-body --silent --show-error "$endpoint")"
           echo "$response" | jq -e '.ok == true and .status == "ready"'
+
+          # Verify browser preflight headers without creating a database record.
+          headers_file="$(mktemp)"
+          trap 'rm -f "$headers_file"' EXIT
+          curl --fail-with-body --silent --show-error --dump-header "$headers_file" --output /dev/null \
+            -X OPTIONS "$endpoint" \
+            -H 'Origin: https://legioniz.github.io' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: apikey,content-type'
+          grep -iq '^access-control-allow-origin: https://legioniz.github.io' "$headers_file"
+          grep -iq '^access-control-allow-methods:.*POST' "$headers_file"
+          grep -iq '^access-control-allow-headers:.*apikey.*content-type' "$headers_file"
+
+          # The honeypot path acknowledges automation without inserting a comment.
+          probe="$(curl --fail-with-body --silent --show-error "$endpoint" \
+            -X POST \
+            -H 'Origin: https://legioniz.github.io' \
+            -H 'Content-Type: application/json' \
+            -H "apikey: ${SUPABASE_PUBLIC_KEY}" \
+            --data '{"kind":"comment","display_name":"Release probe","body":"This automated release probe is intentionally not stored.","website":"portfolio-release-honeypot"}')"
+          echo "$probe" | jq -e '.ok == true'
 
       - name: Set up Python test environment
         uses: actions/setup-python@v5
