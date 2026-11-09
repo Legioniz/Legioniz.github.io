@@ -1,14 +1,14 @@
 /* Versioned, same-origin shell/static cache. Never caches form, auth, or database traffic. */
-const CACHE_NAME = 'legion-portfolio-shell-v8';
+const CACHE_NAME = 'legion-portfolio-shell-v9';
 const SHELL_URLS = [
   '/',
   '/robots.txt',
   '/sitemap.xml',
-  '/site.webmanifest',
+  '/site.webmanifest?v=20261109-2',
   '/og-card.png',
-  '/favicon.svg?v=20261109-1',
-  '/favicon-32.png?v=20261109-1',
-  '/favicon.ico?v=20261109-1',
+  '/favicon.svg?v=20261109-2',
+  '/favicon-32.png?v=20261109-2',
+  '/favicon.ico?v=20261109-2',
 ];
 const API_PREFIXES = ['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'];
 
