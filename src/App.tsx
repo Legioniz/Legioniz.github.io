@@ -16,6 +16,27 @@ const PrivacyNotice = lazy(() => import('./BackendPanels').then((module) => ({ d
 const RecruiterView = lazy(() => import('./RecruiterView').then((module) => ({ default: module.RecruiterView })))
 
 type Theme = 'dark' | 'light'
+type MotionPreference = 'system' | 'on' | 'off'
+
+const MOTION_STORAGE_KEY = 'legion-portfolio-motion-v8'
+const LEGACY_MOTION_STORAGE_KEY = 'legion-portfolio-motion-v7'
+
+function readMotionPreference(): MotionPreference {
+  try {
+    const saved = localStorage.getItem(MOTION_STORAGE_KEY)
+    if (saved === 'on' || saved === 'off') return saved
+    const legacy = localStorage.getItem(LEGACY_MOTION_STORAGE_KEY)
+    if (legacy === 'on' || legacy === 'off') {
+      localStorage.setItem(MOTION_STORAGE_KEY, legacy)
+      return legacy
+    }
+  } catch { /* Use the operating-system preference when storage is unavailable. */ }
+  return 'system'
+}
+
+function systemPrefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+}
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (update: () => void) => { finished: Promise<void> }
@@ -517,14 +538,14 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <section ref={dialogRef} className="project-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabIndex={-1}>
+      <section ref={dialogRef} className="project-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" tabIndex={-1}>
         <div className="modal-topbar"><span>PROJECT FILE / {project.number}</span><button ref={closeButtonRef} className="icon-button" data-sfx="close" onClick={onClose} aria-label="Close project details"><Icon name="close"/></button></div>
         <div className="modal-art"><ProjectArt visual={project.visual}/></div>
         <div className="modal-body">
           <div className="eyebrow"><span className="eyebrow-line"/>{project.category} / {project.label}</div>
           <h2 id="modal-title">{project.name}</h2>
           <h3>{project.headline}</h3>
-          <p className="modal-overview">{project.overview}</p>
+          <p id="modal-description" className="modal-overview">{project.overview}</p>
           <div className="modal-grid">
             <div><span className="detail-label">ROLE / CONTRIBUTION</span><p>{project.role}</p></div>
             <div><span className="detail-label">PROJECT STATUS</span><p>{project.status}</p></div>
@@ -549,6 +570,9 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
 function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: boolean; onClose: () => void; onNavigate: (id: string) => void; theme: Theme; onTheme: () => void }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   const actions = [
     { label: 'Go to home', detail: 'Navigate to introduction', id: 'home', keys: 'home start' },
     { label: 'Explore projects', detail: 'Browse selected work', id: 'projects', keys: 'work builds portfolio' },
@@ -568,27 +592,58 @@ function CommandPalette({ open, onClose, onNavigate, theme, onTheme }: { open: b
     { label: 'Open admin console', detail: 'Private owner sign-in', id: 'admin-console', keys: 'admin dashboard owner login moderation' },
   ]
   const filtered = actions.filter((item) => `${item.label} ${item.detail} ${item.keys}`.toLowerCase().includes(query.toLowerCase()))
+
   useEffect(() => {
     if (!open) return
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setQuery('')
-    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 40)
-    return () => window.clearTimeout(focusTimer)
+    const focusFrame = window.requestAnimationFrame(() => inputRef.current?.focus())
+    const getFocusable = () => Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []).filter((element) => element.getClientRects().length > 0)
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const focusable = getFocusable()
+      if (!focusable.length) {
+        event.preventDefault()
+        dialogRef.current?.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      if (event.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (active === last || !dialogRef.current?.contains(active))) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.cancelAnimationFrame(focusFrame)
+      document.removeEventListener('keydown', handleKeyDown)
+      previousFocus?.focus()
+    }
   }, [open])
-  useEffect(() => {
-    if (!open) return
-    const handle = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handle)
-    return () => window.removeEventListener('keydown', handle)
-  }, [open, onClose])
+
   if (!open) return null
   return (
     <div className="palette-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <div className="command-palette" role="dialog" aria-modal="true" aria-label="Quick navigation">
+      <div ref={dialogRef} className="command-palette" role="dialog" aria-modal="true" aria-labelledby="palette-title" tabIndex={-1}>
         <div className="palette-search"><Icon name="command"/><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Where do you want to go?" aria-label="Search portfolio commands"/><kbd>ESC</kbd></div>
-        <div className="palette-label">NAVIGATION</div>
+        <div className="palette-label" id="palette-title">NAVIGATION</div>
         <div className="palette-results">
           {filtered.map((item, index) => <button key={item.id} className="palette-item" data-sfx="navigate" onClick={() => onNavigate(item.id)}><span className="palette-index">0{index + 1}</span><span className="palette-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><Icon name="arrow" size={16}/></button>)}
-          {filtered.length === 0 && <p className="palette-empty">No matching destination. Try “projects” or “skills”.</p>}
+          {filtered.length === 0 && <p className="palette-empty" role="status" aria-live="polite">No matching destination. Try “projects” or “skills”.</p>}
         </div>
         <div className="palette-footer"><span><kbd>↵</kbd> select</span><button data-sfx="toggle" onClick={onTheme}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14}/> Switch to {theme === 'dark' ? 'light' : 'dark'} theme</button></div>
       </div>
@@ -647,15 +702,12 @@ export default function App() {
   const headerRef = useRef<HTMLElement>(null)
   const [headerHidden, setHeaderHidden] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(() => {
-    try { return localStorage.getItem('legion-portfolio-sound-v2') !== 'off' } catch { return true }
+    try { return localStorage.getItem('legion-portfolio-sound-v2') === 'on' } catch { return false }
   })
   const soundEnabledRef = useRef(soundEnabled)
-  const [motionPreference, setMotionPreference] = useState<'on' | 'off'>(() => {
-    try {
-      return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'
-    } catch { return 'on' }
-  })
-  const motionEnabled = motionPreference === 'on'
+  const [motionPreference, setMotionPreference] = useState<MotionPreference>(readMotionPreference)
+  const [systemReducedMotion, setSystemReducedMotion] = useState(systemPrefersReducedMotion)
+  const motionEnabled = motionPreference === 'on' || (motionPreference === 'system' && !systemReducedMotion)
   const [copied, setCopied] = useState(false)
 
   const categories: ('All' | ProjectCategory)[] = ['All', 'Software', 'Data & Systems', 'Embedded', 'Creative']
@@ -725,7 +777,7 @@ export default function App() {
   const toggleMotion = () => {
     const next = motionEnabled ? 'off' : 'on'
     setMotionPreference(next)
-    try { localStorage.setItem('legion-portfolio-motion-v7', next) } catch { /* Storage can be disabled. */ }
+    try { localStorage.setItem(MOTION_STORAGE_KEY, next) } catch { /* Storage can be disabled. */ }
   }
   const navigate = (id: string) => {
     setMobileOpen(false)
@@ -748,6 +800,15 @@ export default function App() {
     root.dataset.motion = motionEnabled ? 'on' : 'off'
     root.dataset.motionOverride = motionPreference
   }, [motionEnabled, motionPreference])
+
+  useEffect(() => {
+    if (motionPreference !== 'system' || !window.matchMedia) return
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setSystemReducedMotion(query.matches)
+    update()
+    query.addEventListener?.('change', update)
+    return () => query.removeEventListener?.('change', update)
+  }, [motionPreference])
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled
@@ -916,14 +977,14 @@ export default function App() {
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <div className="scroll-progress" ref={progressRef}/>
+      <div className="scroll-progress" ref={progressRef} aria-hidden="true"/>
       <IntroSequence/>
       <header ref={headerRef} className={`site-header ${headerHidden && !mobileOpen ? 'header-hidden' : ''} ${mobileOpen ? 'mobile-nav-active' : ''}`}>
         <a className="brand" href="#home" onClick={(event) => { event.preventDefault(); navigate('home') }}>
           <span className="brand-mark"><span className="brand-monogram">K<span>A</span></span></span><span className="brand-copy"><strong>KING ART</strong><small>DEVELOPER PORTFOLIO</small></span>
         </a>
         <nav id="primary-navigation" className={`main-nav ${mobileOpen ? 'nav-open' : ''}`} aria-label="Main navigation">
-          {navItems.map((item) => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? 'active' : ''} onClick={(event) => { event.preventDefault(); navigate(item.id) }}>{item.label}</a>)}
+          {navItems.map((item) => <a key={item.id} href={`#${item.id}`} className={activeSection === item.id ? 'active' : ''} aria-current={activeSection === item.id ? 'location' : undefined} onClick={(event) => { event.preventDefault(); navigate(item.id) }}>{item.label}</a>)}
           <a className="nav-recruiter" href="?view=recruiter" onClick={(event) => { event.preventDefault(); openRecruiterView() }}>Recruiter view <span aria-hidden="true">↗</span></a>
           <a className="nav-resume nav-original-resume" data-sfx="download" href={siteConfig.resumeOriginalPath} download="King_Art_Pacumberto_Resume.pdf" aria-label="Download the original resume as a PDF">RESUME PDF <Icon name="download" size={13}/></a>
           <a className="nav-resume" data-sfx="download" href={siteConfig.resumePdfPath} download="King_Art_D_Pacumberto_CV.pdf" aria-label="Download the public-safe CV as a PDF">CV PDF <Icon name="download" size={13}/></a>
