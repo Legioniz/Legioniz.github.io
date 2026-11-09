@@ -70,6 +70,8 @@ jobs:
           test -s dist/favicon-32.png
           test -s dist/favicon.ico
           grep -q '/favicon.svg?v=20261109-2' dist/index.html
+          grep -q '/favicon-32.png?v=20261109-2' dist/index.html
+          grep -q '/favicon.ico?v=20261109-2' dist/index.html
           test -s dist/site.webmanifest
           test -d dist/assets
           test -s dist/King-Art-Pacumberto-CV.pdf
