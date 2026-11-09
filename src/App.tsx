@@ -730,7 +730,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    if (themeColor) themeColor.content = theme === 'dark' ? '#151719' : '#f3f0e9'
+    if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || (theme === 'dark' ? '#151719' : '#f3f0e9')
     try { localStorage.setItem('legion-portfolio-theme', theme) } catch { /* Storage can be disabled. */ }
   }, [theme])
 

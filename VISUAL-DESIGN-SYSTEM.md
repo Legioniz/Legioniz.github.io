@@ -8,7 +8,7 @@ The portfolio should feel like a personal technical field journal: part engineer
 
 - **Primary structure:** warm paper/ink surfaces, fine rules, chapter labels, folio numbers, and grid annotations.
 - **Primary accent:** signal coral, used for focus, actions, active states, and selected labels. Dark mode uses bright coral (`#e87961`); light mode uses a deeper coral (`#a94837`) to maintain text contrast against warm paper.
-- **Secondary accent:** muted sea-glass blue/teal, used for technical diagrams and secondary emphasis.
+- **Secondary accent:** muted slate blue, used for technical diagrams and secondary emphasis.
 - **Typography:** Space Grotesk for display, Manrope for readable body copy, and DM Mono for annotations and metadata.
 - **Geometry:** rectangular cards with small corner radii, crosshair marks, dashed separators, circular system maps, and an asymmetric 12-column project layout. Each portfolio area uses a different composition: cover page, editorial profile, case-study board, parts-tray toolkit, timeline/index cards, and studio contact panel.
 - **Tone:** confident, curious, direct, and practical. Avoid invented performance claims or exaggerated professional titles. Project artwork is CSS/SVG-led and specific to each project rather than relying on generic stock photography or a uniform card template.
@@ -110,6 +110,11 @@ Border and grid colors must use the existing translucent `--line`, `--line-stron
 8. **Gradients are restrained.** Existing low-opacity ambient hero treatments and subtle progress treatments may remain. Do not introduce loud multicolor gradients, neon glows, or gradients as substitutes for clear hierarchy.
 9. **No arbitrary hard-coded colors in components.** New CSS should use the shared semantic variables. If a genuinely new semantic color is required, define its dark and light values in `:root` and `:root[data-theme='light']`, document its role here, and verify contrast before use.
 10. **Full Portfolio and Recruiter View share the same palette.** Recruiter View may adjust density and layout, but it must not create a separate brand color system.
+
+
+### Static assets and fallback surfaces
+
+CSS custom properties remain the screen UI source of truth. Files that cannot inherit the stylesheet—HTML theme metadata, the PWA manifest, no-JavaScript fallback, favicon, and social preview artwork—must mirror the corresponding canonical token values rather than introduce a parallel palette. The fixed social preview uses the canonical light-theme palette; the favicon and initial browser theme use the canonical dark-theme values. Keep duplicate public/source SVG assets identical. The monochrome rules inside `@media print` are an intentional print-only treatment, not a separate Recruiter View theme.
 
 ### Color review checklist
 
