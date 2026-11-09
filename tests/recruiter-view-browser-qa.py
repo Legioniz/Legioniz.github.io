@@ -95,6 +95,8 @@ def main() -> None:
             check(response is not None and response.status == 200, 'Recruiter view loads directly from a shareable query URL')
             check('Recruiter Profile' in page.title(), 'Recruiter view receives a focused browser title')
             check(page.get_by_role('navigation', name='Recruiter profile sections').count() == 1, 'Recruiter navigation has an accessible name')
+            check(page.get_by_role('link', name='KA RECRUITER BRIEF / 01', exact=True).count() == 1,
+                  'Recruiter brand accessible name is derived from its visible KA and brief text')
             recruiter_brand = page.locator('.recruiter-brand-lockup')
             snapshot_mark = page.locator('.recruiter-snapshot-mark')
             snapshot_lockup = page.locator('.recruiter-snapshot-lockup')
