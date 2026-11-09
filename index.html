@@ -16,7 +16,7 @@
         root.dataset.motionOverride = 'system'
         root.dataset.motion = 'on'
         try {
-          const savedTheme = localStorage.getItem('legion-portfolio-theme')
+          const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
           const theme = savedTheme === 'light' ? 'light' : 'dark'
           document.documentElement.dataset.theme = theme
           const themeColor = document.querySelector('meta[name="theme-color"]')
@@ -29,7 +29,7 @@
           document.documentElement.dataset.quality = reducedGraphics ? 'economy' : (coarsePointer ? 'balanced' : 'full')
           document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
 
-          const savedMotion = localStorage.getItem('legion-portfolio-motion-v6')
+          const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v6') } catch { return null } })()
           const systemPrefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
           const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
           const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemPrefersReducedMotion)
