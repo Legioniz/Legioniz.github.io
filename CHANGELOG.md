@@ -140,3 +140,15 @@ Historical source, adaptive, and Chromium checks were run in multiple snapshots.
 - VIEW-TRANSITION-LIFECYCLE.md — maintained project/recruiter route lifecycle guidance.
 - BACKEND-SETUP.md — owner-controlled Supabase setup.
 - tests/ and scripts/ — executable verification tools; these are not release logs and remain in the repository.
+
+
+## 2026-11-09 — Recruiter View responsive, motion, and sound refinement
+
+- Restored the intended compact two-column project-card layout at phone widths; a later desktop flex declaration had overridden the earlier mobile grid rule.
+- Added recruiter-local sound and motion controls that share the portfolio's persistent preferences and delegated sound manager.
+- Added current-section tracking to the sticky recruiter navigation.
+- Extended viewport reveal handling to project and skill cards, plus subtle project artwork ring motion that runs only while its art is in view.
+- Improved recruiter copy sizing, wrapping, grid min-width handling, tags, and contact text so long project descriptions and skill labels wrap without clipping.
+- Expanded real-browser checks for preference persistence, visible-section state, responsive project-card geometry, text spill, and minimum typography sizes.
+
+The matching CI result and deployment commit will be recorded after verification.

@@ -6,6 +6,10 @@ import { siteConfig } from './config'
 type RecruiterViewProps = {
   onExit: () => void
   onOpenProject: (project: Project) => void
+  motionEnabled: boolean
+  soundEnabled: boolean
+  onToggleMotion: () => void
+  onToggleSound: () => void
 }
 
 const relevantExperience = [
@@ -17,7 +21,7 @@ const relevantExperience = [
 const otherExperience = experience.filter((item) => !relevantExperience.includes(item))
 const featuredProjects = projects.filter((project) => project.featured && project.category !== 'Creative')
 
-export function RecruiterView({ onExit, onOpenProject }: RecruiterViewProps) {
+export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabled, onToggleMotion, onToggleSound }: RecruiterViewProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const recruiterRootRef = useRef<HTMLDivElement>(null)
 
@@ -28,46 +32,89 @@ export function RecruiterView({ onExit, onOpenProject }: RecruiterViewProps) {
   useEffect(() => {
     const root = recruiterRootRef.current
     if (!root) return
-    const targets = Array.from(root.querySelectorAll<HTMLElement>('.recruiter-hero, .recruiter-section, .recruiter-contact, .recruiter-experience-card, .recruiter-education-item, .recruiter-awards article, .recruiter-leadership-grid article'))
-    const motionEnabled = document.documentElement.dataset.motion !== 'off'
+    const targets = Array.from(root.querySelectorAll<HTMLElement>(
+      '.recruiter-hero, .recruiter-section, .recruiter-contact, .recruiter-project-card, .recruiter-skill-card, .recruiter-experience-card, .recruiter-education-item, .recruiter-awards article, .recruiter-leadership-grid article',
+    ))
+    const projectArtwork = Array.from(root.querySelectorAll<HTMLElement>('.recruiter-project-art'))
+
     if (!motionEnabled || !('IntersectionObserver' in window)) {
       targets.forEach((element) => element.classList.add('is-in-view'))
-      if (motionEnabled) root.querySelectorAll<HTMLElement>('.recruiter-timeline').forEach((element) => element.classList.add('motion-active'))
+      if (motionEnabled) {
+        root.querySelectorAll<HTMLElement>('.recruiter-timeline').forEach((element) => element.classList.add('motion-active'))
+        projectArtwork.forEach((element) => element.classList.add('motion-active'))
+      } else {
+        root.querySelectorAll<HTMLElement>('.motion-active').forEach((element) => element.classList.remove('motion-active'))
+      }
       return
     }
 
-    // Reveal the first viewport before activating hidden-state CSS so the hero
-    // never flashes invisible while IntersectionObserver schedules its first batch.
-    targets.filter((element) => { const rect = element.getBoundingClientRect(); return rect.top < window.innerHeight && rect.bottom > 0 })
-      .forEach((element) => element.classList.add('is-in-view'))
+    // Rebuild reveal state when the visitor resumes motion, but expose the
+    // current viewport before the reveal gate is enabled to prevent hidden copy.
+    targets.forEach((element) => element.classList.remove('is-in-view'))
+    targets.filter((element) => {
+      const rect = element.getBoundingClientRect()
+      return rect.top < window.innerHeight && rect.bottom > 0
+    }).forEach((element) => element.classList.add('is-in-view'))
+
     root.dataset.recruiterMotionReady = 'true'
     let fallbackTimer = 0
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
+        const target = entry.target as HTMLElement
         if (entry.isIntersecting) {
-          (entry.target as HTMLElement).classList.add('is-in-view')
-          observer.unobserve(entry.target)
+          target.classList.add('is-in-view')
+          observer.unobserve(target)
         }
       })
     }, { rootMargin: '0px 0px -7% 0px', threshold: 0.06 })
     targets.forEach((element) => observer.observe(element))
 
     const recruiterTimeline = root.querySelector<HTMLElement>('.recruiter-timeline')
-    let timelineObserver: IntersectionObserver | null = null
-    if (recruiterTimeline) {
-      timelineObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => entry.target.classList.toggle('motion-active', entry.isIntersecting))
-      }, { rootMargin: '80px 0px', threshold: 0 })
-      timelineObserver.observe(recruiterTimeline)
-    }
+    const timelineObserver = recruiterTimeline
+      ? new IntersectionObserver((entries) => {
+          entries.forEach((entry) => entry.target.classList.toggle('motion-active', entry.isIntersecting))
+        }, { rootMargin: '80px 0px', threshold: 0 })
+      : null
+    if (recruiterTimeline) timelineObserver?.observe(recruiterTimeline)
+
+    // Project artwork loops are viewport-scoped; entrance reveals remain visible.
+    const artworkObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.target.classList.toggle('motion-active', entry.isIntersecting))
+    }, { rootMargin: '80px 0px', threshold: 0 })
+    projectArtwork.forEach((element) => artworkObserver.observe(element))
+
     fallbackTimer = window.setTimeout(() => targets.forEach((element) => element.classList.add('is-in-view')), 1800)
 
     return () => {
       if (fallbackTimer) window.clearTimeout(fallbackTimer)
       observer.disconnect()
       timelineObserver?.disconnect()
+      artworkObserver.disconnect()
       delete root.dataset.recruiterMotionReady
     }
+  }, [motionEnabled])
+
+  useEffect(() => {
+    const root = recruiterRootRef.current
+    if (!root || !('IntersectionObserver' in window)) return
+    const sections = Array.from(root.querySelectorAll<HTMLElement>('.recruiter-main > section[id]'))
+    const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('.recruiter-jumps a[href^="#"]'))
+    if (sections.length === 0 || links.length === 0) return
+
+    let activeSection = ''
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+      if (!visible || visible.target.id === activeSection) return
+      activeSection = visible.target.id
+      links.forEach((link) => {
+        if (link.hash === `#${activeSection}`) link.setAttribute('aria-current', 'location')
+        else link.removeAttribute('aria-current')
+      })
+    }, { rootMargin: '-18% 0px -66% 0px', threshold: [0, 0.15, 0.3, 0.5] })
+
+    sections.forEach((section) => observer.observe(section))
+    return () => observer.disconnect()
   }, [])
 
   return (
@@ -79,15 +126,29 @@ export function RecruiterView({ onExit, onOpenProject }: RecruiterViewProps) {
           <small>RECRUITER BRIEF / 01</small>
         </a>
         <nav className="recruiter-jumps" aria-label="Recruiter profile sections">
-          <a href="#recruiter-projects">Projects</a>
-          <a href="#recruiter-skills">Skills</a>
-          <a href="#recruiter-experience">Experience</a>
-          <a href="#recruiter-education">Education</a>
-          <a href="#recruiter-contact">Contact</a>
+          <a href="#recruiter-projects" data-sfx="navigate">Projects</a>
+          <a href="#recruiter-skills" data-sfx="navigate">Skills</a>
+          <a href="#recruiter-experience" data-sfx="navigate">Experience</a>
+          <a href="#recruiter-education" data-sfx="navigate">Education</a>
+          <a href="#recruiter-contact" data-sfx="navigate">Contact</a>
         </nav>
         <div className="recruiter-actions">
-          <a className="recruiter-download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF <span aria-hidden="true">↗</span></a>
-          <button type="button" className="recruiter-exit" onClick={onExit}>Full portfolio <span aria-hidden="true">↗</span></button>
+          <a className="recruiter-download" data-sfx="download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF <span aria-hidden="true">↗</span></a>
+          <button type="button" className="recruiter-exit" data-sfx="navigate" onClick={onExit}>Full portfolio <span aria-hidden="true">↗</span></button>
+          <div className="recruiter-preferences" role="group" aria-label="Display and sound preferences">
+            <button type="button" className="recruiter-preference-toggle motion-toggle" data-sfx="toggle"
+              onClick={onToggleMotion} aria-pressed={motionEnabled}
+              aria-label={motionEnabled ? 'Pause decorative motion' : 'Resume decorative motion'}
+              title={motionEnabled ? 'Pause decorative motion' : 'Resume decorative motion'}>
+              <span aria-hidden="true">◈</span><span>Motion {motionEnabled ? 'On' : 'Off'}</span>
+            </button>
+            <button type="button" className="recruiter-preference-toggle sound-toggle" data-sfx="toggle"
+              onClick={onToggleSound} aria-pressed={soundEnabled}
+              aria-label={soundEnabled ? 'Turn interface sounds off' : 'Turn interface sounds on'}
+              title={soundEnabled ? 'Turn interface sounds off' : 'Turn interface sounds on'}>
+              <span aria-hidden="true">♪</span><span>Sound {soundEnabled ? 'On' : 'Off'}</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -129,8 +190,8 @@ export function RecruiterView({ onExit, onOpenProject }: RecruiterViewProps) {
                   <p>{project.summary}</p>
                   <div className="recruiter-tags">{project.stack.slice(0, 5).map((item) => <span key={item}>{item}</span>)}</div>
                   <div className="recruiter-project-actions">
-                    <button type="button" onClick={() => onOpenProject(project)}>Read case study <span aria-hidden="true">↗</span></button>
-                    {project.repo && <a href={project.repo} target="_blank" rel="noopener noreferrer">Repository <span aria-hidden="true">↗</span></a>}
+                    <button type="button" data-sfx="open" onClick={() => onOpenProject(project)}>Read case study <span aria-hidden="true">↗</span></button>
+                    {project.repo && <a data-sfx="open" href={project.repo} target="_blank" rel="noopener noreferrer">Repository <span aria-hidden="true">↗</span></a>}
                   </div>
                 </div>
               </article>
@@ -197,14 +258,14 @@ export function RecruiterView({ onExit, onOpenProject }: RecruiterViewProps) {
           <div><p className="recruiter-eyebrow">NEXT STEP / CONTACT</p><h2 id="recruiter-contact-title">Open to opportunities and practical collaboration.</h2><p>For internships, entry-level opportunities, project discussions, or questions about the work above.</p></div>
           <div className="recruiter-contact-actions">
             <a href={`mailto:${siteConfig.email}`}>{siteConfig.email} ↗</a>
-            <a href={siteConfig.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-            {siteConfig.linkedin && <a href={siteConfig.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>}
-            <a className="recruiter-download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF ↓</a>
+            <a data-sfx="open" href={siteConfig.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+            {siteConfig.linkedin && <a data-sfx="open" href={siteConfig.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>}
+            <a className="recruiter-download" data-sfx="download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF ↓</a>
           </div>
         </section>
       </main>
 
-      <footer className="recruiter-footer"><span>© {new Date().getFullYear()} {siteConfig.fullName}</span><span>RECRUITER VIEW / SOURCE-LED PROFILE</span><button type="button" onClick={onExit}>Return to full portfolio ↑</button></footer>
+      <footer className="recruiter-footer"><span>© {new Date().getFullYear()} {siteConfig.fullName}</span><span>RECRUITER VIEW / SOURCE-LED PROFILE</span><button type="button" data-sfx="navigate" onClick={onExit}>Return to full portfolio ↑</button></footer>
     </div>
   )
 }

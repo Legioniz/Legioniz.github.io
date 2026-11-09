@@ -57,6 +57,41 @@ def main() -> None:
             check(response is not None and response.status == 200, 'Recruiter view loads directly from a shareable query URL')
             check('Recruiter Profile' in page.title(), 'Recruiter view receives a focused browser title')
             check(page.get_by_role('navigation', name='Recruiter profile sections').count() == 1, 'Recruiter navigation has an accessible name')
+            preferences = page.get_by_role('group', name='Display and sound preferences')
+            check(preferences.count() == 1, 'Recruiter view exposes one named preference group')
+            motion_toggle = preferences.get_by_role('button', name='Pause decorative motion')
+            sound_toggle = preferences.get_by_role('button', name='Turn interface sounds off')
+            check(motion_toggle.get_attribute('aria-pressed') == 'true',
+                  'Recruiter view exposes the shared default-on motion control')
+            check(sound_toggle.get_attribute('aria-pressed') == 'true' and sound_toggle.get_attribute('data-sfx') == 'toggle',
+                  'Recruiter view exposes a sound control wired to the delegated interaction manager')
+
+            motion_toggle.click()
+            page.wait_for_function("document.documentElement.dataset.motion === 'off'")
+            check(preferences.get_by_role('button', name='Resume decorative motion').get_attribute('aria-pressed') == 'false',
+                  'Recruiter motion control pauses decorative motion and updates its pressed state')
+            check(page.evaluate("localStorage.getItem('legion-portfolio-motion-v7')") == 'off',
+                  'Recruiter motion preference persists using the shared site setting')
+            preferences.get_by_role('button', name='Resume decorative motion').click()
+            page.wait_for_function("document.documentElement.dataset.motion === 'on'")
+            check(preferences.get_by_role('button', name='Pause decorative motion').get_attribute('aria-pressed') == 'true',
+                  'Recruiter motion control resumes the reveal and artwork system')
+
+            sound_toggle.click()
+            check(preferences.get_by_role('button', name='Turn interface sounds on').get_attribute('aria-pressed') == 'false',
+                  'Recruiter sound control mutes the delegated interface sound system')
+            check(page.evaluate("localStorage.getItem('legion-portfolio-sound-v2')") == 'off',
+                  'Recruiter sound preference persists using the shared site setting')
+            preferences.get_by_role('button', name='Turn interface sounds on').click()
+            check(preferences.get_by_role('button', name='Turn interface sounds off').get_attribute('aria-pressed') == 'true',
+                  'Recruiter sound control restores interface feedback')
+
+            page.get_by_role('link', name='Experience').click()
+            page.wait_for_function("document.querySelector('.recruiter-jumps a[href=\"#recruiter-experience\"]')?.getAttribute('aria-current') === 'location'")
+            check(page.locator('.recruiter-jumps a[aria-current="location"]').get_attribute('href') == '#recruiter-experience',
+                  'Recruiter section navigation tracks the current section')
+            page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+            page.wait_for_timeout(120)
             check(page.get_by_role('heading', name='Projects that show how I build.').is_visible(), 'Selected project case studies are visible')
             check(page.locator('.recruiter-project-card').count() == 3, 'Exactly three featured technical projects are presented')
             check(page.locator('.recruiter-project-card a[href^="https://github.com/"]').count() >= 3, 'Each featured technical project has a repository link')
@@ -78,6 +113,21 @@ def main() -> None:
             check(access['missingImageAlt'] == 0, 'Recruiter view contains no images without alt attributes')
             check(access['badExternal'] == 0, 'All new-tab external links use opener isolation')
             check(access['landmarks']['main'] == 1 and access['landmarks']['nav'] >= 1, 'Recruiter page has a single main landmark and named navigation')
+
+            first_art = page.locator('.recruiter-project-art').first
+            first_art.scroll_into_view_if_needed()
+            page.wait_for_function("document.querySelector('.recruiter-project-art')?.classList.contains('motion-active')")
+            art_animation = first_art.locator('i').evaluate("(el) => getComputedStyle(el, '::before').animationName")
+            check(art_animation == 'recruiter-project-ring',
+                  'Visible recruiter project artwork receives a viewport-scoped orbital animation')
+            check(page.locator('.recruiter-project-card.is-in-view').count() >= 1,
+                  'Project cards enter through the recruiter scroll-reveal sequence')
+            page.evaluate("window.scrollTo({top:document.body.scrollHeight,behavior:'instant'})")
+            page.wait_for_function("!document.querySelector('.recruiter-project-art')?.classList.contains('motion-active')")
+            check(not first_art.evaluate("el => el.classList.contains('motion-active')"),
+                  'Project artwork animation pauses after leaving the viewport')
+            page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+            page.wait_for_timeout(120)
 
             page.get_by_role('button', name='Read case study').first.click()
             page.get_by_role('dialog').wait_for(timeout=5000)
@@ -146,11 +196,53 @@ def main() -> None:
             page.emulate_media(media='screen')
             check(print_hidden and print_display != 'none', 'Print stylesheet removes on-screen navigation controls')
 
-            for width in [320, 360, 390, 768, 1024, 1440]:
+            for width in [320, 360, 390, 428, 768, 1024, 1440]:
                 page.set_viewport_size({'width': width, 'height': 900})
-                page.wait_for_timeout(80)
-                overflow = page.evaluate('document.documentElement.scrollWidth > window.innerWidth + 1')
-                check(not overflow, f'{width}px viewport has no horizontal overflow')
+                page.wait_for_timeout(100)
+                metrics = page.evaluate("""() => {
+                  const textSelectors = [
+                    '.recruiter-hero h1', '.recruiter-intro', '.recruiter-section-heading h2',
+                    '.recruiter-project-body h3', '.recruiter-project-body > p',
+                    '.recruiter-skill-card > p', '.recruiter-experience-card p',
+                    '.recruiter-education-item p', '.recruiter-awards p',
+                    '.recruiter-leadership-grid p', '.recruiter-contact h2',
+                    '.recruiter-contact p', '.recruiter-tags > span'
+                  ]
+                  const textOverflow = textSelectors.flatMap((selector) =>
+                    [...document.querySelectorAll(selector)].filter((element) =>
+                      element.getClientRects().length && element.scrollWidth > element.clientWidth + 2
+                    ).map((element) => ({selector, text:element.textContent?.trim().slice(0,48),
+                      client:element.clientWidth, scroll:element.scrollWidth}))
+                  )
+                  const card = document.querySelector('.recruiter-project-card')
+                  const art = card?.querySelector('.recruiter-project-art')
+                  const body = card?.querySelector('.recruiter-project-body')
+                  const cardLayout = card ? {
+                    display:getComputedStyle(card).display,
+                    columns:getComputedStyle(card).gridTemplateColumns.split(' ').length,
+                    artLeft:art?.getBoundingClientRect().left ?? 0,
+                    bodyLeft:body?.getBoundingClientRect().left ?? 0
+                  } : null
+                  const copySize = (selector) => {
+                    const element = document.querySelector(selector)
+                    return element ? parseFloat(getComputedStyle(element).fontSize) : 0
+                  }
+                  return {
+                    pageOverflow:document.documentElement.scrollWidth > innerWidth + 1,
+                    textOverflow, cardLayout,
+                    bodyCopy:copySize('.recruiter-project-body > p:not(.recruiter-project-type)'),
+                    skillCopy:copySize('.recruiter-skill-card > p'),
+                    projectLabel:copySize('.recruiter-project-type')
+                  }
+                }""")
+                check(not metrics['pageOverflow'], f'{width}px viewport has no horizontal page overflow')
+                check(not metrics['textOverflow'], f'{width}px viewport has no overflowing recruiter text ({metrics["textOverflow"]})')
+                check(metrics['bodyCopy'] >= 13 and metrics['skillCopy'] >= 13 and metrics['projectLabel'] >= 10,
+                      f'{width}px viewport retains readable recruiter body and metadata sizes ({metrics})')
+                if width <= 760:
+                    check(metrics['cardLayout']['display'] == 'grid' and metrics['cardLayout']['columns'] == 2
+                          and metrics['cardLayout']['bodyLeft'] > metrics['cardLayout']['artLeft'],
+                          f'{width}px viewport uses the intended two-column project-card layout ({metrics["cardLayout"]})')
 
             page.keyboard.press('Tab')
             focused = page.evaluate("document.activeElement && (document.activeElement.tagName === 'A' || document.activeElement.tagName === 'BUTTON')")
@@ -163,6 +255,10 @@ def main() -> None:
             mobile.get_by_role('heading', name='King Art D. Pacumberto.', level=1).wait_for(timeout=15000)
             check(mobile.get_by_role('link', name='Download CV · PDF').first.is_visible(), 'Touch layout keeps the PDF CV action visible')
             check(not mobile.evaluate('document.documentElement.scrollWidth > window.innerWidth + 1'), '390px touch viewport has no horizontal overflow')
+            mobile_card_layout = mobile.locator('.recruiter-project-card').first.evaluate(
+                "el => ({display:getComputedStyle(el).display, columns:getComputedStyle(el).gridTemplateColumns.split(' ').length})")
+            check(mobile_card_layout['display'] == 'grid' and mobile_card_layout['columns'] == 2,
+                  f'Mobile project cards preserve their compact two-column layout ({mobile_card_layout})')
             mobile.get_by_role('link', name='Experience').tap()
             check(mobile.evaluate("location.hash === '#recruiter-experience'"), 'Touch section navigation reaches the experience record')
             check(not errors, 'Touch recruiter route has no uncaught browser exceptions')

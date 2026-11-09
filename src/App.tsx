@@ -862,7 +862,7 @@ export default function App() {
 
   const navItems = [{ id: 'about', label: 'About' }, { id: 'projects', label: 'Projects' }, { id: 'lab', label: 'Labs' }, { id: 'skills', label: 'Toolkit' }, { id: 'experience', label: 'Journey' }]
 
-  if (recruiterView) return <Suspense fallback={<main className="recruiter-loading" role="status" aria-live="polite">Loading recruiter profile…</main>}><RecruiterView onExit={exitRecruiterView} onOpenProject={openRecruiterProject}/></Suspense>
+  if (recruiterView) return <Suspense fallback={<main className="recruiter-loading" role="status" aria-live="polite">Loading recruiter profile…</main>}><RecruiterView onExit={exitRecruiterView} onOpenProject={openRecruiterProject} motionEnabled={motionEnabled} soundEnabled={soundEnabled} onToggleMotion={toggleMotion} onToggleSound={toggleSound}/></Suspense>
 
   return (
     <div className="site-shell">
