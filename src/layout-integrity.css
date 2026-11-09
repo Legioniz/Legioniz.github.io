@@ -1736,3 +1736,54 @@ button, input, select, textarea { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .approved-comment, .comments-loading span { animation: none !important; }
 }
+
+
+/* Accessibility refinements shared by the full portfolio and recruiter view. */
+:where(
+  button, a, input, select, textarea, summary,
+  [role="button"], [role="tab"], [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  scroll-margin-block: calc(var(--layout-header-height) + 24px);
+}
+
+/* The hidden attribute must win over component display declarations. */
+.lab-shell [hidden] { display: none !important; }
+
+/* Coarse-pointer controls get a comfortable activation area, beyond WCAG's 24px minimum. */
+@media (pointer: coarse) {
+  .site-header .icon-button,
+  .site-header .command-trigger,
+  .site-header .main-nav.nav-open > a,
+  .lab-tabs > [role="tab"],
+  .recruiter-preference-toggle,
+  .recruiter-jumps > a,
+  .recruiter-project-actions :is(button, a),
+  .recruiter-actions :is(button, a),
+  .photo-viewer-nav,
+  .photo-lightbox .feature-close,
+  .privacy-actions button,
+  .privacy-settings-reopen,
+  .admin-head .feature-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .site-header .icon-button { flex-basis: 44px; }
+  .site-header .command-trigger { padding-inline: 12px; }
+}
+
+/* Preserve an unmistakable focus indicator in Windows High Contrast / forced-colors modes. */
+@media (forced-colors: active) {
+  :where(
+    button, a, input, select, textarea, summary,
+    [role="button"], [role="tab"], [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
+  }
+  .site-header, .command-palette, .project-modal, .admin-panel,
+  .photo-lightbox-panel, .recruiter-view {
+    border-color: CanvasText;
+  }
+}
