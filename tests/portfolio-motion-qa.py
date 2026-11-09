@@ -292,11 +292,11 @@ with sync_playwright() as p:
         brand_metrics.append({'width':width,'docWidth':m['scrollWidth'],'monogramHeight':round(m['monoHeight'],1)})
 
     print('QA:preference migration', flush=True)
-    # Preference migration ignores the previous keys; v6 defaults to system and stores explicit visitor choices.
+    # Preference migration ignores v1-v6; v7 defaults to motion-on and stores explicit visitor choices.
     assert "localStorage.getItem('legion-portfolio-motion-v7')" in INDEX
     assert "localStorage.getItem('legion-portfolio-motion-v7')" in APP
     assert "localStorage.setItem('legion-portfolio-motion-v7'" in APP
-    assert "legion-portfolio-motion-v5" not in INDEX + APP
+    assert "legion-portfolio-motion-v6" not in INDEX + APP
     assert "updateScrollReveals" not in APP
     assert 'installScrollReveal' in APP and 'useLayoutEffect' in APP
     assert "typeof IntersectionObserver === 'undefined'" in REVEAL_SOURCE.read_text()
@@ -307,7 +307,7 @@ with sync_playwright() as p:
     page.screenshot(path=str(Path(tempfile.gettempdir()) / 'motion-header-mobile.png'),full_page=False)
 
     print('QA:boot preference', flush=True)
-    # Validate boot behavior: motion defaults on in every system profile, and only an explicit v6 pause turns it off.
+    # Validate boot behavior: motion defaults on in every system profile, and only an explicit v7 pause turns it off.
     pref_page=browser.new_page(reduced_motion='no-preference')
     pref_page.set_content('<!doctype html><html><head><meta name=theme-color content=#101619></head><body></body></html>')
     import re
@@ -325,7 +325,7 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     default_motion=pref_page.locator('html').get_attribute('data-motion')
     default_override=pref_page.locator('html').get_attribute('data-motion-override')
-    assert default_motion == 'on' and default_override == 'on', {'stale-v1-v5-settings-ignored': True, 'data-motion': default_motion, 'override': default_override}
+    assert default_motion == 'on' and default_override == 'on', {'stale-v1-v6-settings-ignored': True, 'data-motion': default_motion, 'override': default_override}
     pref_page.emulate_media(reduced_motion='reduce')
     pref_page.add_script_tag(content=inline_scripts[0])
     os_motion=pref_page.locator('html').get_attribute('data-motion')
