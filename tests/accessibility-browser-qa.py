@@ -72,7 +72,8 @@ DOM_AUDIT = r"""() => {
     }
   }
   const brokenFragments = Array.from(document.querySelectorAll('a[href^="#"]'))
-    .map((a) => a.getAttribute("href")).filter((href) => {
+    .map((a) => ({href: a.getAttribute("href"), label: text(a), html: a.outerHTML.slice(0, 240)}))
+    .filter(({href}) => {
       if (!href || href.length <= 1) return false;
       try { return !document.getElementById(decodeURIComponent(href.slice(1))); } catch { return true; }
     });
@@ -135,7 +136,11 @@ def main() -> None:
                     response = page.goto(BASE.rstrip("/") + route, wait_until="domcontentloaded", timeout=30000)
                     page.wait_for_function(
                         "() => Array.from(document.querySelectorAll('h1')).some((h) => h.getClientRects().length)")
-                    page.wait_for_timeout(250)
+                    # The interactive lab is a lazy-loaded route target. Wait for it to mount
+                    # before auditing the main navigation's in-page fragment links.
+                    if view == "full":
+                        page.locator("#lab").wait_for(state="attached", timeout=10000)
+                    page.wait_for_timeout(100)
                     label = f"{view.title()} view / {theme} theme"
                     check(response is not None and response.status == 200, f"{label}: compiled route returns HTTP 200")
                     audit = page.evaluate(DOM_AUDIT)
@@ -147,7 +152,7 @@ def main() -> None:
                     check(not audit["missingImageAlt"], f"{label}: every image declares an alt attribute ({len(audit['missingImageAlt'])} missing)")
                     check(not audit["duplicateIds"], f"{label}: document IDs are unique ({len(audit['duplicateIds'])} duplicates)")
                     check(not audit["brokenIdRefs"], f"{label}: ARIA ID references resolve ({len(audit['brokenIdRefs'])} broken)")
-                    check(not audit["brokenFragments"], f"{label}: in-page links resolve ({len(audit['brokenFragments'])} broken)")
+                    check(not audit["brokenFragments"], f"{label}: in-page links resolve ({len(audit['brokenFragments'])} broken: {audit['brokenFragments']})")
                     check(not audit["unsafeExternalLinks"], f"{label}: new-tab links isolate the opener ({len(audit['unsafeExternalLinks'])} unsafe)")
                     check(not audit["hiddenFocusable"], f"{label}: hidden content has no tabbable controls ({len(audit['hiddenFocusable'])} found)")
                     check(page.evaluate("document.documentElement.dataset.theme") == theme, f"{label}: theme is applied before inspection")
