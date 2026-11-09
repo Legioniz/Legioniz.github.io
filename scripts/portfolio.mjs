@@ -24,7 +24,7 @@ const expectedFiles = [
   'scripts/portfolio.mjs', 'scripts/production-audit.mjs',
   'tests/adaptive-smoke.ts', 'tests/feature-security-qa.py', 'tests/production-quality-qa.py', 'tests/project-integrity-qa.py',
   'tests/design-motion-browser-qa.py', 'tests/interactions-browser-qa.py', 'tests/portfolio-motion-qa.py',
-  'tests/recruiter-view-browser-qa.py', 'tests/layout_integrity_browser_qa.py', 'tests/interaction-fixture.html',
+  'tests/recruiter-view-browser-qa.py', 'tests/comments-browser-qa.py', 'tests/layout_integrity_browser_qa.py', 'tests/interaction-fixture.html',
   '.github/workflows/deploy.yml', '.github/dependabot.yml',
   'README.md', 'SOURCES.md', 'BACKEND-SETUP.md', 'CONTENT-CHECKLIST.md', 'PRODUCTION-QUALITY.md', 'RECRUITER-VIEW.md',
   'UI-MOTION-DESIGN.md', 'VISUAL-DESIGN-SYSTEM.md', 'VIEW-TRANSITION-LIFECYCLE.md',
@@ -334,6 +334,7 @@ try {
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:interactions'])
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:motion'])
     run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:recruiter-browser'])
+    run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'test:comments-browser'])
     if (command === 'release') await verifyLatestBackup()
     console.log(command === 'release' ? '\nRelease checks passed. Review dist/ before deployment.' : '\nFull typecheck and production build passed.')
   } else {
