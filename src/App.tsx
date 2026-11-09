@@ -748,12 +748,16 @@ export default function App() {
     try { return localStorage.getItem('legion-portfolio-sound-v2') !== 'off' } catch { return true }
   })
   const soundEnabledRef = useRef(soundEnabled)
-  const [motionPreference, setMotionPreference] = useState<'on' | 'off'>(() => {
+  const [motionPreference, setMotionPreference] = useState<'system' | 'on' | 'off'>(() => {
     try {
-      return localStorage.getItem('legion-portfolio-motion-v7') === 'off' ? 'off' : 'on'
-    } catch { return 'on' }
+      const saved = localStorage.getItem('legion-portfolio-motion-v7')
+      return saved === 'on' || saved === 'off' ? saved : 'system'
+    } catch { return 'system' }
   })
-  const motionEnabled = motionPreference === 'on'
+  const [systemMotionReduced, setSystemMotionReduced] = useState(() =>
+    typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false),
+  )
+  const motionEnabled = motionPreference === 'on' || (motionPreference === 'system' && !systemMotionReduced)
   const [copied, setCopied] = useState(false)
 
   const categories: ('All' | ProjectCategory)[] = ['All', 'Software', 'Data & Systems', 'Embedded', 'Creative']
@@ -840,6 +844,19 @@ export default function App() {
     if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || (theme === 'dark' ? '#151719' : '#f3f0e9')
     try { localStorage.setItem('legion-portfolio-theme', theme) } catch { /* Storage can be disabled. */ }
   }, [theme])
+
+  useEffect(() => {
+    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (!query) return
+    const update = () => setSystemMotionReduced(query.matches)
+    update()
+    if (typeof query.addEventListener === 'function') query.addEventListener('change', update)
+    else query.addListener(update)
+    return () => {
+      if (typeof query.removeEventListener === 'function') query.removeEventListener('change', update)
+      else query.removeListener(update)
+    }
+  }, [])
 
   useEffect(() => {
     const root = document.documentElement

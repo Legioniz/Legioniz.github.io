@@ -14,9 +14,9 @@
     <script>
       (() => {
         const root = document.documentElement
-        // Motion is on by default. Only a saved, explicit visitor pause disables it.
-        root.dataset.motionOverride = 'on'
-        root.dataset.motion = 'on'
+        // Follow the operating-system motion preference unless the visitor explicitly chooses otherwise.
+        root.dataset.motionOverride = 'system'
+        root.dataset.motion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on'
         try {
           const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
           const theme = savedTheme === 'light' ? 'light' : 'dark'
@@ -32,8 +32,9 @@
           document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
 
           const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v7') } catch { return null } })()
-          const motionOverride = savedMotion === 'off' ? 'off' : 'on'
-          const motionEnabled = savedMotion !== 'off'
+          const systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+          const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
+          const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)
           root.dataset.motionOverride = motionOverride
           root.dataset.motion = motionEnabled ? 'on' : 'off'
         } catch {
