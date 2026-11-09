@@ -196,12 +196,17 @@ def main() -> None:
             first_art = page.locator('.recruiter-project-art').first
             first_art.scroll_into_view_if_needed()
             first_card = page.locator('.recruiter-project-card').first
-            first_card.hover(position={'x': 24, 'y': 28})
-            page.wait_for_timeout(40)
-            spotlight = first_card.get_attribute('data-spotlight')
-            spotlight_opacity = first_card.evaluate("(el) => getComputedStyle(el, '::before').opacity")
-            check(spotlight == 'active' and float(spotlight_opacity) > 0,
-                  'Fine-pointer movement activates the project-card spotlight without a separate stale script')
+            fine_pointer = page.evaluate("window.matchMedia('(hover: hover) and (pointer: fine)').matches")
+            if fine_pointer:
+                first_card.hover(position={'x': 24, 'y': 28})
+                page.wait_for_timeout(40)
+                spotlight = first_card.get_attribute('data-spotlight')
+                spotlight_opacity = first_card.evaluate("(el) => getComputedStyle(el, '::before').opacity")
+                check(spotlight == 'active' and float(spotlight_opacity) > 0,
+                      'Fine-pointer movement activates the project-card spotlight without a separate stale script')
+            else:
+                check(first_card.get_attribute('data-spotlight') is None,
+                      'Project-card spotlight remains disabled when the browser reports no fine-pointer hover input')
             page.wait_for_function("document.querySelector('.recruiter-project-art')?.classList.contains('motion-active')")
             art_animation = first_art.locator('i').evaluate("(el) => getComputedStyle(el, '::before').animationName")
             check(art_animation == 'recruiter-project-ring',
