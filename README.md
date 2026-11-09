@@ -10,7 +10,7 @@ Professional portfolio of **King Art D. Pacumberto**, a BSIT student at the Poly
 - A compact adaptive runtime profiler for viewport, orientation, pointer type, browser visual viewport, reduced-motion, Save-Data, device memory, and CPU hints
 - Context-aware synthesized Web Audio cues with distinct sound signatures for navigation, project-card hover, controls, disclosures, keyboard focus, text fields, selects, submits, toggles, filters, project open/close, downloads, and copy actions; no audio files or additional runtime dependency
 - GitHub Actions + GitHub Pages deployment
-- Optional Supabase Auth, Postgres/RLS, server-side inquiry intake, moderation, opt-in analytics, and owner console; disabled until configured
+- Supabase Auth, PostgreSQL/RLS, server-side inquiry and public-comment intake, moderation, opt-in analytics, and owner console. The production build is connected to the dedicated Singapore project; pending comments stay private until the owner approves them.
 
 ## Run locally
 
