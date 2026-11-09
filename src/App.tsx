@@ -367,11 +367,11 @@ function ProjectArt({ visual }: { visual: Project['visual'] }) {
         <div className="meter-topline"><span>ENERGY / PULSE</span><span className="meter-live"><i /> LOCAL DEMO</span></div>
         <div className="meter-readout"><span>DAILY CONSUMPTION</span><strong>8.42 <small>kWh</small></strong><em>synthetic data stream</em></div>
         <svg className="meter-chart" viewBox="0 0 520 170" preserveAspectRatio="none">
-          <defs><linearGradient id="meterFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d8ff65" stopOpacity=".34"/><stop offset="1" stopColor="#d8ff65" stopOpacity="0"/></linearGradient></defs>
+          <defs><linearGradient id="meterFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--accent)" stopOpacity=".34"/><stop offset="1" stopColor="var(--accent)" stopOpacity="0"/></linearGradient></defs>
           {[28, 68, 108, 148].map(y => <line key={y} x1="0" x2="520" y1={y} y2={y} stroke="currentColor" strokeOpacity=".12" strokeDasharray="3 7"/>)}
           <path d="M0 128 C28 123 38 88 65 94 S105 127 132 92 S170 56 198 73 S238 113 263 82 S306 35 333 57 S365 111 394 78 S431 94 454 44 S491 34 520 18 L520 170 L0 170Z" fill="url(#meterFill)"/>
-          <path d="M0 128 C28 123 38 88 65 94 S105 127 132 92 S170 56 198 73 S238 113 263 82 S306 35 333 57 S365 111 394 78 S431 94 454 44 S491 34 520 18" fill="none" stroke="#d8ff65" strokeWidth="2.5" vectorEffect="non-scaling-stroke"/>
-          <circle cx="454" cy="44" r="5" fill="#d8ff65" stroke="#11150f" strokeWidth="3"/>
+          <path d="M0 128 C28 123 38 88 65 94 S105 127 132 92 S170 56 198 73 S238 113 263 82 S306 35 333 57 S365 111 394 78 S431 94 454 44 S491 34 520 18" fill="none" stroke="var(--accent)" strokeWidth="2.5" vectorEffect="non-scaling-stroke"/>
+          <circle cx="454" cy="44" r="5" fill="var(--accent)" stroke="var(--bg-2)" strokeWidth="3"/>
         </svg>
         <div className="meter-bottom"><span>00:00</span><span>12:00</span><span>24:00</span></div>
         <div className="meter-pill">ANALYTICS / 002</div>
