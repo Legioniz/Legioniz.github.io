@@ -166,6 +166,6 @@ The current source refines the shared charcoal/ivory/coral design system, hero m
 
 ## Hero visibility safeguard
 
-The first-screen hero heading, eyebrow, supporting copy, actions, and visual are deliberately excluded from the global scroll-reveal observer. They use a dedicated, fail-open entrance sequence: the baseline styles keep all hero content visible, while motion only adds a brief transform/blur refinement. Pausing motion or using the operating-system reduced-motion preference removes the animation without hiding content. The heading also exposes a complete accessible sentence (`From a question to working systems.`) rather than relying on adjacent visual line fragments.
+The first-screen hero heading, eyebrow, supporting copy, actions, and visual are deliberately excluded from the global scroll-reveal observer. They use a dedicated, fail-open entrance sequence: the baseline styles keep all hero content visible, while motion only adds a brief transform/blur refinement. Pausing motion with the persistent header control removes the animation without hiding content. The heading also exposes a complete accessible sentence (`From a question to working systems.`) rather than relying on adjacent visual line fragments.
 
 The service-worker shell cache is versioned as `legion-portfolio-shell-v7` for this visibility fix.
