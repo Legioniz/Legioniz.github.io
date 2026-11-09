@@ -166,7 +166,7 @@ export const experience = [
     period: 'July 2026 — Present',
     title: 'Cook / Food Preparation & Beverage Staff',
     organization: 'Migoy’s Burger · Quezon City',
-    description: 'Prepares burgers, hotdogs, footlongs, ham, spam, tonkatsu, nuggets, and fries, along with milk tea, iced coffee, and fruit tea. Maintains food safety and sanitation standards, manages ingredients and inventory, and keeps the workstation clean and efficient.',
+    description: 'Prepares burgers, hot dogs, footlongs, ham, spam, tonkatsu, nuggets, and fries, along with milk tea, iced coffee, and fruit tea. Maintains food safety and sanitation standards, manages ingredients and inventory, and keeps the workstation clean and efficient.',
     tags: ['Food preparation', 'Beverage service', 'Inventory & sanitation'],
   },
   {
@@ -187,7 +187,7 @@ export const experience = [
     period: 'February 2026 — March 2026',
     title: 'Student Teacher — Practical Research & Computer Programming',
     organization: 'On-the-Job Training · CASAP · Quezon City',
-    description: 'Taught Programming (HTML/CSS) and Practical Research to senior high school students. Prepared lesson plans, facilitated hands-on coding sessions, and assisted students with programming exercises and research activities.',
+    description: 'Taught Computer Programming (HTML/CSS) and Practical Research to senior high school students. Prepared lesson materials, led hands-on coding sessions, and supported students with programming exercises and research activities.',
     tags: ['HTML / CSS instruction', 'Lesson planning', 'Practical Research'],
   },
   {
@@ -232,7 +232,7 @@ export const achievements: Achievement[] = [
   },
   {
     title: 'Quiz Bee & Spelling Competitions',
-    note: 'Multiple-time winner',
+    note: 'Multiple-time competition winner',
     mark: '03',
     source: 'Supplied resume; individual contest names and years not specified',
   },
@@ -265,12 +265,12 @@ export const extracurriculars = [
   {
     title: 'Glee Club',
     organization: 'CASAP Quezon City',
-    description: 'Member of the campus Glee Club and bass guitarist in the school’s main band, including a performance at the school Gala Night.',
+    description: 'Was a member of the campus Glee Club and a bass guitarist in the school’s main band, which performed at the school’s Gala Night.',
   },
   {
     title: 'Technology Club & Technical Team',
     organization: 'School activities',
-    description: 'Technology Club Officer and Technical Team Leader. Managed visual and video playback, speaker and audio setup for performances and school events, and hardware and software troubleshooting, including cable replacement and speaker issues. Served as the primary technical operator for esports livestreams of Mobile Legends: Bang Bang and Call of Duty: Mobile.',
+    description: 'Served as a Technology Club officer and Technical Team Leader. Managed visual and video playback, audio and speaker setup, and hardware and software troubleshooting for performances and school events. Also served as the primary technical operator for Mobile Legends: Bang Bang and Call of Duty: Mobile esports livestreams.',
   },
   {
     title: 'Mathematics Club & Science Club',
@@ -280,6 +280,6 @@ export const extracurriculars = [
   {
     title: 'Badminton Club & Volunteer Photographer',
     organization: 'CASAP Quezon City school activities',
-    description: 'Participated as a badminton player and volunteered as an event photographer across CASAP QC activities, including casual events, sports events, pageants, quiz bees, officers’ portraits, competitions, and documentation. Work included photography, photo editing, and preparing images for school posts.',
+    description: 'Played badminton and volunteered as an event photographer at CASAP QC activities, including social and sports events, pageants, quiz bees, officer portraits, and competitions. Photographed and edited images for school documentation and social media posts.',
   },
 ]
