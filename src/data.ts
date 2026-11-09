@@ -232,7 +232,7 @@ export const achievements: Achievement[] = [
   },
   {
     title: 'Quiz Bee & Spelling Competitions',
-    note: 'Multiple-time competition winner',
+    note: 'Won multiple quiz bee and spelling competitions.',
     mark: '03',
     source: 'Supplied resume; individual contest names and years not specified',
   },
