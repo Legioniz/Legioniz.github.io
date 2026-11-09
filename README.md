@@ -84,7 +84,7 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Project cards behave as full keyboard-operable launch surfaces; desktop hover reveals a right-side quick-view panel, while click/tap/Enter/Space opens the full project introduction with role, overview, technology, project scope, and repository link where available
 - Project dialogs animate into view, expose an accessible title and description, manage focus, support Escape-to-close, and restore focus to the project card
 - Project Laboratory tabs use roving tab stops, Left/Right Arrow navigation, Home/End navigation, and explicit tab-to-panel relationships
-- Visible keyboard focus states in both themes and forced-colors mode, a skip-to-content link, WCAG AA palette checks, and 44px minimum coarse-pointer controls
+- Visible keyboard focus states in both themes and forced-colors mode, a skip-to-content link, WCAG AA palette checks, 44px primary touch targets, and compact 32×44px header controls
 - One-line `KA` monogram lockup with nowrap layout rules and a responsive brand header
 - Synthesized, target-specific interface sounds for navigation, project hover, controls, disclosures, keyboard focus, forms, downloads, and copy; sound is off until a visitor explicitly enables it with the persistent header toggle, with no audio assets
 - Responsive profile portrait with WebP/JPEG source sets, intrinsic dimensions, lazy loading, and initials fallback
