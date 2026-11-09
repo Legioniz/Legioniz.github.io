@@ -1277,3 +1277,175 @@ button, input, select, textarea { font: inherit; }
   from { opacity: 0; filter: blur(5px); transform: translate3d(0, 12px, 0) scale(.994); }
   to { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0) scale(1); }
 }
+
+/* RECRUITER VIEW — final monogram, live progress, and pointer interaction layer.
+   Kept in the imported layout-integrity sheet so it is the final authority
+   after legacy presentation rules in styles.css. */
+.recruiter-view {
+  --recruiter-scroll-progress: 0;
+  --recruiter-spot-x: 50%;
+  --recruiter-spot-y: 50%;
+}
+.recruiter-snapshot-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  height: 64px;
+  min-height: 64px;
+  overflow: hidden;
+  isolation: isolate;
+}
+.recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup {
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--text-strong);
+  font: 700 clamp(23px, 2.2vw, 28px)/1 var(--font-display);
+  letter-spacing: -.085em;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  text-align: center;
+  transform: translateX(-.035em);
+}
+.recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup::before,
+.recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup::after {
+  content: none !important;
+  display: none !important;
+}
+.recruiter-snapshot-mark::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  z-index: -1;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: 9px 2px;
+  pointer-events: none;
+  opacity: .7;
+}
+.recruiter-snapshot-mark { position: relative; }
+
+.recruiter-scroll-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 150;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--line) 55%, transparent);
+}
+.recruiter-scroll-progress > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--blue), color-mix(in srgb, var(--accent) 72%, white));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+  transform: scaleX(var(--recruiter-scroll-progress, 0));
+  transform-origin: left center;
+}
+:root[data-motion="on"] .recruiter-scroll-progress > span {
+  transition: transform 100ms linear;
+}
+.recruiter-jumps a {
+  position: relative;
+  transition: color 220ms ease, opacity 220ms ease;
+}
+.recruiter-jumps a::after {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 320ms var(--recruiter-ease, cubic-bezier(.16, 1, .3, 1));
+}
+.recruiter-jumps a:hover::after,
+.recruiter-jumps a:focus-visible::after,
+.recruiter-jumps a[aria-current="location"]::after {
+  transform: scaleX(1);
+}
+
+.recruiter-project-card {
+  position: relative;
+  isolation: isolate;
+  --recruiter-spot-x: 50%;
+  --recruiter-spot-y: 50%;
+}
+.recruiter-project-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    340px circle at var(--recruiter-spot-x, 50%) var(--recruiter-spot-y, 50%),
+    color-mix(in srgb, var(--accent) 13%, transparent),
+    transparent 72%
+  );
+  transition: opacity 260ms ease;
+}
+.recruiter-project-card[data-spotlight="active"]::before { opacity: 1; }
+.recruiter-project-card > * { position: relative; z-index: 1; }
+.recruiter-project-card > .recruiter-project-art { z-index: 0; }
+.recruiter-project-card > .recruiter-project-body { z-index: 1; }
+
+@keyframes recruiter-mark-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 9%, transparent); }
+}
+@keyframes recruiter-section-rule {
+  from { transform: scaleX(0); opacity: .35; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+@keyframes recruiter-card-glint {
+  0% { transform: translateX(-130%) skewX(-16deg); opacity: 0; }
+  18% { opacity: .35; }
+  52%, 100% { transform: translateX(240%) skewX(-16deg); opacity: 0; }
+}
+:root[data-motion="on"] .recruiter-view .recruiter-snapshot-mark {
+  animation: recruiter-mark-breathe 4.8s ease-in-out 1.2s infinite;
+}
+:root[data-motion="on"] .recruiter-view .recruiter-project-card.is-in-view .recruiter-project-art::after {
+  animation: recruiter-card-glint 1.25s var(--recruiter-ease) 220ms both;
+}
+:root[data-motion="on"] .recruiter-view .recruiter-section-heading > div::after {
+  content: '';
+  display: block;
+  width: clamp(44px, 7vw, 82px);
+  height: 2px;
+  margin-top: 15px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+}
+:root[data-motion="on"] .recruiter-view .recruiter-section.is-in-view .recruiter-section-heading > div::after {
+  animation: recruiter-section-rule 620ms var(--recruiter-ease) 120ms both;
+}
+:root[data-motion="off"] .recruiter-view .recruiter-snapshot-mark,
+:root[data-motion="off"] .recruiter-view .recruiter-project-card::before,
+:root[data-motion="off"] .recruiter-view .recruiter-project-art::after,
+:root[data-motion="off"] .recruiter-view .recruiter-section-heading > div::after {
+  animation: none !important;
+  transition: none !important;
+}
+:root[data-motion="off"] .recruiter-view .recruiter-project-card::before { opacity: 0 !important; }
+@media (hover: none), (pointer: coarse) {
+  .recruiter-project-card::before { display: none; }
+}
+@media (max-width: 520px) {
+  .recruiter-snapshot-mark { width: 64px; min-width: 64px; }
+  .recruiter-view .recruiter-snapshot-mark .recruiter-snapshot-lockup { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion-override="on"]) .recruiter-view .recruiter-snapshot-mark,
+  :root:not([data-motion-override="on"]) .recruiter-view .recruiter-project-card::before,
+  :root:not([data-motion-override="on"]) .recruiter-view .recruiter-project-art::after,
+  :root:not([data-motion-override="on"]) .recruiter-view .recruiter-section-heading > div::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
