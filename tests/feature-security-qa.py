@@ -50,7 +50,10 @@ check('.quick-navigator.is-expanded .quick-navigator-links' in (ROOT / 'src/styl
 
 # Backend frontend contract.
 check("VITE_SUPABASE_URL" in backend and "VITE_SUPABASE_ANON_KEY" in backend, 'Frontend backend configuration uses only public Supabase URL and anon key')
-check(all(name in deploy for name in ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_TURNSTILE_SITE_KEY']) and 'vars.VITE_SUPABASE_URL' in deploy and 'secrets.VITE_SUPABASE_URL' in deploy, 'GitHub Pages build passes only the documented public Vite backend settings into the production bundle')
+check(all(name in deploy for name in ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_TURNSTILE_SITE_KEY']) and 'vars.VITE_SUPABASE_URL' in deploy and 'secrets.VITE_SUPABASE_URL' in deploy and 'pjuwrngnrrvdiwqspkic.supabase.co' in deploy, 'GitHub Pages build passes the public Supabase configuration into the production bundle')
+check('headers.delete(\'Authorization\')' in backend and 'if (accessToken)' in backend, 'Anonymous requests use the publishable API key without misusing it as a JWT')
+check('SUPABASE_SECRET_KEYS' in edge and 'USE_MODERN_SECRET' in edge and 'serviceKeyHeaders' in edge, 'Edge Function uses Supabase-injected modern server secret keys safely')
+check('missing_server_credentials' in edge and "request.method === 'GET'" in edge, 'Edge Function exposes a non-sensitive readiness probe')
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'No Supabase service-role key or privileged credential is included in frontend backend client')
 check('sessionStorage' in backend and 'legion-portfolio-admin-session-v1' in backend, 'Admin session persistence is tab-scoped')
 check('mailto:' in backend_ui and 'No message is stored by the website' in backend_ui, 'Unconfigured inquiry form has an honest email fallback')
