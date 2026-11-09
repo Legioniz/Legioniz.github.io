@@ -54,6 +54,10 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Run complete source, type, build, and browser verification
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY || secrets.VITE_TURNSTILE_SITE_KEY }}
         run: npm run verify
 
       - name: Run Lighthouse audits on the full site and recruiter view
