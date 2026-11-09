@@ -1769,8 +1769,9 @@ button, input, select, textarea { font: inherit; }
     min-width: 44px;
     min-height: 44px;
   }
-  .site-header .icon-button { flex-basis: 44px; }
-  .site-header .command-trigger { padding-inline: 12px; }
+  /* Keep the compact header from overflowing 320px viewports while preserving 24px+ width and 44px height. */
+  .site-header .icon-button { min-width: 32px; min-height: 44px; flex-basis: 32px; }
+  .site-header .command-trigger { min-width: 44px; padding-inline: 12px; }
 }
 
 /* Preserve an unmistakable focus indicator in Windows High Contrast / forced-colors modes. */
