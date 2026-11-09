@@ -1,0 +1,198 @@
+/* Shared layout integrity layer — imported after styles.css by main.tsx. */
+:root {
+  --layout-max: 1240px;
+  --layout-gutter: clamp(16px, 3.2vw, 42px);
+  --layout-section: clamp(64px, 8vw, 112px);
+  --layout-gap: clamp(16px, 2vw, 26px);
+  --layout-column-gap: clamp(24px, 4vw, 56px);
+  --layout-header-height: 68px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: calc(var(--layout-header-height) + 24px); }
+body { min-width: 320px; overflow-x: clip; }
+#root, main, section, article, aside, header, footer, nav, form, fieldset, figure, picture { min-width: 0; }
+img, video, canvas, svg, iframe { max-width: 100%; }
+img, video { height: auto; }
+h1, h2, h3, h4, p, li, dd, dt, blockquote { min-width: 0; overflow-wrap: anywhere; }
+button, a, input, select, textarea { min-width: 0; }
+button, a { max-width: 100%; }
+.page-width { width: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter))); margin-inline: auto; }
+.section-pad { padding-block: var(--layout-section); }
+.section-pad, .recruiter-section { scroll-margin-top: calc(var(--layout-header-height) + 26px); }
+.section-heading { width: min(100%, 760px); margin-bottom: clamp(30px, 4.2vw, 56px); }
+.section-heading > p, .hero-description, .contact-content > p { max-width: min(100%, 64ch); }
+.site-header {
+  width: min(1320px, calc(100% - 2 * clamp(10px, 1.8vw, 22px)));
+  height: var(--layout-header-height); min-width: 0; padding-inline: clamp(10px, 1.6vw, 22px);
+  gap: clamp(10px, 1.4vw, 20px); isolation: isolate;
+}
+.brand, .brand-copy, .main-nav, .header-tools, .command-trigger { min-width: 0; }
+.brand { flex: 0 1 auto; gap: clamp(8px, 1vw, 13px); }
+.brand-copy strong, .brand-copy small { max-width: 100%; overflow-wrap: normal; }
+.main-nav { flex: 1 1 auto; justify-content: flex-end; gap: clamp(8px, .9vw, 14px); margin-inline: clamp(8px, 1.1vw, 16px); }
+.main-nav > a { flex: 0 0 auto; white-space: nowrap; font-size: clamp(9px, .76vw, 10px); }
+.header-tools { flex: 0 0 auto; gap: clamp(5px, .6vw, 8px); }
+.icon-button { flex: 0 0 36px; }
+.hero-section { height: auto; min-height: min(820px, 100svh); padding-block: clamp(118px, 14vh, 154px) 54px; }
+.hero-content { width: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter))); margin-inline: auto; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: var(--layout-column-gap); padding-top: 0; }
+.hero-copy, .hero-visual, .visual-plate { min-width: 0; max-width: 100%; }
+.hero-title, .hero-title .title-line { max-width: 100%; }
+.availability-line, .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.about-layout { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: var(--layout-column-gap); }
+.about-main, .about-aside, .aside-card, .about-signature, .skill-groups, .skill-group, .skill-group-head, .skill-group-copy { min-width: 0; }
+.about-aside { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); }
+.skills-layout { grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); gap: var(--layout-column-gap); }
+.skill-group-head { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.skill-pills, .project-stack, .recruiter-tags { min-width: 0; }
+.journey-layout { grid-template-columns: minmax(0, 1fr) minmax(0, .94fr); gap: var(--layout-column-gap); }
+.journey-column, .journey-side, .timeline, .timeline-item, .timeline-summary, .timeline-content { min-width: 0; }
+.timeline-summary { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.project-toolbar, .project-filters { min-width: 0; display: flex; flex-wrap: wrap; gap: 12px 18px; }
+.project-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--layout-gap); }
+.project-card, .project-card-content, .project-title-row, .project-title-row h3, .project-meta, .project-stack, .project-detail-link { min-width: 0; max-width: 100%; }
+.project-card-content { padding: clamp(17px, 2vw, 25px); }
+.project-title-row { display: flex; align-items: flex-start; gap: 12px; }
+.project-title-row h3 { flex: 1 1 auto; overflow-wrap: anywhere; }
+.project-title-row .round-arrow { flex: 0 0 auto; }
+.project-stack { display: flex; flex-wrap: wrap; }
+.project-stack > span { max-width: 100%; overflow-wrap: anywhere; }
+.project-toki { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
+.project-toki .project-art { min-width: 0; }
+.contact-section { padding-block: var(--layout-section); }
+.contact-frame { min-height: 0; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); }
+.contact-content { min-width: 0; padding: clamp(24px, 4.5vw, 58px); }
+.contact-content h2 { max-width: 15ch; overflow-wrap: normal; }
+.contact-aside { min-width: 0; margin: clamp(12px, 1.5vw, 20px); }
+.contact-aside > * { max-width: 100%; }
+.site-footer { min-width: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px 24px; padding-block: 22px; }
+.footer-copy { min-width: min(100%, 240px); }
+.footer-copy small { overflow-wrap: anywhere; }
+.footer-links { min-width: 0; display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.footer-links a, .footer-links button { min-height: 34px; white-space: normal; }
+/* Recruiter view uses the same container and spacing scale. */
+.recruiter-view { --recruiter-content: min(var(--layout-max), calc(100% - 2 * var(--layout-gutter))); }
+.recruiter-main { width: var(--recruiter-content); max-width: var(--layout-max); margin-inline: auto; min-width: 0; }
+.recruiter-topbar { min-height: var(--layout-header-height); padding-inline: var(--layout-gutter); gap: 12px clamp(12px, 2vw, 24px); }
+.recruiter-brand, .recruiter-actions, .recruiter-jumps { min-width: 0; }
+.recruiter-actions { flex: 0 1 auto; }
+.recruiter-hero { grid-template-columns: minmax(0, 1.45fr) minmax(250px, .7fr); gap: var(--layout-column-gap); }
+.recruiter-hero-copy, .recruiter-snapshot, .recruiter-snapshot > div, .recruiter-project-card, .recruiter-project-body, .recruiter-skill-card, .recruiter-experience-card, .recruiter-two-column > *, .recruiter-contact > * { min-width: 0; }
+.recruiter-project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--layout-gap); }
+.recruiter-project-body { min-height: 0; padding: clamp(16px, 2vw, 24px); }
+.recruiter-experience-card { grid-template-columns: minmax(160px, .58fr) minmax(0, 1fr); gap: clamp(14px, 2vw, 24px); }
+.recruiter-two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-column-gap); }
+.recruiter-contact { grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: var(--layout-column-gap); }
+.recruiter-footer { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+/* Fixed utilities use distinct corners on desktop and reflow on compact screens. */
+.privacy-notice, .service-update-notice { max-width: calc(100vw - 28px); min-width: 0; }
+.privacy-notice { left: auto; right: 14px; bottom: 14px; }
+.service-update-notice { top: calc(12px + var(--layout-header-height) + 10px); right: 14px; bottom: auto; }
+.privacy-notice > *, .service-update-notice > * { min-width: 0; }
+.privacy-notice p, .service-update-notice small { overflow-wrap: anywhere; }
+.modal-backdrop, .palette-backdrop, .photo-lightbox { padding: clamp(10px, 2vw, 24px); }
+.project-modal, .command-palette, .photo-lightbox-panel { width: min(100%, 820px); max-height: min(90svh, 920px); min-width: 0; overflow: auto; overscroll-behavior: contain; }
+.modal-body { padding: clamp(18px, 4vw, 36px); }
+.modal-grid, .capability-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-panel { width: min(620px, 100%); max-width: 100%; }
+@media (max-width: 1200px) {
+  .main-nav { gap: 8px; margin-inline: 8px; }
+  .main-nav > a { font-size: 9px; }
+  .hero-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; }
+  .hero-section { min-height: 760px; }
+  .project-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .recruiter-project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .site-header { left: 50%; right: auto; transform: translate3d(-50%, 0, 0); }
+  .main-nav { display: none; }
+  .nav-open .main-nav { display: flex; position: absolute; top: calc(100% + 8px); right: 0; flex-direction: column; align-items: stretch; width: min(320px, calc(100vw - 24px)); margin: 0; padding: 14px; }
+  .nav-open .main-nav > a { width: 100%; white-space: normal; }
+  .hero-content { gap: 28px; }
+  .hero-title { font-size: clamp(40px, 6vw, 68px); }
+  .hero-section { min-height: auto; }
+  .project-card:nth-child(n) { grid-column: span 6; }
+  .project-card:nth-child(5) { grid-column: span 12; }
+  .contact-frame { grid-template-columns: minmax(0, 1.2fr) minmax(240px, .8fr); }
+  .recruiter-hero { gap: 28px; }
+  .recruiter-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .project-toki { grid-template-columns: minmax(0, 1fr); }
+  .project-toki .project-art { min-height: 250px; border-right: 0; border-bottom: 1px solid var(--line-strong); }
+  .recruiter-hero { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-snapshot { max-width: 620px; }
+  .recruiter-contact { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  :root { --layout-gutter: 19px; --layout-section: clamp(58px, 10vw, 78px); }
+  .site-header { top: 9px; height: 62px; width: calc(100% - 18px); padding-inline: 11px; }
+  .brand-mark { flex-basis: 35px; width: 35px; height: 35px; }
+  .header-tools { gap: 5px; }
+  .icon-button, .command-trigger { flex-basis: 33px; width: 33px; height: 33px; }
+  .hero-section { padding: 108px 0 38px; }
+  .hero-content, .about-layout, .skills-layout, .journey-layout, .contact-frame { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .hero-content { width: calc(100% - 38px); }
+  .hero-title { font-size: clamp(38px, 10.5vw, 62px); }
+  .hero-description { font-size: 13px; line-height: 1.75; }
+  .project-grid { grid-template-columns: minmax(0, 1fr); gap: 15px; }
+  .project-card:nth-child(n) { grid-column: 1 / -1; }
+  .project-card .project-art { height: clamp(190px, 54vw, 270px); min-height: 190px; }
+  .about-aside { grid-template-columns: minmax(0, 1fr); }
+  .journey-side { grid-template-columns: minmax(0, 1fr); }
+  .contact-content { padding: 23px; }
+  .contact-aside { margin: 12px; }
+  .footer-links { width: 100%; justify-content: flex-start; }
+  .recruiter-main { width: calc(100% - 38px); }
+  .recruiter-topbar { padding-inline: 19px; flex-wrap: wrap; }
+  .recruiter-hero { padding-block: 48px 42px; }
+  .recruiter-project-grid, .recruiter-skill-grid, .recruiter-two-column, .recruiter-leadership-grid { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-project-card { grid-template-columns: minmax(0, 1fr); }
+  .recruiter-experience-card { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .recruiter-contact { margin-block: 34px 26px; padding: 20px; }
+  .recruiter-footer { padding-inline: 19px; }
+  .privacy-notice { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; flex-direction: column; align-items: flex-start; }
+  .privacy-actions { align-self: stretch; justify-self: start; }
+  .service-update-notice { left: 12px; right: 12px; width: auto; max-width: none; flex-wrap: wrap; }
+  .modal-grid, .capability-list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  :root { --layout-gutter: 17px; }
+  .hero-content { width: calc(100% - 34px); }
+  .hero-title { font-size: clamp(36px, 10.2vw, 51px); letter-spacing: -.07em; }
+  .availability-line { align-items: flex-start; font-size: 7px; }
+  .section-heading h2 { font-size: clamp(34px, 9vw, 46px); }
+  .recruiter-topbar { padding-inline: 17px; }
+  .recruiter-main { width: calc(100% - 34px); }
+  .recruiter-snapshot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 15px; }
+  .recruiter-project-card { grid-template-columns: minmax(0, 1fr); }
+  .privacy-notice { gap: 10px; padding: 12px; }
+}
+@media (max-width: 360px) {
+  .site-header { width: calc(100% - 14px); padding-inline: 8px; gap: 7px; }
+  .brand { gap: 6px; }
+  .brand-mark { width: 32px; height: 32px; flex-basis: 32px; }
+  .brand-copy strong { font-size: 8px; }
+  .brand-copy small { font-size: 6px; }
+  .header-tools { gap: 3px; }
+  .icon-button, .command-trigger { width: 30px; height: 30px; flex-basis: 30px; }
+  .hero-title { font-size: 35px; }
+  .hero-actions .button { padding-inline: 9px; font-size: 9px; }
+  .recruiter-main { width: calc(100% - 30px); }
+  .recruiter-actions a, .recruiter-actions button { font-size: 8px; padding-inline: 7px; }
+}
+/* Keep the expanded mobile navigation attached to its own control row. */
+.main-nav.nav-open {
+  display: flex;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(320px, calc(100vw - 24px));
+  margin: 0;
+  padding: 14px;
+}
+.main-nav.nav-open > a { width: 100%; white-space: normal; }
+/* Large displays use a deliberately bounded title measure, not viewport-sized lettering. */
+.hero-title { font-size: clamp(38px, 5.2vw, 84px); }
+.hero-title .title-line { max-width: 100%; }
