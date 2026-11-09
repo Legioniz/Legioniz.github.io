@@ -39,7 +39,7 @@ Use the four POUR principles:
 | Document structure | One primary `main`, meaningful headings, named navigation landmarks, and a declared language | Full and Recruiter views have separate labelled structures and skip links |
 | Keyboard | Every action is reachable and usable with keyboard; focus order follows reading order | Project cards, disclosures, controls, navigation, and modal actions are keyboard-operable |
 | Focus | Visible, high-contrast focus; do not hide the focused control behind sticky UI | Shared focus treatment, scroll offsets, and forced-colors outline |
-| Target size | WCAG 2.2 AA SC 2.5.8 is 24×24 CSS px or a qualifying spacing exception; prefer 44×44 for primary touch controls | Coarse-pointer controls use 44px minimum activation areas |
+| Target size | WCAG 2.2 AA SC 2.5.8 is 24×24 CSS px or a qualifying spacing exception; prefer 44×44 for primary touch controls | Primary/coarse-pointer actions use 44px minimum; compact header icons remain 32×44px, above the 24px AA minimum while preserving the 320px layout |
 | Contrast | Normal text 4.5:1; large text 3:1; essential UI graphics/boundaries 3:1 where applicable | Dark/light semantic tokens have source-level contrast checks; review images and mixed surfaces manually |
 | Reflow | No loss of content or two-dimensional scrolling for ordinary text at narrow CSS widths and zoom | Test 320 CSS px, 200% and 400% browser zoom, landscape, and long content |
 | Motion | Respect `prefers-reduced-motion` unless the user makes an explicit choice | Default follows OS; explicit Motion On/Off is persisted; essential content never depends on animation |
