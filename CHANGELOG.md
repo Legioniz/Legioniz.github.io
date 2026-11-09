@@ -2,6 +2,15 @@
 
 This file is the single record of portfolio updates, maintenance work, and release verification. The individual QA/update reports that previously existed at the repository root and in docs/releases/ have been consolidated here. Older test counts are historical snapshots from their original commits; they are not substitutes for the current commit's CI result.
 
+## 2026-11-09 — System-wide responsive layout and spacing upgrade
+
+- Replaced the previous final layout override layer with a single shared responsive contract for content width, page gutters, section rhythm, component gaps, and masthead geometry.
+- Standardized shrink-safe grid/flex tracks and text wrapping across the hero, profile, project cards, toolkit, experience, contact, footer, recruiter presentation, and interactive labs.
+- Reworked responsive composition at 1200, 1100, 900, 760, 520, and 360 CSS-pixel breakpoints; the mobile navigation now uses its actual expanded-state selector and stays bounded beneath the masthead.
+- Improved practice-map sizing, project/recruiter card reflow, feature-panel stacking, dialog constraints, and separation of floating privacy/update notices.
+- Repaired a malformed Python QA line and updated release assertions to match the current mobile layout and the existing v11 service-worker shell cache.
+- Removed the duplicate standalone QA report; this changelog remains the single release-history record.
+
 ## 2026-11-09 — Systems orbit repair and repository cleanup
 
 ### Systems orbit
