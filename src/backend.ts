@@ -89,10 +89,18 @@ async function request<T>(path: string, options: RequestInit = {}, accessToken?:
     try { payload = JSON.parse(raw) } catch { payload = raw }
   }
   if (!response.ok) {
-    const detail = typeof payload === 'object' && payload !== null && 'message' in payload
-      ? String((payload as { message: unknown }).message)
-      : typeof payload === 'string' ? payload : `Request failed (${response.status})`
-    throw new BackendError(detail, response.status)
+    const detail = typeof payload === 'object' && payload !== null
+      ? payload as Record<string, unknown>
+      : null
+    const detailMessage = detail
+      ? [detail.message, detail.msg, detail.error_description].find(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0,
+      )
+      : null
+    const message = detail?.error_code === 'over_email_send_rate_limit'
+      ? 'The Supabase authentication email limit for this project has been reached. Please wait before requesting another link or ask the site owner to configure custom SMTP.'
+      : detailMessage || (typeof payload === 'string' ? payload : `Request failed (${response.status})`)
+    throw new BackendError(message, response.status)
   }
   return payload as T
 }
