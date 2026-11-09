@@ -150,6 +150,8 @@ function ParticleField() {
     let lastFrame = 0
     let resizeFrame = 0
     let isVisible = true
+    let particleTheme = ''
+    let particleColor = ''
     let pointer = { x: -1000, y: -1000 }
     let particles: { x: number; y: number; vx: number; vy: number; r: number; a: number }[] = []
 
@@ -166,8 +168,11 @@ function ParticleField() {
       ctx.clearRect(0, 0, width, height)
       if (particles.length === 0) return
 
-      const isLight = document.documentElement.dataset.theme === 'light'
-      const particleColor = isLight ? '75, 89, 83' : '225, 232, 222'
+      const activeTheme = document.documentElement.dataset.theme || 'dark'
+      if (activeTheme !== particleTheme) {
+        particleTheme = activeTheme
+        particleColor = getComputedStyle(document.documentElement).getPropertyValue('--muted-2').trim()
+      }
       const linkDistance = profile.quality === 'full' ? 94 : 78
       const linkDistanceSquared = linkDistance * linkDistance
       const linkStrength = profile.quality === 'full' ? 0.105 : 0.075
@@ -195,9 +200,11 @@ function ParticleField() {
         }
 
         ctx.beginPath()
-        ctx.fillStyle = `rgba(${particleColor}, ${particle.a})`
+        ctx.fillStyle = particleColor
+        ctx.globalAlpha = particle.a
         ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2)
         ctx.fill()
+        ctx.globalAlpha = 1
 
         // A strict particle ceiling keeps this bounded to at most 861 pair tests per frame.
         for (let j = i + 1; j < particles.length; j += 1) {
@@ -208,11 +215,13 @@ function ParticleField() {
           if (distanceSquared < linkDistanceSquared) {
             const opacity = (1 - Math.sqrt(distanceSquared) / linkDistance) * linkStrength
             ctx.beginPath()
-            ctx.strokeStyle = `rgba(${particleColor}, ${opacity})`
+            ctx.strokeStyle = particleColor
+            ctx.globalAlpha = opacity
             ctx.lineWidth = 0.65
             ctx.moveTo(particle.x, particle.y)
             ctx.lineTo(next.x, next.y)
             ctx.stroke()
+            ctx.globalAlpha = 1
           }
         }
       }

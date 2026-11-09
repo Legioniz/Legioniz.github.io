@@ -64,7 +64,7 @@ check(len(parser.metas.get('description', '')) >= 80, 'Meta description is prese
 check(parser.metas.get('robots', '').startswith('index, follow'), 'Search crawler indexing policy is explicit')
 check(parser.metas.get('referrer') == 'strict-origin-when-cross-origin', 'External referrer policy is restrictive')
 check(parser.metas.get('og:url') == 'https://legioniz.github.io/', 'Open Graph canonical URL is absolute and stable')
-check(parser.metas.get('twitter:card') == 'summary_large_image' and parser.metas.get('og:image', '').endswith('/og-card.png') and parser.metas.get('og:image:type') == 'image/png', 'Social sharing metadata uses a crawler-compatible PNG preview')
+check(parser.metas.get('twitter:card') == 'summary_large_image' and parser.metas.get('og:image') == 'https://legioniz.github.io/og-card.png?v=20261109-4' and parser.metas.get('twitter:image') == parser.metas.get('og:image') and parser.metas.get('og:image:type') == 'image/png', 'Social sharing metadata uses the current cache-busted PNG preview')
 check(any(link.get('rel') == 'canonical' and link.get('href') == 'https://legioniz.github.io/' for link in parser.links), 'Canonical URL is linked in document head')
 check(any(link.get('rel') == 'icon' and link.get('type') == 'image/x-icon' and 'favicon.ico?v=20261109-4' in link.get('href', '') for link in parser.links), 'Browser-first ICO favicon is linked with a fresh cache key')
 check(any(link.get('rel') == 'icon' and link.get('type') == 'image/png' and 'favicon-32.png?v=20261109-4' in link.get('href', '') for link in parser.links), '32px PNG favicon fallback is linked')
@@ -96,6 +96,7 @@ except (json.JSONDecodeError, OSError):
     check(False, 'Web app manifest has a valid root start URL and display mode')
 
 app = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
+check("getPropertyValue('--muted-2')" in app and 'ctx.globalAlpha = particle.a' in app and 'ctx.globalAlpha = opacity' in app, 'Decorative canvas particles inherit the active theme color token')
 recruiter = (ROOT / 'src/RecruiterView.tsx').read_text(encoding='utf-8')
 css = (ROOT / 'src/styles.css').read_text(encoding='utf-8') + '\n' + (ROOT / 'src/layout-integrity.css').read_text(encoding='utf-8')
 data = (ROOT / 'src/data.ts').read_text(encoding='utf-8')
