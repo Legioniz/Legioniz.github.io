@@ -1,13 +1,26 @@
 // Supabase Edge Function: public inquiry/comment intake + consented page-view counts.
-// Required server secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-// PORTFOLIO_ALLOWED_ORIGIN, PORTFOLIO_RATE_LIMIT_SECRET.
-// Optional paired Turnstile secrets: TURNSTILE_SECRET_KEY (frontend site key is a Vite env value).
+// Supabase injects SUPABASE_URL and SUPABASE_SECRET_KEYS into hosted Edge Functions.
+// Only the public site origin is fixed here; no privileged key is stored in source control.
+// Optional custom overrides: PORTFOLIO_ALLOWED_ORIGIN, PORTFOLIO_RATE_LIMIT_SECRET,
+// and TURNSTILE_SECRET_KEY (the matching site key is a public Vite variable).
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const ALLOWED_ORIGIN = Deno.env.get('PORTFOLIO_ALLOWED_ORIGIN') ?? ''
-const RATE_SECRET = Deno.env.get('PORTFOLIO_RATE_LIMIT_SECRET') ?? ''
+const secretKeys = (() => {
+  try { return JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}') as Record<string, string> }
+  catch { return {} }
+})()
+const modernSecretKey = secretKeys.default ?? ''
+const legacyServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const SERVICE_ROLE_KEY = modernSecretKey || legacyServiceRoleKey
+const USE_MODERN_SECRET = Boolean(modernSecretKey)
+const ALLOWED_ORIGIN = Deno.env.get('PORTFOLIO_ALLOWED_ORIGIN') ?? 'https://legioniz.github.io'
+const RATE_SECRET = Deno.env.get('PORTFOLIO_RATE_LIMIT_SECRET') ?? SERVICE_ROLE_KEY
 const TURNSTILE_SECRET = Deno.env.get('TURNSTILE_SECRET_KEY') ?? ''
+
+const serviceKeyHeaders = {
+  apikey: SERVICE_ROLE_KEY,
+  ...(USE_MODERN_SECRET ? {} : { Authorization: `Bearer ${SERVICE_ROLE_KEY}` }),
+}
 
 const jsonHeaders = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
 
@@ -34,7 +47,7 @@ async function hmacHex(secret: string, value: string) {
 async function consumeQuota(hash: string, scope: string, limit: number) {
   const result = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_portfolio_quota`, {
     method: 'POST',
-    headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' },
+    headers: { ...serviceKeyHeaders, 'Content-Type': 'application/json' },
     body: JSON.stringify({ p_bucket_hash: hash, p_scope: scope, p_limit: limit }),
   })
   if (!result.ok) throw new Error('Rate-limit service unavailable')
@@ -76,8 +89,7 @@ async function insertRecord(table: string, record: Record<string, unknown>) {
   const result = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: 'POST',
     headers: {
-      apikey: SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      ...serviceKeyHeaders,
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
@@ -92,6 +104,12 @@ async function insertRecord(table: string, record: Record<string, unknown>) {
 
 Deno.serve(async (request) => {
   const origin = request.headers.get('origin')
+
+  // Safe deployment probe: reports configuration state, never key material.
+  if (request.method === 'GET') {
+    const ready = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY && ALLOWED_ORIGIN && RATE_SECRET)
+    return response({ ok: ready, service: 'portfolio-submit', status: ready ? 'ready' : 'missing_server_credentials' }, ready ? 200 : 503, origin)
+  }
   if (request.method === 'OPTIONS') return response({ ok: true }, 204, origin)
   if (request.method !== 'POST') return response({ ok: false, message: 'Method not allowed.' }, 405, origin)
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !ALLOWED_ORIGIN || !RATE_SECRET) {
