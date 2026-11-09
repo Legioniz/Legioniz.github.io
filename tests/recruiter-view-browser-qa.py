@@ -51,14 +51,72 @@ def main() -> None:
                 launch['executable_path'] = os.environ['CHROMIUM_PATH']
             browser = p.chromium.launch(**launch)
             page = browser.new_page(viewport={'width': 1440, 'height': 1000})
+            page.add_init_script("""
+              (() => {
+                let notes = 0;
+                class PortfolioTestAudioContext {
+                  constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; }
+                  resume() { this.state = 'running'; return Promise.resolve(); }
+                  createOscillator() {
+                    return {
+                      type: 'sine',
+                      frequency: { setValueAtTime() {} },
+                      connect() {},
+                      start() { notes += 1; },
+                      stop() {},
+                      disconnect() {},
+                      onended: null
+                    };
+                  }
+                  createGain() {
+                    return {
+                      gain: {
+                        setValueAtTime() {},
+                        exponentialRampToValueAtTime() {}
+                      },
+                      connect() {},
+                      disconnect() {}
+                    };
+                  }
+                }
+                Object.defineProperty(window, 'AudioContext', {
+                  configurable: true,
+                  value: PortfolioTestAudioContext
+                });
+                Object.defineProperty(window, '__portfolioAudioNotes', {
+                  configurable: false,
+                  get: () => notes
+                });
+              })();
+            """)
             page.on('pageerror', lambda error: errors.append(str(error)))
             response = page.goto(BASE + '?view=recruiter', wait_until='domcontentloaded', timeout=30000)
             page.get_by_role('heading', name='King Art D. Pacumberto.', level=1).wait_for(timeout=15000)
             check(response is not None and response.status == 200, 'Recruiter view loads directly from a shareable query URL')
             check('Recruiter Profile' in page.title(), 'Recruiter view receives a focused browser title')
             check(page.get_by_role('navigation', name='Recruiter profile sections').count() == 1, 'Recruiter navigation has an accessible name')
+            recruiter_brand = page.locator('.recruiter-brand-lockup')
+            snapshot_mark = page.locator('.recruiter-snapshot-mark')
+            snapshot_lockup = page.locator('.recruiter-snapshot-lockup')
+            check(recruiter_brand.inner_text().strip() == 'KA' and snapshot_mark.inner_text().strip() == 'KA',
+                  'Both recruiter KA marks render without punctuation or an orphaned period')
+            monogram_geometry = snapshot_lockup.evaluate("""el => ({
+              whiteSpace: getComputedStyle(el).whiteSpace,
+              width: el.getBoundingClientRect().width,
+              height: el.getBoundingClientRect().height,
+              parentWidth: el.parentElement.getBoundingClientRect().width,
+              fits: el.scrollWidth <= el.clientWidth + 1
+            })""")
+            check(monogram_geometry['whiteSpace'] == 'nowrap' and monogram_geometry['fits']
+                  and monogram_geometry['width'] <= monogram_geometry['parentWidth'] + 1,
+                  f'Snapshot KA stays on one line and inside its 64px mark ({monogram_geometry})')
             preferences = page.get_by_role('group', name='Display and sound preferences')
             check(preferences.count() == 1, 'Recruiter view exposes one named preference group')
+            page.wait_for_function("document.querySelector('.recruiter-view')?.dataset.recruiterMotionReady === 'true'")
+            page.wait_for_function("document.querySelector('.recruiter-hero')?.classList.contains('is-in-view')")
+            check(page.locator('.recruiter-section[data-reveal]').count() >= 5
+                  and page.locator('.recruiter-project-card[data-reveal]').count() == 3,
+                  'Shared reveal controller is connected to recruiter sections and project evidence')
             motion_toggle = preferences.get_by_role('button', name='Motion On — pause decorative motion')
             sound_toggle = preferences.get_by_role('button', name='Sound On — turn interface sounds off')
             check(motion_toggle.get_attribute('aria-pressed') == 'true',
@@ -85,6 +143,12 @@ def main() -> None:
             preferences.get_by_role('button', name='Turn interface sounds on').click()
             check(preferences.get_by_role('button', name='Turn interface sounds off').get_attribute('aria-pressed') == 'true',
                   'Recruiter sound control restores interface feedback')
+            notes_before_disclosure = page.evaluate('window.__portfolioAudioNotes')
+            page.locator('.recruiter-more-experience > summary').click()
+            page.wait_for_timeout(80)
+            notes_after_disclosure = page.evaluate('window.__portfolioAudioNotes')
+            check(notes_after_disclosure > notes_before_disclosure,
+                  f'Recruiter disclosure triggers real synthesized interface audio ({notes_before_disclosure} → {notes_after_disclosure} oscillator notes)')
 
             page.get_by_role('link', name='Experience').click()
             page.wait_for_function("document.querySelector('.recruiter-jumps a[href=\"#recruiter-experience\"]')?.getAttribute('aria-current') === 'location'")
@@ -204,9 +268,12 @@ def main() -> None:
                     '.recruiter-hero h1', '.recruiter-intro', '.recruiter-section-heading h2',
                     '.recruiter-project-body h3', '.recruiter-project-body > p',
                     '.recruiter-skill-card > p', '.recruiter-experience-card p',
-                    '.recruiter-education-item p', '.recruiter-awards p',
-                    '.recruiter-leadership-grid p', '.recruiter-contact h2',
-                    '.recruiter-contact p', '.recruiter-tags > span'
+                    '.recruiter-education-item p', '.recruiter-education-current h3',
+                    '.recruiter-awards p', '.recruiter-leadership-grid p',
+                    '.recruiter-contact h2', '.recruiter-contact p',
+                    '.recruiter-tags > span', '.recruiter-brand-lockup',
+                    '.recruiter-snapshot-lockup', '.recruiter-hero-links a',
+                    '.recruiter-contact-actions a'
                   ]
                   const textOverflow = textSelectors.flatMap((selector) =>
                     [...document.querySelectorAll(selector)].filter((element) =>
