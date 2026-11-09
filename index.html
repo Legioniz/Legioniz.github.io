@@ -14,9 +14,11 @@
     <script>
       (() => {
         const root = document.documentElement
-        // Respect reduced-motion before first paint; explicit visitor choices override the OS.
+        // Resolve reduced motion before any other setup or first paint.
         root.dataset.motionOverride = 'system'
-        root.dataset.motion = 'on'
+        let systemReducedMotion = false
+        try { systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false } catch { /* Motion defaults to static if the preference cannot be read. */ }
+        root.dataset.motion = systemReducedMotion ? 'off' : 'on'
         try {
           const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
           const theme = savedTheme === 'light' ? 'light' : 'dark'
@@ -43,7 +45,6 @@
             }
           } catch { /* The operating-system preference remains available without storage. */ }
           const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
-          const systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
           const motionEnabled = motionOverride === 'on' || (motionOverride === 'system' && !systemReducedMotion)
           root.dataset.motionOverride = motionOverride
           root.dataset.motion = motionEnabled ? 'on' : 'off'
