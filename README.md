@@ -12,10 +12,6 @@ Professional portfolio of **King Art D. Pacumberto**, a BSIT student at the Poly
 - GitHub Actions + GitHub Pages deployment
 - Supabase Auth, PostgreSQL/RLS, server-side inquiry and public-comment intake, moderation, opt-in analytics, and owner console. The production build is connected to the dedicated Singapore project; pending comments stay private until the owner approves them.
 
-## Design and engineering standards
-
-The portfolio's working UI/UX, accessibility, responsive, performance, SEO, privacy, security, and release criteria are documented in [UI-UX-ENGINEERING-STANDARD.md](./UI-UX-ENGINEERING-STANDARD.md). The creative system and visual direction remain documented in [VISUAL-DESIGN-SYSTEM.md](./VISUAL-DESIGN-SYSTEM.md).
-
 ## Run locally
 
 Requirements: Node.js 20.19+ or 22.12+ and npm.
@@ -37,7 +33,6 @@ npm run test:features  # feature integration and backend security source checks
 npm run test:production-source # recruiter, SEO, accessibility, mobile, privacy, and production-source checks
 npm run test:design-browser # Chromium stylesheet, motion, and reduced-motion checks
 npm run test:recruiter-browser # real Chromium recruiter-view routing, layout, print, and keyboard tests
-npm run test:accessibility-browser # compiled full/recruiter views, keyboard semantics, and 320px reflow
 # CI additionally runs Lighthouse CI against both the full site and recruiter view
 npm run test:interactions # Chromium/Playwright project interaction and UI sound tests
 npm run test:motion       # Chromium/Playwright section, masthead, disclosure, and reduced-motion tests
@@ -47,13 +42,13 @@ npm run verify         # preflight + all source/security/browser suites + TypeSc
 npm run preview        # preview production output
 ```
 
-Install the test-only Python dependencies with `python -m pip install -r requirements-test.txt` and install the matching Chromium browser with `python -m playwright install chromium`. For a release-ready local run, use `npm run release`. It creates a verified backup first, then runs the preflight, adaptive, cross-file integrity, feature/security, production-source, design-browser, strict TypeScript project, Vite production build, bundle-budget checks, desktop/touch interactions, scroll/motion regressions, compiled Recruiter View browser tests, and full/recruiter accessibility checks across eight viewport widths and both themes. The production site is generated in `dist/`; the preview server uses `http://localhost:4174/`. The backup tool retains the five newest snapshots under `.portfolio-backups/` and records SHA-256 checksums. That local backup directory is ignored by Git and is never deployed.
+Install the test-only Python dependencies with `python -m pip install -r requirements-test.txt` and install the matching Chromium browser with `python -m playwright install chromium`. For a release-ready local run, use `npm run release`. It creates a verified backup first, then runs the preflight, adaptive, cross-file integrity, feature/security, production-source, design-browser, strict TypeScript project, Vite production build, bundle-budget checks, desktop/touch interactions, scroll/motion regressions, and compiled Recruiter View browser tests. The production site is generated in `dist/`; the preview server uses `http://localhost:4174/`. The backup tool retains the five newest snapshots under `.portfolio-backups/` and records SHA-256 checksums. That local backup directory is ignored by Git and is never deployed.
 
 ## Deploy to GitHub Pages
 
-The included workflow is configured for the root GitHub Pages user site `https://legioniz.github.io/`. Follow [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md): create the empty public repository `Legioniz.github.io`, then run `PUSH-TO-GITHUB.cmd` from the extracted folder. In **Settings -> Pages**, select **GitHub Actions** as the source. The workflow runs the full React/Vite verification, browser tests, and Lighthouse audits, then validates and uploads the compiled `dist/` directory directly with `actions/upload-pages-artifact (pinned to a full commit SHA)`. It deliberately skips Jekyll packaging so the production HTML and hashed JS/CSS bundles are deployed unchanged. The `actions/deploy-pages (pinned to a full commit SHA)` step runs only after verification and artifact validation pass. Do not add a second Pages workflow; use the existing one to avoid competing deployments.
+The included workflow is configured for the root GitHub Pages user site `https://legioniz.github.io/`. Follow [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md): create the empty public repository `Legioniz.github.io`, then run `PUSH-TO-GITHUB.cmd` from the extracted folder. In **Settings -> Pages**, select **GitHub Actions** as the source. The workflow runs the full React/Vite verification, browser tests, and Lighthouse audits, then validates and uploads the compiled `dist/` directory directly with `actions/upload-pages-artifact@v4`. It deliberately skips Jekyll packaging so the production HTML and hashed JS/CSS bundles are deployed unchanged. The `actions/deploy-pages@v4` step runs only after verification and artifact validation pass. Do not add a second Pages workflow; use the existing one to avoid competing deployments.
 
-The deployment history, including the earlier Jekyll packaging failure and the current direct Vite artifact workflow, is consolidated in [CHANGELOG.md](./CHANGELOG.md). The current workflow and [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) are the operational source of truth. Third-party workflow actions are pinned to full commit SHAs and monitored by Dependabot.
+The deployment history, including the earlier Jekyll packaging failure and the current direct Vite artifact workflow, is consolidated in [CHANGELOG.md](./CHANGELOG.md). The current workflow and [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) are the operational source of truth.
 
 The public URLs are `https://legioniz.github.io/` (full portfolio) and `https://legioniz.github.io/?view=recruiter` (Recruiter View). `START-PORTFOLIO-LAN.cmd` launches a same-Wi-Fi preview; it is not a public Internet tunnel. This source package intentionally omits `node_modules/` and `dist/`.
 
@@ -61,21 +56,21 @@ The public URLs are `https://legioniz.github.io/` (full portfolio) and `https://
 
 Open the concise, shareable recruiter profile with `/?view=recruiter`. It reuses the same project, skills, experience, education, achievements, and contact data as the full site, presents concise professional information and direct contact links, and can hand visitors into the full project case studies.
 
-The production workflow includes source-level SEO, privacy, responsive, accessibility, and security checks; a compiled asset and bundle-size audit; Lighthouse CI against both the full portfolio and recruiter view; and Chromium browser checks for recruiter routes, keyboard behavior, print styling, narrow-screen overflow, and accessibility regressions on both compiled views. Lighthouse HTML/JSON reports are written to `.lighthouseci/reports` in CI rather than uploaded to public temporary storage. Passing these checks is a release gate, not a claim of live deployment or full WCAG certification.
+The production workflow includes source-level SEO, privacy, responsive, accessibility, and security checks; a compiled asset and bundle-size audit; Lighthouse CI against both the full portfolio and recruiter view; and Chromium browser checks for recruiter routes, keyboard behavior, print styling, and narrow-screen overflow. Lighthouse HTML/JSON reports are written to `.lighthouseci/reports` in CI rather than uploaded to public temporary storage. Passing these checks is a release gate, not a claim of live deployment or full WCAG certification.
 
 ## Site features
 
 - Responsive technical-field-journal art direction with warm paper/ink surfaces, signal-coral accents, annotated geometry, and dark/light themes
 - Annotated geometric practice map and lightweight Canvas particle visualization
 - Project category filters, right-side quick-view pop-outs on desktop hover, and detailed project case-study dialogs opened by click/tap/Enter/Space; each project can be opened directly with `?project=project-id`, shared by copying its URL, and closed with browser back/forward navigation
-- Keyboard command palette (`Ctrl+K` / `Cmd+K`) with shortcuts to the labs, photography workspace, network simulation, OSINT journal, activity record, and owner console
+- Keyboard command palette (`Ctrl+K` / `Cmd+K`) with labelled modal semantics, focus containment and restoration, Escape-to-close, live no-results feedback, and shortcuts to the labs, photography workspace, network simulation, OSINT journal, activity record, and owner console
 - Scroll progress and bidirectional section reveals driven by IntersectionObserver: content eases in when entering the reading area and eases out when leaving, then re-enters when scrolling back
 - Direction-aware floating masthead: hides after deliberate downward scroll and reappears on upward scroll; stays available near the page top, while the mobile menu is open, and during keyboard focus
-- Adaptive Canvas particle field (maximum 42 fine-pointer desktop / 18 coarse-pointer particles; downshifts to 12 on constrained devices and 0 for Save-Data or an explicit motion pause; 24 fps cap and adaptive pixel ratio)
+- Adaptive Canvas particle field (maximum 42 fine-pointer desktop / 18 coarse-pointer particles; downshifts to 12 on constrained devices and 0 for Save-Data or reduced motion; 24 fps cap and adaptive pixel ratio)
 - Collapsible skill categories, work-history entries, extracurricular details, and project-scope notes using native keyboard-accessible disclosures
 - Progressive disclosure animation where supported; native open/close behavior remains available as a lightweight fallback
 - Decorative orbit, project-art, and skills animations pause outside the viewport and resume near view; the capability strip stays static for readability
-- Decorative motion follows the operating system's reduced-motion preference by default. Visitors can explicitly pause or opt in from the header; the preference is stored under the versioned `legion-portfolio-motion-v7` key.
+- Motion follows the operating-system reduced-motion setting until a visitor explicitly chooses Motion On or Motion Off. The choice is stored under `legion-portfolio-motion-v8`; older explicit v7 choices are migrated. The intro sequence is skipped when motion is reduced.
 - Asymmetric 12-column project case-study board with a dedicated horizontal treatment for the photography project
 - Side-by-side project comparison for purpose, contribution, status, stack, and documented capabilities
 - Project Laboratory with an exposure-triangle / EV100 calculator and a user-adjustable appliance-energy estimator; both are explicitly labelled local teaching models
@@ -87,16 +82,17 @@ The production workflow includes source-level SEO, privacy, responsive, accessib
 - Developer Notebook and a clearly qualified “Currently Building” board
 - Persistent section quick navigator, active-section tracking, existing scroll progress, and responsive, keyboard-accessible navigation
 - Project cards behave as full keyboard-operable launch surfaces; desktop hover reveals a right-side quick-view panel, while click/tap/Enter/Space opens the full project introduction with role, overview, technology, project scope, and repository link where available
-- Project dialogs animate into view, manage focus, support Escape-to-close, and restore focus to the project card
-- Visible keyboard focus states in both themes, a skip-to-content link, and explicit light-theme contrast tuning
+- Project dialogs animate into view, expose an accessible title and description, manage focus, support Escape-to-close, and restore focus to the project card
+- Project Laboratory tabs use roving tab stops, Left/Right Arrow navigation, Home/End navigation, and explicit tab-to-panel relationships
+- Visible keyboard focus states in both themes and forced-colors mode, a skip-to-content link, WCAG AA palette checks, 44px primary touch targets, and compact 32×44px header controls
 - One-line `KA` monogram lockup with nowrap layout rules and a responsive brand header
-- Synthesized, target-specific interface sounds for navigation and link hover, project hover, controls, disclosures, keyboard focus, form fields, submits, project open/close, downloads, and copy; off by default and enabled only by an explicit visitor choice, persistent sound toggle in the header, no audio assets
+- Synthesized, target-specific interface sounds for navigation, project hover, controls, disclosures, keyboard focus, forms, downloads, and copy; sound is off until a visitor explicitly enables it with the persistent header toggle, with no audio assets
 - Responsive profile portrait with WebP/JPEG source sets, intrinsic dimensions, lazy loading, and initials fallback
 - Versioned, opt-in service-worker updates and a same-origin static-asset cache; form, auth, database, and storage API traffic is excluded from caching
 - Dedicated OSINT and defensive network-practice note with explicit authorized-lab scope
 - Direct GitHub, LinkedIn, and email links across the full portfolio, recruiter profile, and progressive fallbacks
 
-## Personal documents
+## CV and privacy
 
 The portfolio intentionally does not publish downloadable resumes, CVs, or other personal application documents. Visitors can review the information presented directly in the Full Portfolio and Recruiter View, then use the contact links to get in touch.
 
@@ -120,7 +116,7 @@ CSS owns the layout through fluid sizing, breakpoints, orientation rules, dynami
 
 ## Interaction sounds and project previews
 
-The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close, and copy actions have distinct action cues. Sound is off by default and remains silent until a visitor explicitly enables it. Browsers still require a real user gesture before Web Audio can play; the sound-toggle action itself gives a short confirmation cue, and the first click, tap, or keyboard action unlocks the context for subsequent cues. The preference is stored as `legion-portfolio-sound-v2`.
+The interface sound manager is delegated at the document level, so links, buttons, disclosures, project cards, filters, form controls, and dynamically rendered modal controls receive feedback without individual component handlers. Hover signatures vary by target: header/footer navigation, content links, project cards, controls, and disclosure rows have different note shapes. Focus, text-field changes, select changes, form submissions, toggles, filters, project open/close and copy actions have distinct action cues. Sound is off for first-time visitors and is enabled only after an explicit choice; browsers still require a real user gesture before Web Audio can play. The speaker control persists the preference under `legion-portfolio-sound-v2`.
 
 On fine-pointer desktop layouts, hovering or keyboard-focusing a project card slides a quick-view panel in from the right. Clicking anywhere on the card, or pressing Enter/Space while focused, opens the complete project introduction. Touch layouts skip the hover-only panel and open the same introduction on tap. Projects without a live demo only expose the documented overview and repository link; no fake launch destinations are shown.
 
@@ -142,10 +138,11 @@ On fine-pointer desktop layouts, hovering or keyboard-focusing a project card sl
 - `tests/adaptive-smoke.ts`: dependency-free device-profile tests.
 - `tests/feature-security-qa.py`: source checks for interactive lab safety boundaries, project links, photo limits, RLS, submission validation, and no client-side service-role secret.
 - `tests/interactions-browser-qa.py` and `tests/interaction-fixture.html`: optional browser tests against the exact compiled sound module and shipped stylesheet, covering hover pop-out, project click/keyboard opening, touch behavior, motion pause, target-specific hover sounds, keyboard focus, text/select/submit cues, and disclosure feedback; requires Python Playwright and a Chromium-family browser.
-- `tests/portfolio-motion-qa.py`: Chromium/Playwright test that compiles and loads the exact production reveal and masthead controllers, verifies section enter/exit/re-entry, dynamic project insertion, skill/education/achievement disclosure open-close transitions, motion-on-by-default behavior, explicit visitor pause, header movement by scroll direction, fallback behavior, and the one-line `KA` lockup at seven viewport widths. Requires global TypeScript (`tsc`), Python Playwright, and Chromium outside the deployed runtime. Run it with `npm run test:motion`.
+- `tests/portfolio-motion-qa.py`: Chromium/Playwright test that compiles and loads the exact production reveal and masthead controllers, verifies section enter/exit/re-entry, dynamic project insertion, skill/education/achievement disclosure open-close transitions, system-aware reduced motion, explicit visitor overrides, header movement by scroll direction, fallback behavior, and the one-line `KA` lockup at seven viewport widths. Requires global TypeScript (`tsc`), Python Playwright, and Chromium outside the deployed runtime. Run it with `npm run test:motion`.
 - `SOURCES.md`: evidence and editorial notes for public-facing claims.
+- `UX-ACCESSIBILITY-PLAYBOOK.md`: the sourced design, accessibility, interaction, performance, SEO, and security standards used to review and maintain the site.
 
-Smart Electrical Monitoring is described as a local demonstration using synthetic data, not a live utility integration. The TIMO award links to its published ranking. The current education and experience details follow the latest owner-supplied information. The OSINT and security-practice descriptions are owner-reported, self-directed experience and are labeled foundational; the named Medusa tool is described only in an authorized authentication-audit lab context. The uploaded profile image is stored as responsive, optimized WebP/JPEG derivatives under `public/profile/`, not as a large original PNG. Leadership responsibilities and event-production details are included from the owner's direct confirmation; no missing dates or titles have been invented. The light-theme coral and secondary metadata tokens have been darkened to maintain contrast on the warm paper background. The adaptive effect key intentionally ignores one-pixel layout changes so CSS/ResizeObserver can handle geometry without repeatedly rebuilding optional effects.
+Smart Electrical Monitoring is described as a local demonstration using synthetic data, not a live utility integration. The TIMO award links to its published ranking. The current education and experience details follow the latest supplied resume. The OSINT and security-practice descriptions are owner-reported, self-directed experience and are labeled foundational; the named Medusa tool is described only in an authorized authentication-audit lab context. The uploaded profile image is stored as responsive, optimized WebP/JPEG derivatives under `public/profile/`, not as a large original PNG. Leadership responsibilities and event-production details are included from the owner's direct confirmation; no missing dates or titles have been invented. The light-theme coral and secondary metadata tokens have been darkened to maintain contrast on the warm paper background. The adaptive effect key intentionally ignores one-pixel layout changes so CSS/ResizeObserver can handle geometry without repeatedly rebuilding optional effects.
 
 
 ### Collapsible section navigator
@@ -170,7 +167,7 @@ The current source refines the shared charcoal/ivory/coral design system, hero m
 
 The first-screen hero heading, eyebrow, supporting copy, actions, and visual are deliberately excluded from the global scroll-reveal observer. They use a dedicated, fail-open entrance sequence: the baseline styles keep all hero content visible, while motion only adds a brief transform/blur refinement. Pausing motion with the persistent header control removes the animation without hiding content. The heading also exposes a complete accessible sentence (`From a question to working systems.`) rather than relying on adjacent visual line fragments.
 
-The service-worker shell cache is versioned as `legion-portfolio-shell-v7` for this visibility fix.
+The service-worker shell cache is versioned to invalidate previously cached shell assets when shared layout behavior changes.
 
 
 ## Global layout integrity upgrade

@@ -17,18 +17,22 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
   const exposureValue = Math.log2((aperture * aperture / shutter) * (100 / iso))
   const baselineEv = Math.log2((5.6 * 5.6 / (1 / 125)) * (100 / 100))
   const relativeExposure = Math.pow(2, baselineEv - exposureValue)
-  const handleLabTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-    const tabs: FeatureTab[] = ['exposure', 'energy']
-    let nextIndex = tabs.indexOf(labTab)
-    if (event.key === 'ArrowRight') nextIndex = (nextIndex + 1) % tabs.length
-    else if (event.key === 'ArrowLeft') nextIndex = (nextIndex - 1 + tabs.length) % tabs.length
+  function handleLabTabKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
+    const tabs = Array.from(event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])
+    const currentIndex = tabs.indexOf(event.currentTarget)
+    let nextIndex = currentIndex
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length
+    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length
     else if (event.key === 'Home') nextIndex = 0
     else if (event.key === 'End') nextIndex = tabs.length - 1
     else return
     event.preventDefault()
-    const nextTab = tabs[nextIndex]!
-    setLabTab(nextTab)
-    window.requestAnimationFrame(() => document.getElementById(`lab-tab-${nextTab}`)?.focus())
+    const nextTab = tabs[nextIndex]
+    const nextValue = nextTab?.dataset.labTab
+    if (nextTab && (nextValue === 'exposure' || nextValue === 'energy')) {
+      setLabTab(nextValue)
+      nextTab.focus()
+    }
   }
 
   const [watts, setWatts] = useState(90)
@@ -215,8 +219,8 @@ export function PortfolioFeatures({ onOpenProject }: { onOpenProject: (project: 
         <div className="lab-shell" data-reveal>
           <div className="lab-shell-head"><span><i className="live-dot"/> INTERACTIVE WORKSPACE</span><span>LOCAL SIMULATION / NO EXTERNAL DATA</span></div>
           <div className="lab-tabs" role="tablist" aria-label="Project laboratory demonstrations">
-            <button id="lab-tab-exposure" type="button" role="tab" aria-selected={labTab === 'exposure'} aria-controls="lab-panel-exposure" tabIndex={labTab === 'exposure' ? 0 : -1} className={labTab === 'exposure' ? 'is-selected' : ''} onClick={() => setLabTab('exposure')} onKeyDown={handleLabTabKeyDown}>01 / EXPOSURE MODEL</button>
-            <button id="lab-tab-energy" type="button" role="tab" aria-selected={labTab === 'energy'} aria-controls="lab-panel-energy" tabIndex={labTab === 'energy' ? 0 : -1} className={labTab === 'energy' ? 'is-selected' : ''} onClick={() => setLabTab('energy')} onKeyDown={handleLabTabKeyDown}>02 / ENERGY ESTIMATOR</button>
+            <button id="lab-tab-exposure" data-lab-tab="exposure" type="button" role="tab" aria-selected={labTab === 'exposure'} aria-controls="lab-panel-exposure" tabIndex={labTab === 'exposure' ? 0 : -1} className={labTab === 'exposure' ? 'is-selected' : ''} onClick={() => setLabTab('exposure')} onKeyDown={handleLabTabKeyDown}>01 / EXPOSURE MODEL</button>
+            <button id="lab-tab-energy" data-lab-tab="energy" type="button" role="tab" aria-selected={labTab === 'energy'} aria-controls="lab-panel-energy" tabIndex={labTab === 'energy' ? 0 : -1} className={labTab === 'energy' ? 'is-selected' : ''} onClick={() => setLabTab('energy')} onKeyDown={handleLabTabKeyDown}>02 / ENERGY ESTIMATOR</button>
           </div>
           <>
             <div id="lab-panel-exposure" aria-labelledby="lab-tab-exposure" className="exposure-workspace" role="tabpanel" tabIndex={0} hidden={labTab !== 'exposure'}>

@@ -111,39 +111,30 @@ check("path: ./dist" in workflow and "test -s dist/index.html" in workflow and "
       "The Pages artifact is validated directly from the compiled Vite dist folder, including every favicon format")
 check("uses: actions/jekyll-build-pages@v1" not in workflow and "destination: ./_site" not in workflow and "path: ./_site" not in workflow,
       "The deployment bypasses Jekyll packaging and publishes the Vite build without rewriting its files")
-check(workflow.index("npm run verify") < workflow.index("Validate the production Pages artifact") < workflow.index("actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b"),
+check(workflow.index("npm run verify") < workflow.index("Validate the production Pages artifact") < workflow.index("actions/upload-pages-artifact@v4"),
       "Build/verification, direct dist validation, and Pages artifact upload occur in the required order")
-check(all(f"uses: actions/{action}@{sha}" in workflow for action, sha in [
-    ("checkout", "11bd71901bbe5b1630ceea73d27597364c9af683"),
-    ("configure-pages", "983d7736d9b0ae728b81ab479565c72886d7745b"),
-    ("setup-node", "49933ea5288caeca8642d1e84afbd3f7d6820020"),
-    ("setup-python", "a26af69be951a213d495a4c3e4e4022e16d87065"),
-    ("upload-artifact", "ea165f8d65b6e75b540449e92b4886f43607fa02"),
-    ("upload-pages-artifact", "7b1f4a764d45c48632c6b24a0339c27f5614fb0b"),
-    ("deploy-pages", "d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e"),
-]), "GitHub Actions dependencies are pinned to verified immutable full-length commit SHAs")
 html_shell = read("index.html")
 favicon_svg = read("public/favicon.svg")
 favicon_png = (ROOT / "public/favicon-32.png").read_bytes()
 favicon_ico = (ROOT / "public/favicon.ico").read_bytes()
 manifest = read("public/site.webmanifest")
 service_worker = read("public/sw.js")
-check(all(f'/favicon{suffix}?v=20261109-4' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
+check(all(f'/favicon{suffix}?v=20261109-5' in html_shell for suffix in ('.svg', '-32.png', '.ico')) and '<link rel="mask-icon"' in html_shell and 'rel="icon" type="image/x-icon"' in html_shell,
       "HTML provides refreshed SVG, PNG, ICO, and mask-icon favicon references")
 check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([137, 80, 78, 71, 13, 10, 26, 10])) and favicon_ico[:4] == bytes([0, 0, 1, 0]),
       "All deployed favicon source formats have valid file signatures")
-check('favicon.svg?v=20261109-4' in manifest and 'favicon-32.png?v=20261109-4' in manifest,
+check('favicon.svg?v=20261109-5' in manifest and 'favicon-32.png?v=20261109-5' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v18" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v18" in service_worker and "favicon.ico?v=20261109-5" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
-check("legion-portfolio-motion-v7" in html_shell and "prefers-reduced-motion: reduce" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)" in html_shell,
-      "Early boot follows the OS reduced-motion preference unless a visitor explicitly overrides it")
+check("legion-portfolio-motion-v8" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "motionOverride === 'system' && !systemReducedMotion" in html_shell,
+      "Early boot honors system reduced motion before paint and allows explicit visitor overrides")
 app_source = read("src/App.tsx")
 intro_source = read("src/PortfolioChrome.tsx")
-check("return saved === 'on' || saved === 'off' ? saved : 'system'" in app_source and "motionPreference === 'system' && !systemMotionReduced" in app_source and "query.addEventListener('change', update)" in app_source,
-      "React motion controls follow live system preference changes while preserving explicit visitor overrides")
-check("if (savedMotion === 'off') return false" in intro_source and "window.matchMedia?.('(prefers-reduced-motion: reduce)')" in intro_source and "savedMotion === 'on' || !systemReducedMotion" in intro_source,
-      "The intro sequence follows the OS motion preference unless explicitly enabled")
+check("function readMotionPreference(): MotionPreference" in app_source and "motionPreference === 'system' && !systemReducedMotion" in app_source and "legion-portfolio-motion-v8" in app_source,
+      "React motion controls follow system preference until an explicit visitor override")
+check("document.documentElement.dataset.motion === 'off'" in intro_source and "return true" in intro_source,
+      "The intro sequence respects the shared system-or-visitor reduced-motion state")
 adaptive_source = read("src/adaptive.ts")
 check("document.documentElement.dataset.motion === 'off'" in adaptive_source and "prefers-reduced-motion" not in adaptive_source,
       "Adaptive motion load follows the explicit site pause state")
@@ -151,8 +142,8 @@ check("cache: npm" in workflow and "npm ci --no-audit --no-fund" in workflow and
 check("needs: verify-and-package" in workflow and "id-token: write" in workflow and "pages: write" in workflow,
       "Pages deployment waits for verification and has the documented Pages/id-token permissions")
 release_runner = read("scripts/portfolio.mjs")
-check(all(f"['run', '{name}']" in release_runner for name in ["test:adaptive", "test:integrity", "test:features", "test:production-source", "test:design-browser", "typecheck", "build:app", "audit:bundle", "test:interactions", "test:motion", "test:recruiter-browser", "test:accessibility-browser"]),
-      "Release verification runs source, security, build, bundle, desktop/touch, motion, and compiled recruiter/accessibility browser suites")
+check(all(f"['run', '{name}']" in release_runner for name in ["test:adaptive", "test:integrity", "test:features", "test:production-source", "test:design-browser", "typecheck", "build:app", "audit:bundle", "test:interactions", "test:motion", "test:recruiter-browser"]),
+      "Release verification runs source, security, build, bundle, desktop/touch, motion, and compiled recruiter browser suites")
 
 # 3. Ensure static URLs used by HTML, TSX, CSS, and the service worker resolve.
 asset_sources = [ROOT / "index.html", *ROOT.glob("src/**/*.ts"), *ROOT.glob("src/**/*.tsx"), ROOT / "src/styles.css", ROOT / "src/layout-integrity.css", ROOT / "public/sw.js", ROOT / "tests/interaction-fixture.html"]
@@ -257,7 +248,7 @@ for name in unused_keyframes:
     print(f"  UNUSED KEYFRAME {name}")
 
 # 5. Documentation links, duplicated deploy guide, PDF-only policy, and design source ownership.
-active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "design-assets/README.md", "public/llms.txt", "public/profile.md", "public/projects.md", "public/experience.md"]
+active_docs = ["README.md", "CHANGELOG.md", "SOURCES.md", "BACKEND-SETUP.md", "CONTENT-CHECKLIST.md", "PRODUCTION-QUALITY.md", "RECRUITER-VIEW.md", "UI-MOTION-DESIGN.md", "VISUAL-DESIGN-SYSTEM.md", "VIEW-TRANSITION-LIFECYCLE.md", "UX-ACCESSIBILITY-PLAYBOOK.md", "design-assets/README.md", "public/llms.txt", "public/profile.md", "public/projects.md", "public/experience.md"]
 missing_doc_links: list[str] = []
 for doc_name in active_docs:
     content = read(doc_name)

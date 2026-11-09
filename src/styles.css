@@ -2118,7 +2118,7 @@ button:active:not(:disabled), [role="button"]:active, [role="tab"]:active {
 .main-nav > a:not(.nav-contact) {
   transition: color .24s ease, transform .3s var(--ease-expressive);
 }
-.main-nav > a:not(.nav-contact):hover { transform: translateY(-2px); }
+.main-nav > a:not(.nav-resume):not(.nav-contact):hover { transform: translateY(-2px); }
 .main-nav > a.active:not(.nav-contact)::before {
   content: '';
   position: absolute;
@@ -3428,6 +3428,17 @@ button, input, textarea, select { font-family: var(--font-body); }
 }
 
 
+/* Explicit visitor pause and inherited OS preference share one complete motion stop. */
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  view-transition-name: none !important;
+}
+
 /* DESIGN + MOTION POLISH — final consistency and safety layer */
 :root {
   --content-measure: 68ch;
@@ -4219,7 +4230,3 @@ body {
 }
 .admin-auth-link:hover { color: var(--text-strong); }
 .admin-auth-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-
-
-/* ARIA tab panels remain mounted so every tab's aria-controls target exists. */
-.lab-shell [role="tabpanel"][hidden] { display: none !important; }
