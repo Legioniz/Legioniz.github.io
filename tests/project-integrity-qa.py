@@ -125,7 +125,7 @@ check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([
       "All deployed favicon source formats have valid file signatures")
 check('favicon.svg?v=20261109-5' in manifest and 'favicon-32.png?v=20261109-5' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v17" in service_worker and "favicon.ico?v=20261109-5" in service_worker and "|ico)$/i" in service_worker,
+check("legion-portfolio-shell-v18" in service_worker and "favicon.ico?v=20261109-5" in service_worker and "|ico)$/i" in service_worker,
       "Service-worker cache version refreshes and caches every favicon format")
 check("legion-portfolio-motion-v8" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "motionOverride === 'system' && !systemReducedMotion" in html_shell,
       "Early boot honors system reduced motion before paint and allows explicit visitor overrides")
@@ -268,8 +268,8 @@ check((ROOT / "design-assets/og-card.svg").is_file() and (ROOT / "public/og-card
       "Social-card vector master is retained outside public assets; PNG is the deployed crawler image")
 public_files = [path for path in (ROOT / "public").rglob("*") if path.is_file()]
 check(not any(path.suffix.lower() in {".doc", ".docx", ".odt"} for path in public_files), "Public assets contain no editable Word/OpenDocument files")
-check((ROOT / "public/King-Art-Pacumberto-CV.pdf").read_bytes().startswith(b"%PDF") and (ROOT / "public/King-Art-Pacumberto-Resume.pdf").read_bytes().startswith(b"%PDF"),
-      "Both document downloads are valid PDF containers")
+check(not any(path.suffix.lower() in {".pdf", ".doc", ".docx", ".odt"} for path in public_files),
+      "Public assets contain no downloadable personal application documents")
 check(not any("private" in path.name.lower() for path in public_files), "No private-CV filename is present in public assets")
 
 # 6. No-unused compiler policy and exact direct dependency pins.

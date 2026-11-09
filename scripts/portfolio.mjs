@@ -16,7 +16,7 @@ const expectedFiles = [
   'src/adaptive.ts', 'src/backend.ts', 'src/config.ts', 'src/data.ts', 'src/main.tsx', 'src/masthead.ts', 'src/reveal.ts',
   'src/serviceWorker.ts', 'src/sound.ts', 'src/styles.css', 'src/layout-integrity.css',
   'public/sw.js', 'public/favicon.svg', 'public/favicon-32.png', 'public/favicon.ico', 'public/og-card.png', 'public/robots.txt', 'public/sitemap.xml', 'public/llms.txt', 'public/profile.md', 'public/projects.md', 'public/experience.md',
-  'public/site.webmanifest', 'public/BACKEND-SETUP.md', 'public/King-Art-Pacumberto-Resume.pdf', 'public/King-Art-Pacumberto-CV.pdf',
+  'public/site.webmanifest', 'public/BACKEND-SETUP.md',
   'public/profile/king-art-portrait-480.webp', 'public/profile/king-art-portrait-800.webp', 'public/profile/king-art-portrait-1023.webp',
   'public/profile/king-art-portrait-480.jpg', 'public/profile/king-art-portrait-800.jpg', 'public/profile/king-art-portrait-1023.jpg',
   'design-assets/README.md', 'design-assets/og-card.svg',
@@ -134,7 +134,7 @@ async function check() {
   log(edge.includes('PORTFOLIO_ALLOWED_ORIGIN') && edge.includes('verifyTurnstile') && edge.includes('consume_portfolio_quota') && edge.includes('payload.website.trim()'), 'Submission Edge Function includes origin, CAPTCHA, quota, and honeypot controls')
   const serviceWorker = await read('public/sw.js')
   log(['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'].every((prefix) => serviceWorker.includes(prefix)), 'Service worker excludes backend API paths from caching')
-  log(serviceWorker.includes("legion-portfolio-shell-v17") && serviceWorker.includes("/favicon.svg?v=20261109-5") && serviceWorker.includes("/favicon-32.png?v=20261109-5") && serviceWorker.includes("/favicon.ico?v=20261109-5"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
+  log(serviceWorker.includes("legion-portfolio-shell-v18") && serviceWorker.includes("/favicon.svg?v=20261109-5") && serviceWorker.includes("/favicon-32.png?v=20261109-5") && serviceWorker.includes("/favicon.ico?v=20261109-5"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
 
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')
@@ -208,25 +208,19 @@ async function check() {
   log((await read('src/App.tsx')).includes('Public-source research') || (await read('src/App.tsx')).includes('OPEN-SOURCE RESEARCH'), 'OSINT profile section is present')
 
   const config = await read('src/config.ts')
-  const originalResumePath = config.match(/resumeOriginalPath:\s*'([^']+)'/)?.[1]
-  log(Boolean(originalResumePath && await exists(path.join('public', originalResumePath.replace(/^\//, '')))), 'Exact owner-supplied resume PDF resolves to a bundled file')
-  if (originalResumePath) {
-    const originalBytes = await readFile(path.join(ROOT, 'public', originalResumePath.replace(/^\//, '')))
-    log(originalBytes.subarray(0, 5).toString('ascii') === '%PDF-' && originalBytes.length < 600_000, 'Original resume is a valid, compact PDF resource')
-  }
-  const resumePath = config.match(/resumePdfPath:\s*'([^']+)'/)?.[1]
-  log(Boolean(resumePath && await exists(path.join('public', resumePath.replace(/^\//, '')))), 'Public-safe CV PDF link resolves to a bundled file')
   const appLinks = await read('src/App.tsx')
-  const publicDocumentAssets = await readdir(path.join(ROOT, 'public'))
-  log(!config.includes('resumeDocxPath') && !appLinks.includes('resumeDocxPath') && !publicDocumentAssets.some((file) => /\.(docx?|odt)$/i.test(file)), 'No editable Word document is configured, linked, or shipped in public assets')
-  log((appLinks.match(/siteConfig\.resumeOriginalPath/g) || []).length >= 3 && appLinks.includes('siteConfig.resumePdfPath'), 'Resume and public-safe CV are integrated as PDF-only downloads in the header, hero, and contact')
+  const recruiter = await read('src/RecruiterView.tsx')
   const fallback = await read('src/ErrorBoundary.tsx')
-  log(fallback.includes('siteConfig.resumeOriginalPath'), 'Original resume remains available in the React error fallback')
+  const portfolioSources = [config, appLinks, recruiter, fallback].join('\n')
+  log(!/resumeOriginalPath|resumePdfPath|King-Art-Pacumberto-(?:Resume|CV)\.pdf|Download (?:public )?CV|Original Resume · PDF/i.test(portfolioSources), 'No downloadable resume/CV controls or file paths remain in the portfolio interface')
+  const publicDocumentAssets = await readdir(path.join(ROOT, 'public'))
+  log(!publicDocumentAssets.some((file) => /\.(?:pdf|docx?|odt)$/i.test(file)), 'No personal application documents are shipped in public assets')
+
 
   const html = await read('index.html')
   log(html.includes('id="root"') && html.includes('boot-fallback') && html.includes('<noscript>'), 'Boot and no-JavaScript fallbacks exist')
   log(html.includes("localStorage.getItem('legion-portfolio-motion-v8')") && html.includes("savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'") && html.includes("motionOverride === 'system' && !systemReducedMotion") && html.includes('dataset.motionOverride'), 'Early boot script respects system reduced motion and explicit saved visitor choices before paint')
-  log(html.includes('/King-Art-Pacumberto-Resume.pdf'), 'Original resume is available before React starts and without JavaScript')
+  log(!/King-Art-Pacumberto-(?:Resume|CV)\.pdf|resume PDF|CV PDF/i.test(html), 'Startup and no-JavaScript fallbacks contain no personal-document downloads')
   log(html.includes('/favicon.svg?v=20261109-5') && html.includes('/favicon-32.png?v=20261109-5') && html.includes('/favicon.ico?v=20261109-5'), 'Cache-busted SVG, PNG, and ICO favicon fallbacks are linked from the HTML shell')
   const faviconPng = await readFile(path.join(ROOT, 'public', 'favicon-32.png'))
   const faviconIco = await readFile(path.join(ROOT, 'public', 'favicon.ico'))
@@ -241,10 +235,7 @@ async function check() {
   log(workflow.includes('npm run verify') && workflow.includes('actions/configure-pages@v5') && workflow.includes('actions/deploy-pages@v4') && workflow.includes('actions/upload-pages-artifact@v4') && workflow.includes('path: ./dist') && workflow.includes('test -s dist/index.html') && workflow.includes('test -s dist/favicon.svg') && workflow.includes('test -s dist/favicon-32.png') && workflow.includes('test -s dist/favicon.ico') && workflow.includes('test -d dist/assets') && workflow.includes('test -f dist/.nojekyll') && !workflow.includes('actions/jekyll-build-pages@v1') && !workflow.includes('destination: ./_site'), 'GitHub Pages workflow validates and uploads compiled Vite dist output directly without Jekyll packaging')
   log(workflow.indexOf('npm run verify') < workflow.indexOf('Validate the production Pages artifact') && workflow.indexOf('Validate the production Pages artifact') < workflow.indexOf('actions/upload-pages-artifact@v4'), 'Vite verification/build and production artifact validation complete before Pages upload')
 
-  const publicFiles = await readdir(path.join(ROOT, 'public'))
-  log(!publicFiles.some((name) => /private|phone|personal-cv/i.test(name)), 'No private CV file is stored in public/')
-  const publicPdf = await readFile(path.join(ROOT, 'public', 'King-Art-Pacumberto-CV.pdf'))
-  log(publicPdf.subarray(0, 5).toString('ascii') === '%PDF-' && publicPdf.length > 100_000, 'Latest redesigned public CV PDF is bundled (updated export)')
+  log(!publicDocumentAssets.some((name) => /private|phone|personal-cv/i.test(name)), 'No private personal-document asset is stored in public/')
   log(!await exists('package-lock.json') ? true : (await read('package-lock.json')).includes('lockfileVersion'), 'Package lockfile is valid when present')
   log(await exists('src/RecruiterView.tsx'), 'Dedicated recruiter profile component is present')
   log(await exists('public/robots.txt') && await exists('public/sitemap.xml') && await exists('public/site.webmanifest') && await exists('public/llms.txt') && await exists('public/profile.md') && await exists('public/projects.md') && await exists('public/experience.md'), 'Crawler and install metadata files are present')

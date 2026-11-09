@@ -1,3 +1,11 @@
+## 2026-11-10 — Personal application documents removed
+
+- Removed the résumé and CV PDF assets from the current branch tree so the next GitHub Pages artifact excludes them at their former paths.
+- Removed document-download actions from the Full Portfolio, Recruiter View, startup/no-JavaScript fallback, and React error fallback.
+- Removed document links and descriptions from the Markdown discovery pages, recruiter documentation, source notes, and deployment guide.
+- Updated release scripts, artifact validation, and browser/source QA to require the absence of personal application documents.
+- Bumped the service-worker shell cache to v18 so returning visitors adopt the updated site shell.
+
 ## 2026-11-09 — Deep UX and accessibility implementation
 
 - Changed motion to inherit the operating-system reduced-motion preference before first paint, then follow OS changes until the visitor explicitly selects Motion On or Off. Existing explicit v7 choices migrate to v8.
