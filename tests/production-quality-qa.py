@@ -170,7 +170,7 @@ edge = (ROOT / 'supabase/functions/portfolio-submit/index.ts').read_text(encodin
 check('SUPABASE_SERVICE_ROLE_KEY' not in backend and 'service_role' not in backend, 'Frontend backend configuration contains no service-role credential')
 check('enable row level security' in sql.lower() and 'is_portfolio_admin' in sql, 'Database migration retains RLS and administrator policy enforcement')
 check('verifyTurnstile' in edge and 'consume_portfolio_quota' in edge and 'PORTFOLIO_ALLOWED_ORIGIN' in edge, 'Server-side intake retains CAPTCHA, rate quota, and origin restrictions')
-check("const CACHE_NAME = 'legion-portfolio-shell-v13'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker uses a new cache version for this release')
+check("const CACHE_NAME = 'legion-portfolio-shell-v14'" in (ROOT / 'public/sw.js').read_text(encoding='utf-8'), 'Service worker uses a new cache version for this release')
 check('service_role' not in recruiter.lower(), 'Recruiter chunk has no privileged backend credential references')
 
 check('--content-measure: 68ch' in css and '--section-space: clamp(72px, 9vw, 132px)' in css and '--type-kicker' in css, 'Shared design system includes readable measure, responsive section spacing, and semantic typography tokens')
