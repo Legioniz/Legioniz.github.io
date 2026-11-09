@@ -29,7 +29,7 @@ This portfolio uses development port **5174** (instead of Vite’s default 5173)
 npm run check          # fast source/content/config preflight
 npm run test:adaptive  # dependency-free adaptive-profile tests
 npm run test:integrity  # imports, assets, CSS tokens, links, and unused-export checks
-npm run test:features  # 67 feature integration and backend security source checks
+npm run test:features  # feature integration and backend security source checks
 npm run test:production-source # recruiter, SEO, accessibility, mobile, privacy, and production-source checks
 npm run test:design-browser # Chromium stylesheet, motion, and reduced-motion checks
 npm run test:recruiter-browser # real Chromium recruiter-view routing, layout, print, and keyboard tests
