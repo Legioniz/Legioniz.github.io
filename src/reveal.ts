@@ -7,6 +7,7 @@ interface RevealMotionOptions {
   enabled?: boolean
   scope?: ParentNode
   root?: HTMLElement
+  visibleClass?: string
 }
 
 const REVEAL_SELECTOR = '[data-reveal]'
@@ -17,10 +18,10 @@ function findTargets(scope: ParentNode): HTMLElement[] {
   return Array.from(scope.querySelectorAll<HTMLElement>(REVEAL_SELECTOR))
 }
 
-function showEverything(root: HTMLElement, scope: ParentNode): void {
+function showEverything(root: HTMLElement, scope: ParentNode, visibleClass: string): void {
   root.removeAttribute('data-reveal-ready')
   findTargets(scope).forEach((element) => {
-    element.classList.add('is-visible')
+    element.classList.add(visibleClass)
     element.dataset.revealState = 'in'
   })
 }
@@ -34,10 +35,11 @@ export function installScrollReveal(options: RevealMotionOptions = {}): () => vo
   const root = options.root ?? document.documentElement
   const scope = options.scope ?? document.getElementById('main-content') ?? document.body
   const enabled = options.enabled ?? true
+  const visibleClass = options.visibleClass ?? 'is-visible'
 
   // A no-motion or unsupported-browser fallback must never hide content.
   if (!enabled || typeof IntersectionObserver === 'undefined' || typeof MutationObserver === 'undefined') {
-    showEverything(root, scope)
+    showEverything(root, scope, visibleClass)
     return () => undefined
   }
 
@@ -57,7 +59,7 @@ export function installScrollReveal(options: RevealMotionOptions = {}): () => vo
       const element = entry.target as HTMLElement
       if (!tracked.has(element) || !element.isConnected) continue
       const visible = entry.isIntersecting && entry.intersectionRatio > 0
-      element.classList.toggle('is-visible', visible)
+      element.classList.toggle(visibleClass, visible)
       element.dataset.revealState = visible ? 'in' : 'out'
     }
   }, {
@@ -75,7 +77,7 @@ export function installScrollReveal(options: RevealMotionOptions = {}): () => vo
       : []
     const index = Math.max(0, siblings.indexOf(element))
     element.style.setProperty('--reveal-delay', `${Math.min(index, 4) * 58}ms`)
-    element.classList.remove('is-visible')
+    element.classList.remove(visibleClass)
     element.dataset.revealState = 'out'
     observer.observe(element)
   }
@@ -117,7 +119,7 @@ export function installScrollReveal(options: RevealMotionOptions = {}): () => vo
   // its initial observation batch, reveal content rather than leave it hidden.
   fallbackTimer = window.setTimeout(() => {
     if (disposed || receivedInitialBatch) return
-    showEverything(root, scope)
+    showEverything(root, scope, visibleClass)
     observer.disconnect()
     mutationObserver.disconnect()
   }, INITIAL_CALLBACK_FALLBACK_MS)
