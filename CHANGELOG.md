@@ -151,4 +151,21 @@ Historical source, adaptive, and Chromium checks were run in multiple snapshots.
 - Improved recruiter copy sizing, wrapping, grid min-width handling, tags, and contact text so long project descriptions and skill labels wrap without clipping.
 - Expanded real-browser checks for preference persistence, visible-section state, responsive project-card geometry, text spill, and minimum typography sizes.
 
-The matching CI result and deployment commit will be recorded after verification.
+Final verification passed and the Recruiter View update deployed on November 9, 2026.
+
+**Deployed commit:** `2b371496fc6a072113395d48d6ef6aa97467122b`  
+**GitHub Actions:** [Run #122 — successful verification and deployment](https://github.com/Legioniz/Legioniz.github.io/actions/runs/42555142348)
+
+Verification on that commit:
+- Cross-file integrity: **40/40 passed**.
+- Feature/security: **59/59 passed**.
+- Production-source, SEO, responsive, accessibility and privacy checks: **77/77 passed**.
+- CSS/design browser suite: **41/41 passed**.
+- Production bundle audit: **19/19 passed**.
+- Recruiter View browser suite: **74/74 passed**.
+- Strict TypeScript check and Vite production build: passed.
+- Lighthouse CI audits for the full portfolio and Recruiter View: passed.
+- Production Pages artifact validation: passed.
+- GitHub Pages deployment: reported success at https://legioniz.github.io/.
+
+Recruiter-specific browser coverage includes the persistent motion/sound controls, current-section navigation state, viewport-scoped project art animation, reveal state, zero unnamed controls/links, no text spill or horizontal overflow at 320, 360, 390, 428, 768, 1024, and 1440 CSS pixels, and the intended two-column mobile project-card layout at 320–428px.
