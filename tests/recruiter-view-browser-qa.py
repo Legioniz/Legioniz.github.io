@@ -210,16 +210,19 @@ def main() -> None:
                         clientY: bounds.top + 28
                     }))
                 }""")
-                spotlight_state = first_card.evaluate("""el => ({
-                    state: el.getAttribute('data-spotlight'),
-                    opacity: getComputedStyle(el, '::before').opacity,
-                    x: el.style.getPropertyValue('--recruiter-spot-x'),
-                    y: el.style.getPropertyValue('--recruiter-spot-y')
-                })""")
+                spotlight_state = first_card.evaluate("""el => {
+                    const body = el.querySelector('.recruiter-project-body')
+                    return {
+                      state: el.getAttribute('data-spotlight'),
+                      background: getComputedStyle(body).backgroundImage,
+                      x: el.style.getPropertyValue('--recruiter-spot-x'),
+                      y: el.style.getPropertyValue('--recruiter-spot-y')
+                    }
+                }""")
                 check(spotlight_state['state'] == 'active'
-                      and float(spotlight_state['opacity']) > 0
+                      and 'radial-gradient' in spotlight_state['background']
                       and bool(spotlight_state['x']) and bool(spotlight_state['y']),
-                      f'Fine-pointer movement activates the visible project-card spotlight from a nested target ({spotlight_state})')
+                      f'Fine-pointer movement applies a visible radial spotlight to the project content from a nested target ({spotlight_state})')
             else:
                 check(first_card.get_attribute('data-spotlight') is None,
                       'Project-card spotlight remains disabled when the browser reports no fine-pointer hover input')
