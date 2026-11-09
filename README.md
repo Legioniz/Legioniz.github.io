@@ -135,7 +135,7 @@ On fine-pointer desktop layouts, hovering or keyboard-focusing a project card sl
 - `src/adaptive.ts`: environment profile and coalesced observer with API fallbacks.
 - `src/reveal.ts`: progressive, bidirectional IntersectionObserver reveal controller; it observes dynamically filtered project cards without reinitializing the entire page observer, leaves content visible when motion is disabled or observer APIs are unavailable, and includes a timeout safety path for browsers that fail to dispatch the initial observer batch.
 - `src/masthead.ts`: independently testable direction-aware masthead controller with batched scroll updates, top/menu/focus guards, and scroll-progress updates.
-- `src/styles.css`: one design-token source of truth, responsive rules, and animation.
+- `src/styles.css` and `src/layout-integrity.css`: shared design tokens plus a connected geometry layer for bounded containers, shrink-safe flex/grid children, coordinated breakpoints, and collision-aware notices. `src/main.tsx` imports the integrity layer immediately after the base stylesheet; it is exercised by the production-source and Chromium design suites.
 - `scripts/portfolio.mjs`: preflight, release orchestration, and checksum-verified backups.
 - `tests/adaptive-smoke.ts`: dependency-free device-profile tests.
 - `tests/feature-security-qa.py`: source checks for interactive lab safety boundaries, project links, photo limits, RLS, submission validation, and no client-side service-role secret.
@@ -169,3 +169,8 @@ The current source refines the shared charcoal/ivory/coral design system, hero m
 The first-screen hero heading, eyebrow, supporting copy, actions, and visual are deliberately excluded from the global scroll-reveal observer. They use a dedicated, fail-open entrance sequence: the baseline styles keep all hero content visible, while motion only adds a brief transform/blur refinement. Pausing motion with the persistent header control removes the animation without hiding content. The heading also exposes a complete accessible sentence (`From a question to working systems.`) rather than relying on adjacent visual line fragments.
 
 The service-worker shell cache is versioned as `legion-portfolio-shell-v7` for this visibility fix.
+
+
+## Global layout integrity upgrade
+
+The shared `src/layout-integrity.css` layer is imported directly by `src/main.tsx` after the base design system. It normalizes box sizing, applies `min-width: 0` to grid/flex content, bounds site and recruiter containers, coordinates the responsive layout breakpoints, prevents reveal transforms from expanding the document, and separates fixed privacy/update notices from page content. It is not a disconnected override: the production-source and Chromium design checks load and inspect it as part of the release verification.
