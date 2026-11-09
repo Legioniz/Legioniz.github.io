@@ -157,7 +157,7 @@ async function check() {
   log(reveal.includes('showEverything') && reveal.includes('data-reveal-ready') && reveal.includes('!enabled') && reveal.includes('typeof MutationObserver'), 'Reveal controller preserves readable content when motion is disabled or observer APIs are unavailable')
   log(reveal.includes('INITIAL_CALLBACK_FALLBACK_MS') && reveal.includes('receivedInitialBatch'), 'Reveal controller has a timeout fallback if an observer fails to dispatch')
   log(app.includes('education-history') && app.includes('achievement-summary') && app.includes('skill-disclosure-panel'), 'Skills, academic history, achievements, work history, and extracurriculars use consistent native disclosures')
-  log(app.includes('legion-portfolio-motion-v7') && !app.includes('legion-portfolio-motion-v5') && !app.includes('updateScrollReveals'), 'Versioned motion preference defaults on and preserves an explicit visitor pause')
+  log(app.includes('legion-portfolio-motion-v7') && !app.includes('legion-portfolio-motion-v6') && !app.includes('updateScrollReveals'), 'Versioned motion preference defaults on and preserves an explicit visitor pause')
   log(app.includes("headerHidden && !mobileOpen") && app.includes('mobile-nav-active'), 'Mobile navigation keeps the masthead visible while open')
   log(app.includes('const motionIsPaused') && app.includes('setMotionPreference(next)') && app.includes("useState<'on' | 'off'>") && app.includes("const motionEnabled = motionPreference === 'on'"), 'Decorative motion defaults on and can be explicitly paused or resumed')
   log(app.includes('installInteractionSounds') && app.includes('legion-portfolio-sound-v2') && app.includes('soundEnabledRef'), 'Global interaction sound manager is mounted and uses a versioned visitor preference')
