@@ -57,7 +57,9 @@ check('mailto:' in backend_ui and 'No message is stored by the website' in backe
 check('analytics are off by default' in backend_ui.lower() and 'choice !== \'accepted\'' in backend_ui, 'Analytics are opt-in and consent-gated')
 check('if (!backendConfig.configured) return null' in backend_ui, 'Privacy consent banner is hidden when analytics are not available')
 check('commentCaptcha' in backend_ui and 'turnstileToken: commentCaptcha' in backend_ui and 'turnstileToken: captcha' in backend_ui, 'Private inquiries and public notes submit independent single-use verification tokens')
-check('useId().replace(/:/g, \'\')' in backend_ui and 'resetSignal' in backend_ui and 'window.turnstile?.remove?.' in backend_ui, 'Each public form owns a unique Turnstile widget with reset and cleanup lifecycle')
+check('useId().replace(/:/g, \'\')' in backend_ui and 'resetSignal' in backend_ui and 'window.turnstile?.remove?.' in backend_ui and backend_ui.count('<TurnstileChallenge ') == 2, 'Inquiry and public-note forms own separate Turnstile widgets with reset and cleanup lifecycle')
+comments_panel = backend_ui.split('<aside className="comments-panel"', 1)[1].split('</aside>', 1)[0]
+check('type="email"' not in comments_panel and 'autoComplete="email"' not in comments_panel and 'Contact details are not requested' in comments_panel, 'Public notes collect no email or contact-detail fields')
 check("setComments(await fetchApprovedComments())" in backend_ui and 'commentsLoading' in backend_ui and 'commentsError' in backend_ui and 'TRY AGAIN' in backend_ui, 'Public comments show loading, failure, retry, and refreshed approved-feed states')
 check("website: commentHoneypot" in backend_ui and 'maxLength={1000}' in backend_ui and 'commentBody.length.toLocaleString()' in backend_ui, 'Public note composer includes its own honeypot and bounded character counter')
 check("'pending'" in backend_ui and 'APPROVE / PUBLISH' in backend_ui and 'HIDE' in backend_ui and 'ARCHIVE' in backend_ui and 'DELETE' in backend_ui, 'Admin comments support moderation status changes and permanent deletion')
