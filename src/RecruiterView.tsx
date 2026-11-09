@@ -107,6 +107,15 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
     return () => observer.disconnect()
   }, [])
 
+  const activateSectionLink = (sectionId: string) => {
+    const root = recruiterRootRef.current
+    if (!root) return
+    root.querySelectorAll<HTMLAnchorElement>('.recruiter-jumps a[href^="#"]').forEach((link) => {
+      if (link.hash === `#${sectionId}`) link.setAttribute('aria-current', 'location')
+      else link.removeAttribute('aria-current')
+    })
+  }
+
   return (
     <div className="recruiter-view" id="recruiter-view" ref={recruiterRootRef}>
       <a className="skip-link recruiter-skip" href="#recruiter-main" data-sfx="navigate">Skip to recruiter profile</a>
@@ -116,11 +125,11 @@ export function RecruiterView({ onExit, onOpenProject, motionEnabled, soundEnabl
           <small>RECRUITER BRIEF / 01</small>
         </a>
         <nav className="recruiter-jumps" aria-label="Recruiter profile sections">
-          <a href="#recruiter-projects" data-sfx="navigate">Projects</a>
-          <a href="#recruiter-skills" data-sfx="navigate">Skills</a>
-          <a href="#recruiter-experience" data-sfx="navigate">Experience</a>
-          <a href="#recruiter-education" data-sfx="navigate">Education</a>
-          <a href="#recruiter-contact" data-sfx="navigate">Contact</a>
+          <a href="#recruiter-projects" data-sfx="navigate" onClick={() => activateSectionLink('recruiter-projects')}>Projects</a>
+          <a href="#recruiter-skills" data-sfx="navigate" onClick={() => activateSectionLink('recruiter-skills')}>Skills</a>
+          <a href="#recruiter-experience" data-sfx="navigate" onClick={() => activateSectionLink('recruiter-experience')}>Experience</a>
+          <a href="#recruiter-education" data-sfx="navigate" onClick={() => activateSectionLink('recruiter-education')}>Education</a>
+          <a href="#recruiter-contact" data-sfx="navigate" onClick={() => activateSectionLink('recruiter-contact')}>Contact</a>
         </nav>
         <div className="recruiter-actions">
           <a className="recruiter-download" data-sfx="download" href={siteConfig.resumePdfPath} download="King-Art-D-Pacumberto-CV.pdf">Download CV · PDF <span aria-hidden="true">↗</span></a>
