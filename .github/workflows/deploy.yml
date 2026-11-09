@@ -108,9 +108,9 @@ jobs:
           test -s dist/favicon.ico
           test -s dist/og-card.png
           test -s dist/og-card.svg
-          grep -q '/favicon.svg?v=20261109-4' dist/index.html
-          grep -q '/favicon-32.png?v=20261109-4' dist/index.html
-          grep -q '/favicon.ico?v=20261109-4' dist/index.html
+          grep -q '/favicon.svg?v=20261109-5' dist/index.html
+          grep -q '/favicon-32.png?v=20261109-5' dist/index.html
+          grep -q '/favicon.ico?v=20261109-5' dist/index.html
           test -s dist/site.webmanifest
           test -s dist/llms.txt
           test -s dist/profile.md
