@@ -146,13 +146,13 @@ def main() -> None:
                   'Recruiter sound control explicitly enables the delegated interface sound system')
             check(page.evaluate("localStorage.getItem('legion-portfolio-sound-v2')") == 'on',
                   'Recruiter sound opt-in persists using the shared site setting')
-            preferences.get_by_role('button', name='Turn interface sounds off').click()
+            sound_toggle.click()
             check(preferences.get_by_role('button', name='Sound Off — turn interface sounds on').get_attribute('aria-pressed') == 'false',
                   'Recruiter sound control can mute interface feedback again')
             check(page.evaluate("localStorage.getItem('legion-portfolio-sound-v2')") == 'off',
                   'Recruiter sound mute persists using the shared site setting')
-            preferences.get_by_role('button', name='Turn interface sounds on').click()
-            check(preferences.get_by_role('button', name='Turn interface sounds off').get_attribute('aria-pressed') == 'true',
+            sound_toggle.click()
+            check(preferences.get_by_role('button', name='Sound On — turn interface sounds off').get_attribute('aria-pressed') == 'true',
                   'Recruiter sound control restores interface feedback')
             notes_before_disclosure = page.evaluate('window.__portfolioAudioNotes')
             page.locator('.recruiter-more-experience > summary').click()
