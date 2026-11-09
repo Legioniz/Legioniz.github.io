@@ -80,8 +80,6 @@ def main() -> None:
             x:Math.round(x*10)/10, y:Math.round(y*10)/10, width:Math.round(r.width*10)/10, height:Math.round(r.height*10)/10}
         })""")
         print('ORBIT_POINTER_HIT_TEST ' + str(pointer_targets))
-        desktop_metrics = inspect_orbit_geometry(1440, 950)
-        print('ORBIT_DESKTOP_GEOMETRY ' + str(desktop_metrics))
         check(all(item['hitCategory'] == item['category'] for item in pointer_targets), 'Each orbit button owns its visible center hit point without overlap from another node')
         for item in pointer_targets:
             page.mouse.click(item['x'], item['y'])
@@ -120,6 +118,7 @@ def main() -> None:
                 centerWidth:centerRect.width, nodes}
             }""")
         desktop_orbit = inspect_orbit_geometry(1440, 950)
+        print('ORBIT_DESKTOP_GEOMETRY ' + str(desktop_orbit))
         check(all(ring['dx'] <= 1.5 and ring['dy'] <= 1.5 for ring in desktop_orbit['rings']), 'All rotating orbit rings remain concentric at desktop size')
         check(desktop_orbit['centerContainsCaption'] and desktop_orbit['centerFitsInnerRing'] and all(node['inside'] and node['overlap'] <= 1 for node in desktop_orbit['nodes']), 'Desktop orbit keeps its caption and center tile within the inner ring and nodes clear of the tile')
         mobile_orbit = inspect_orbit_geometry(320, 780)
