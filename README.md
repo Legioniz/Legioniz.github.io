@@ -102,16 +102,17 @@ The two PDF downloads are integrated into the site header, hero actions, contact
 
 ## Inquiries, moderated comments, analytics, and owner administration
 
-The frontend forms and owner-console interface are included. A secure Supabase schema and Edge Function are also included under `supabase/`, but the live backend remains **unconfigured** until the owner creates a Supabase project, applies the migration, deploys the function, adds the administrator allowlist row, and supplies the public frontend values. No live database, credentials, administrator account, or external service has been fabricated.
+The production site is connected to the dedicated Supabase project in Singapore. Its PostgreSQL schema, row-level security policies, owner allowlist, and public `portfolio-submit` Edge Function are deployed. The GitHub Pages workflow builds the frontend with the project's public URL and publishable API key; the browser never receives a server-side secret.
 
-- When no backend is configured, the inquiry form opens a prefilled email as a fallback; it does not claim to save a record. Public-note submission remains disabled and clearly shows that no browser-side storage is being used.
-- With the backend configured, visitors submit public notes using a display name and comment only; every submission is validated server-side and enters the `pending` queue. The public feed can read approved notes only.
+- Visitors can submit a public note using only a display name and comment. The Edge Function validates it and inserts it as `pending`; no Auth account or email address is required.
+- The public feed reads only `approved` comments. A successful submission is acknowledged immediately but does not appear in the public feed until the owner approves it in the Admin console.
+- The feed supports manual refresh and uses uncached API reads. An empty feed means there are no approved notes yet; it does not mean the composer is unavailable.
 - The owner console provides searchable moderation queues for pending, approved, hidden, and archived comments, with edit, approve/publish, hide, archive, export, and permanent delete actions.
-- The owner console uses Supabase Auth plus an explicit database allowlist. Row Level Security is the enforcement boundary for private inquiries, comments, the allowlist, page views, and admin activity.
+- Owner access uses Supabase Auth plus the confirmed-email database allowlist. Row Level Security enforces the boundary for inquiries, comments, the allowlist, page views, and admin activity.
 - Analytics are off by default and require visitor consent. The minimal record contains a random session UUID, page path, and timestamp. The submission function derives a short-lived HMAC rate-limit bucket; it does not store raw IP addresses.
-- Cloudflare Turnstile is optional but recommended. Its site key is public; its secret belongs only in Supabase Function secrets.
+- Cloudflare Turnstile is optional. Its site key is public; its secret belongs only in Supabase Function secrets. The current project does not require a Turnstile token unless the matching server secret is configured.
 
-Follow `BACKEND-SETUP.md` (also served as `/BACKEND-SETUP.md` in the deployed site) before enabling any persistent records. Never put a Supabase service-role key, Turnstile secret, rate-limit HMAC secret, or other server secret in `src/`, `public/`, GitHub Pages build variables, or client-side JavaScript. See `VISUAL-DESIGN-SYSTEM.md` for the creative direction, layout rules, and interaction principles.
+For local development, add the public values from `.env.example` to `.env.local`; without them, the composer remains disabled and the inquiry form uses its honest email fallback. Follow `BACKEND-SETUP.md` (also served as `/BACKEND-SETUP.md`) before moving or reconfiguring the project. Never put a Supabase service-role/secret key, Turnstile secret, rate-limit HMAC secret, or other server secret in `src/`, `public/`, GitHub Pages build variables, or browser-side JavaScript. See `VISUAL-DESIGN-SYSTEM.md` for the creative direction, layout rules, and interaction principles.
 
 ## Responsive and progressive enhancement
 
