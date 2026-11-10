@@ -115,7 +115,7 @@ check(workflow.index("npm run verify") < workflow.index("Validate the production
       "Build/verification, direct dist validation, and Pages artifact upload occur in the required order")
 # Validate the pinning policy without hard-coding action commit hashes: Dependabot
 # must be able to refresh official action commits without invalidating this test.
-action_refs = re.findall(r"^\\s*uses:\\s*([^\\s#]+)", workflow, flags=re.MULTILINE)
+action_refs = re.findall(r"^\s*uses:\s*([^\s#]+)", workflow, flags=re.MULTILINE)
 required_actions = {
     "actions/checkout", "actions/configure-pages", "actions/setup-node",
     "actions/setup-python", "actions/upload-artifact",
