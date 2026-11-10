@@ -111,17 +111,23 @@ check("path: ./dist" in workflow and "test -s dist/index.html" in workflow and "
       "The Pages artifact is validated directly from the compiled Vite dist folder, including every favicon format")
 check("uses: actions/jekyll-build-pages@v1" not in workflow and "destination: ./_site" not in workflow and "path: ./_site" not in workflow,
       "The deployment bypasses Jekyll packaging and publishes the Vite build without rewriting its files")
-check(workflow.index("npm run verify") < workflow.index("Validate the production Pages artifact") < workflow.index("actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b"),
+check(workflow.index("npm run verify") < workflow.index("Validate the production Pages artifact") < workflow.index("Upload compiled Vite Pages artifact"),
       "Build/verification, direct dist validation, and Pages artifact upload occur in the required order")
-check(all(f"uses: actions/{action}@{sha}" in workflow for action, sha in [
-    ("checkout", "11bd71901bbe5b1630ceea73d27597364c9af683"),
-    ("configure-pages", "983d7736d9b0ae728b81ab479565c72886d7745b"),
-    ("setup-node", "49933ea5288caeca8642d1e84afbd3f7d6820020"),
-    ("setup-python", "a26af69be951a213d495a4c3e4e4022e16d87065"),
-    ("upload-artifact", "ea165f8d65b6e75b540449e92b4886f43607fa02"),
-    ("upload-pages-artifact", "7b1f4a764d45c48632c6b24a0339c27f5614fb0b"),
-    ("deploy-pages", "d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e"),
-]), "GitHub Actions dependencies are pinned to verified immutable full-length commit SHAs")
+# Validate the pinning policy without hard-coding action commit hashes: Dependabot
+# must be able to refresh official action commits without invalidating this test.
+action_refs = re.findall(r"^\s*uses:\s*([^\s#]+)", workflow, flags=re.MULTILINE)
+required_actions = {
+    "actions/checkout", "actions/configure-pages", "actions/setup-node",
+    "actions/setup-python", "actions/upload-artifact",
+    "actions/upload-pages-artifact", "actions/deploy-pages",
+}
+pinned_action_refs = all(
+    re.fullmatch(r"actions/[A-Za-z0-9_.-]+@[0-9a-f]{40}", ref)
+    for ref in action_refs
+)
+present_actions = {ref.split("@", 1)[0] for ref in action_refs}
+check(pinned_action_refs and required_actions.issubset(present_actions),
+      "Every GitHub Actions dependency uses a full 40-character commit SHA and all required deployment actions are present")
 html_shell = read("index.html")
 favicon_svg = read("public/favicon.svg")
 favicon_png = (ROOT / "public/favicon-32.png").read_bytes()

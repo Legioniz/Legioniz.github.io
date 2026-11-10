@@ -228,8 +228,17 @@ async function check() {
   const vite = await read('vite.config.ts')
   log(vite.includes('port: 5174') && vite.includes('port: 4174') && vite.includes('strictPort: true'), 'Development and preview ports remain isolated from 5173')
   const workflow = await read('.github/workflows/deploy.yml')
-  log(workflow.includes('npm run verify') && workflow.includes('actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b') && workflow.includes('actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e') && workflow.includes('actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b') && workflow.includes('path: ./dist') && workflow.includes('test -s dist/index.html') && workflow.includes('test -s dist/favicon.svg') && workflow.includes('test -s dist/favicon-32.png') && workflow.includes('test -s dist/favicon.ico') && workflow.includes('test -d dist/assets') && workflow.includes('test -f dist/.nojekyll') && !workflow.includes('actions/jekyll-build-pages@v1') && !workflow.includes('destination: ./_site'), 'GitHub Pages workflow validates and uploads compiled Vite dist output directly without Jekyll packaging')
-  log(workflow.indexOf('npm run verify') < workflow.indexOf('Validate the production Pages artifact') && workflow.indexOf('Validate the production Pages artifact') < workflow.indexOf('actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b'), 'Vite verification/build and production artifact validation complete before Pages upload')
+  const workflowActionRefs = [...workflow.matchAll(/^\s*uses:\s*([^\s#]+)/gm)].map((match) => match[1])
+  const requiredWorkflowActions = [
+    'actions/checkout', 'actions/configure-pages', 'actions/setup-node',
+    'actions/setup-python', 'actions/upload-artifact',
+    'actions/upload-pages-artifact', 'actions/deploy-pages',
+  ]
+  const workflowActionsPinned = workflowActionRefs.length > 0
+    && workflowActionRefs.every((reference) => /^actions\/[A-Za-z0-9_.-]+@[0-9a-f]{40}$/.test(reference))
+    && requiredWorkflowActions.every((action) => workflowActionRefs.some((reference) => reference.startsWith(`${action}@`)))
+  log(workflow.includes('npm run verify') && workflowActionsPinned && workflow.includes('path: ./dist') && workflow.includes('test -s dist/index.html') && workflow.includes('test -s dist/favicon.svg') && workflow.includes('test -s dist/favicon-32.png') && workflow.includes('test -s dist/favicon.ico') && workflow.includes('test -d dist/assets') && workflow.includes('test -f dist/.nojekyll') && !workflow.includes('actions/jekyll-build-pages@v1') && !workflow.includes('destination: ./_site'), 'GitHub Pages workflow validates and uploads compiled Vite dist output directly without Jekyll packaging, with all required actions SHA-pinned')
+  log(workflow.indexOf('npm run verify') < workflow.indexOf('Validate the production Pages artifact') && workflow.indexOf('Validate the production Pages artifact') < workflow.indexOf('Upload compiled Vite Pages artifact'), 'Vite verification/build and production artifact validation complete before Pages upload')
 
   log(!publicDocumentAssets.some((name) => /private|phone|personal-cv/i.test(name)), 'No private personal-document asset is stored in public/')
   log(!await exists('package-lock.json') ? true : (await read('package-lock.json')).includes('lockfileVersion'), 'Package lockfile is valid when present')
