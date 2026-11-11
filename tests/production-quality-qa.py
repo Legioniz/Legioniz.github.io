@@ -90,17 +90,20 @@ check(
 app_source = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
 check(
     'function DeferredInquiryAndComments()' in app_source
-    and 'new IntersectionObserver' in app_source
-    and "rootMargin: '720px 0px'" in app_source
-    and "if (typeof IntersectionObserver === 'undefined')" in app_source
+    and 'function DeferredPortfolioFeatures(' in app_source
+    and app_source.count('new IntersectionObserver') >= 2
+    and app_source.count("rootMargin: '720px 0px'") >= 2
+    and app_source.count("if (typeof IntersectionObserver === 'undefined')") >= 2
     and '<DeferredInquiryAndComments/>' in app_source
+    and '<DeferredPortfolioFeatures onOpenProject={openProject}/>' in app_source
     and "import('./PrivacyNotice')" in app_source
     and "import('./BackendPanels')" in app_source
     and 'const [adminPortalRequested, setAdminPortalRequested] = useState(adminOpen)' in app_source
     and 'if (adminOpen) setAdminPortalRequested(true)' in app_source
     and '{adminPortalRequested && <AdminPortal' in app_source
-    and '<Suspense fallback={null}><InquiryAndComments/></Suspense>' not in app_source,
-    'Backend inquiry/feed and admin code load on demand; privacy settings stay available in a separate module',
+    and '<Suspense fallback={null}><InquiryAndComments/></Suspense>' not in app_source
+    and '<PortfolioFeatures onOpenProject={openProject}/>' not in app_source,
+    'Interactive labs, public inquiry/feed, and admin code load on demand; privacy settings stay available in a separate module',
 )
 
 lhci = json.loads((ROOT / '.lighthouserc.json').read_text(encoding='utf-8'))['ci']

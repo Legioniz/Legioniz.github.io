@@ -54,6 +54,45 @@ function DeferredInquiryAndComments() {
   )
 }
 
+/**
+ * Keep interactive lab code out of the initial route bundle. The lab tools are
+ * loaded shortly before their section enters view, with a progressive fallback
+ * for browsers that do not implement IntersectionObserver.
+ */
+function DeferredPortfolioFeatures({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true)
+      return
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      setShouldLoad(true)
+      observer.disconnect()
+    }, { rootMargin: '720px 0px' })
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={sentinelRef} className="deferred-features-slot">
+      {shouldLoad && (
+        <Suspense fallback={<div className="feature-module-loading" role="status">Loading interactive project tools…</div>}>
+          <PortfolioFeatures onOpenProject={onOpenProject}/>
+        </Suspense>
+      )}
+    </div>
+  )
+}
+
 type Theme = 'dark' | 'light'
 
 type ViewTransitionDocument = Document & {
@@ -1195,9 +1234,7 @@ export default function App() {
           </div>
         </section>
 
-        <Suspense fallback={<div className="feature-module-loading" role="status">Loading interactive project tools…</div>}>
-          <PortfolioFeatures onOpenProject={openProject}/>
-        </Suspense>
+        <DeferredPortfolioFeatures onOpenProject={openProject}/>
 
         <section className="skills-section section-pad page-width" id="skills">
           <SectionHeading index="11" kicker="THE TOOLKIT / METHODS" title="A toolkit for" accent="making things work." description="Technologies and practical capabilities used in academic, freelance, and independent projects. Skill levels are not self-rated; the project examples show where selected tools have been applied."/>

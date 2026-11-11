@@ -1,6 +1,7 @@
 ## 2026-11-11 — Deferred noncritical contact loading
 
 - Split the small privacy notice from the heavier backend panel module, and mount the admin portal only when opened.
+- Delayed the interactive labs bundle until the project tools section approaches the viewport.
 - Delayed the inquiry and moderated-comment module until the contact section approaches the viewport, deferring its initial approved-comments feed request from first load.
 - Kept the inquiry form, approved-only comment feed, manual refresh, moderation flow, and existing backend safeguards unchanged.
 - Added a source regression check for the observer trigger and the immediate fallback used when IntersectionObserver is unavailable.
