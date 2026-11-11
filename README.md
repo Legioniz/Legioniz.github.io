@@ -180,3 +180,13 @@ The shared `src/layout-integrity.css` layer is imported directly by `src/main.ts
 ## Public Markdown references
 
 The public site also serves [llms.txt](https://legioniz.github.io/llms.txt), a short discovery index for text-first clients, with separate [profile](https://legioniz.github.io/profile.md), [project](https://legioniz.github.io/projects.md), and [experience](https://legioniz.github.io/experience.md) summaries. These files are maintained alongside the React source and are included in the sitemap. They provide text-first profile information and direct contact links; no personal documents are distributed.
+
+## Repository hygiene and deployment secrets
+
+- The committed `.env.example` contains names for public browser configuration only. Put real local values in ignored `.env.local` files.
+- Configure production values through the hosting platform's environment settings or repository secrets. Never commit service-role keys, database passwords, private keys, access tokens, or populated environment files.
+- Do not place private credentials in variables prefixed with `VITE_`; values exposed to the browser must be treated as public.
+- `node_modules/`, `dist/`, test output, local reports, and local backup snapshots are generated or machine-specific and remain ignored. Use the lockfile to reproduce dependencies.
+- If a credential is accidentally committed, revoke or rotate it immediately. Removing it from the latest commit does not erase copies from Git history.
+
+The project’s tests and deployment checks are intended to validate the current source. A passing static or browser check is not a substitute for verifying live backend configuration and production permissions.
