@@ -87,6 +87,22 @@ check(
     'Compiled full/recruiter accessibility browser regression is registered in the release gate',
 )
 
+app_source = (ROOT / 'src/App.tsx').read_text(encoding='utf-8')
+check(
+    'function DeferredInquiryAndComments()' in app_source
+    and 'new IntersectionObserver' in app_source
+    and "rootMargin: '720px 0px'" in app_source
+    and "if (typeof IntersectionObserver === 'undefined')" in app_source
+    and '<DeferredInquiryAndComments/>' in app_source
+    and "import('./PrivacyNotice')" in app_source
+    and "import('./BackendPanels')" in app_source
+    and 'const [adminPortalRequested, setAdminPortalRequested] = useState(adminOpen)' in app_source
+    and 'if (adminOpen) setAdminPortalRequested(true)' in app_source
+    and '{adminPortalRequested && <AdminPortal' in app_source
+    and '<Suspense fallback={null}><InquiryAndComments/></Suspense>' not in app_source,
+    'Backend inquiry/feed and admin code load on demand; privacy settings stay available in a separate module',
+)
+
 lhci = json.loads((ROOT / '.lighthouserc.json').read_text(encoding='utf-8'))['ci']
 workflow = (ROOT / '.github/workflows/deploy.yml').read_text(encoding='utf-8')
 check(set(lhci['collect']['url']) == {'http://127.0.0.1:4174/', 'http://127.0.0.1:4174/?view=recruiter'}, 'Lighthouse CI audits both the full portfolio and recruiter view')

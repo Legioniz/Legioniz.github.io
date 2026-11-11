@@ -119,6 +119,10 @@ def main() -> None:
 
             response = page.goto(BASE, wait_until="domcontentloaded", timeout=30000)
             check(response is not None and response.status == 200, "Production build serves the full portfolio")
+            # Reaching the contact section triggers the deferred public form.
+            # Wait for the panel to mount before testing its production behavior.
+            page.locator("#contact").scroll_into_view_if_needed()
+            page.locator(".comments-panel").wait_for(timeout=10000)
             page.locator(".comments-panel").scroll_into_view_if_needed()
             page.locator("#comments-title").wait_for(timeout=10000)
             check(not page.locator("#public-note-name").is_disabled()

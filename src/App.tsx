@@ -12,8 +12,47 @@ import { IntroSequence, ProjectCompare, QuickNavigator, ServiceWorkerUpdateNotic
 const PortfolioFeatures = lazy(() => import('./PortfolioFeatures').then((module) => ({ default: module.PortfolioFeatures })))
 const AdminPortal = lazy(() => import('./BackendPanels').then((module) => ({ default: module.AdminPortal })))
 const InquiryAndComments = lazy(() => import('./BackendPanels').then((module) => ({ default: module.InquiryAndComments })))
-const PrivacyNotice = lazy(() => import('./BackendPanels').then((module) => ({ default: module.PrivacyNotice })))
+const PrivacyNotice = lazy(() => import('./PrivacyNotice').then((module) => ({ default: module.PrivacyNotice })))
 const RecruiterView = lazy(() => import('./RecruiterView').then((module) => ({ default: module.RecruiterView })))
+
+/**
+ * Mount the inquiry and moderated-comment module shortly before the contact
+ * section becomes visible, so its initial feed request stays off first load.
+ * Browsers without IntersectionObserver retain immediate access to the form.
+ */
+function DeferredInquiryAndComments() {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true)
+      return
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      setShouldLoad(true)
+      observer.disconnect()
+    }, { rootMargin: '720px 0px' })
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={sentinelRef} className="deferred-inquiry-slot">
+      {shouldLoad && (
+        <Suspense fallback={<div className="feature-module-loading" role="status">Loading inquiry and public notes…</div>}>
+          <InquiryAndComments/>
+        </Suspense>
+      )}
+    </div>
+  )
+}
 
 type Theme = 'dark' | 'light'
 
@@ -746,6 +785,11 @@ export default function App() {
       || hash.get('type') === 'recovery'
       || Boolean(hash.get('error') || hash.get('error_code'))
   })
+  // Load the large console on first use, then keep it mounted to preserve its session state.
+  const [adminPortalRequested, setAdminPortalRequested] = useState(adminOpen)
+  useEffect(() => {
+    if (adminOpen) setAdminPortalRequested(true)
+  }, [adminOpen])
   const [activeSection, setActiveSection] = useState('home')
   const progressRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
@@ -1252,7 +1296,7 @@ export default function App() {
             <div className="contact-aside"><div className="contact-aside-top"><span>DIRECTORY / 001</span><span>PUBLIC PROFILE</span></div><div className="contact-monogram">KA<span>.</span></div><div className="contact-handle">@{siteConfig.handle}</div><button className="copy-profile" data-sfx="copy" onClick={handleCopy}><span>{copied ? 'PROFILE LINK COPIED' : 'COPY GITHUB PROFILE'}</span><Icon name={copied ? 'check' : 'copy'} size={15}/></button><a className="contact-github" href={siteConfig.github} target="_blank" rel="noopener noreferrer"><Icon name="github"/> OPEN GITHUB <Icon name="external" size={13}/></a></div>
             <div className="contact-corner">OPEN TO GOOD QUESTIONS & PRACTICAL BUILDS.</div>
           </div>
-          <Suspense fallback={null}><InquiryAndComments/></Suspense>
+          <DeferredInquiryAndComments/>
         </section>
       </main>
 
@@ -1261,7 +1305,7 @@ export default function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} theme={theme} onTheme={toggleTheme}/>
       <QuickNavigator activeSection={activeSection} onNavigate={navigate}/>
       <Suspense fallback={null}>
-        <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>
+        {adminPortalRequested && <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>}
         <PrivacyNotice/>
       </Suspense>
       <ServiceWorkerUpdateNotice/>
