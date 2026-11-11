@@ -12,7 +12,7 @@ const command = process.argv[2] || 'help'
 const expectedFiles = [
   'index.html', 'package.json', 'vite.config.ts', '.lighthouserc.json', '.env.example', '.gitignore',
   'tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json', 'requirements-test.txt', 'START-PORTFOLIO.cmd',
-  'src/App.tsx', 'src/BackendPanels.tsx', 'src/ErrorBoundary.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/RecruiterView.tsx',
+  'src/App.tsx', 'src/BackendPanels.tsx', 'src/PrivacyNotice.tsx', 'src/ErrorBoundary.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/RecruiterView.tsx',
   'src/adaptive.ts', 'src/backend.ts', 'src/config.ts', 'src/data.ts', 'src/main.tsx', 'src/masthead.ts', 'src/reveal.ts',
   'src/serviceWorker.ts', 'src/sound.ts', 'src/styles.css', 'src/layout-integrity.css',
   'public/sw.js', 'public/favicon.svg', 'public/favicon-32.png', 'public/favicon.ico', 'public/og-card.png', 'public/robots.txt', 'public/sitemap.xml', 'public/llms.txt', 'public/profile.md', 'public/projects.md', 'public/experience.md',
@@ -123,7 +123,8 @@ async function check() {
   log(backendClient.includes('VITE_SUPABASE_ANON_KEY') && !backendClient.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Frontend backend client uses only public credentials')
   const backendPanels = await read('src/BackendPanels.tsx')
   log(backendPanels.includes('mailto:') && backendPanels.includes('No message is stored by the website'), 'Unconfigured inquiry form has an accurate email fallback')
-  log(backendPanels.includes('legion-portfolio-analytics-consent-v1') && backendPanels.includes("choice !== 'accepted'"), 'Analytics require explicit opt-in consent')
+  const privacyNotice = await read('src/PrivacyNotice.tsx')
+  log(privacyNotice.includes('legion-portfolio-analytics-consent-v1') && privacyNotice.includes("choice !== 'accepted'"), 'Analytics require explicit opt-in consent')
   const backendSetupSource = await read('BACKEND-SETUP.md')
   const backendSetupPublic = await read('public/BACKEND-SETUP.md')
   log(backendSetupSource === backendSetupPublic, 'Backend setup guide is available from the deployed static site and matches its source copy')
@@ -247,7 +248,7 @@ async function check() {
   log(await exists('.github/dependabot.yml'), 'Dependabot monitors npm and GitHub Actions dependencies')
   log(await exists('scripts/production-audit.mjs') && await exists('tests/production-quality-qa.py') && await exists('tests/recruiter-view-browser-qa.py') && await exists('tests/accessibility-browser-qa.py'), 'Production budgets, source checks, and full/recruiter accessibility browser tests are included')
 
-  const sourceFiles = ['src/App.tsx', 'src/RecruiterView.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
+  const sourceFiles = ['src/App.tsx', 'src/PrivacyNotice.tsx', 'src/RecruiterView.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
   let totalBytes = 0
   for (const relative of sourceFiles) totalBytes += (await stat(path.join(ROOT, relative))).size
   console.log(`\nSource footprint: ${(totalBytes / 1024).toFixed(1)} KB across ${sourceFiles.length} source, backend, and PWA files.`)
