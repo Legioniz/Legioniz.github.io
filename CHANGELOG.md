@@ -1,3 +1,10 @@
+## 2026-11-11 — Deferred noncritical contact loading
+
+- Delayed loading the public inquiry and moderated-comment module until the contact section approaches the viewport.
+- Deferred the initial approved-comments feed request with the component, so it no longer competes with first-screen rendering and startup work.
+- Kept the inquiry form, approved-only comment feed, manual refresh, moderation flow, and existing backend safeguards unchanged.
+- Added a source regression check for the observer trigger and the immediate fallback used when IntersectionObserver is unavailable.
+
 ## 2026-11-10 — Personal application documents removed
 
 - Removed the résumé and CV PDF assets from the current repository tree so the next GitHub Pages artifact excludes them at their former paths.

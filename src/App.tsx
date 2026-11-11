@@ -15,6 +15,45 @@ const InquiryAndComments = lazy(() => import('./BackendPanels').then((module) =>
 const PrivacyNotice = lazy(() => import('./BackendPanels').then((module) => ({ default: module.PrivacyNotice })))
 const RecruiterView = lazy(() => import('./RecruiterView').then((module) => ({ default: module.RecruiterView })))
 
+ /**
+  * Keep the public inquiry/comment module and its initial feed request off the
+  * first-load path. The content is mounted shortly before the contact section
+  * becomes visible, with an immediate fallback for browsers without IO.
+  */
+function DeferredInquiryAndComments() {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true)
+      return
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      setShouldLoad(true)
+      observer.disconnect()
+    }, { rootMargin: '720px 0px' })
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={sentinelRef} className="deferred-inquiry-slot">
+      {shouldLoad && (
+        <Suspense fallback={<div className="feature-module-loading" role="status">Loading inquiry and public notes…</div>}>
+          <InquiryAndComments/>
+        </Suspense>
+      )}
+    </div>
+  )
+}
+
 type Theme = 'dark' | 'light'
 
 type ViewTransitionDocument = Document & {
@@ -1252,7 +1291,7 @@ export default function App() {
             <div className="contact-aside"><div className="contact-aside-top"><span>DIRECTORY / 001</span><span>PUBLIC PROFILE</span></div><div className="contact-monogram">KA<span>.</span></div><div className="contact-handle">@{siteConfig.handle}</div><button className="copy-profile" data-sfx="copy" onClick={handleCopy}><span>{copied ? 'PROFILE LINK COPIED' : 'COPY GITHUB PROFILE'}</span><Icon name={copied ? 'check' : 'copy'} size={15}/></button><a className="contact-github" href={siteConfig.github} target="_blank" rel="noopener noreferrer"><Icon name="github"/> OPEN GITHUB <Icon name="external" size={13}/></a></div>
             <div className="contact-corner">OPEN TO GOOD QUESTIONS & PRACTICAL BUILDS.</div>
           </div>
-          <Suspense fallback={null}><InquiryAndComments/></Suspense>
+          <DeferredInquiryAndComments/>
         </section>
       </main>
 
