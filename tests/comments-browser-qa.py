@@ -119,6 +119,11 @@ def main() -> None:
 
             response = page.goto(BASE, wait_until="domcontentloaded", timeout=30000)
             check(response is not None and response.status == 200, "Production build serves the full portfolio")
+            # The public form is now mounted only when its persistent sentinel
+            # approaches the viewport. Scroll the sentinel first, then assert the
+            # real panel appears and exercise the same production behavior.
+            page.locator(".deferred-inquiry-slot").scroll_into_view_if_needed()
+            page.locator(".comments-panel").wait_for(timeout=10000)
             page.locator(".comments-panel").scroll_into_view_if_needed()
             page.locator("#comments-title").wait_for(timeout=10000)
             check(not page.locator("#public-note-name").is_disabled()
