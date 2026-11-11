@@ -94,8 +94,11 @@ check(
     and "rootMargin: '720px 0px'" in app_source
     and "if (typeof IntersectionObserver === 'undefined')" in app_source
     and '<DeferredInquiryAndComments/>' in app_source
+    and "import('./PrivacyNotice')" in app_source
+    and "import('./BackendPanels')" in app_source
+    and '{adminOpen && <AdminPortal' in app_source
     and '<Suspense fallback={null}><InquiryAndComments/></Suspense>' not in app_source,
-    'Public inquiry and moderated comments mount near the contact section with a safe no-IntersectionObserver fallback',
+    'Backend inquiry/feed and admin code load on demand; privacy settings stay available in a separate module',
 )
 
 lhci = json.loads((ROOT / '.lighthouserc.json').read_text(encoding='utf-8'))['ci']

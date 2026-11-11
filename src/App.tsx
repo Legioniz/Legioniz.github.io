@@ -12,14 +12,14 @@ import { IntroSequence, ProjectCompare, QuickNavigator, ServiceWorkerUpdateNotic
 const PortfolioFeatures = lazy(() => import('./PortfolioFeatures').then((module) => ({ default: module.PortfolioFeatures })))
 const AdminPortal = lazy(() => import('./BackendPanels').then((module) => ({ default: module.AdminPortal })))
 const InquiryAndComments = lazy(() => import('./BackendPanels').then((module) => ({ default: module.InquiryAndComments })))
-const PrivacyNotice = lazy(() => import('./BackendPanels').then((module) => ({ default: module.PrivacyNotice })))
+const PrivacyNotice = lazy(() => import('./PrivacyNotice').then((module) => ({ default: module.PrivacyNotice })))
 const RecruiterView = lazy(() => import('./RecruiterView').then((module) => ({ default: module.RecruiterView })))
 
- /**
-  * Keep the public inquiry/comment module and its initial feed request off the
-  * first-load path. The content is mounted shortly before the contact section
-  * becomes visible, with an immediate fallback for browsers without IO.
-  */
+/**
+ * Mount the inquiry and moderated-comment module shortly before the contact
+ * section becomes visible, so its initial feed request stays off first load.
+ * Browsers without IntersectionObserver retain immediate access to the form.
+ */
 function DeferredInquiryAndComments() {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [shouldLoad, setShouldLoad] = useState(false)
@@ -1300,7 +1300,7 @@ export default function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} theme={theme} onTheme={toggleTheme}/>
       <QuickNavigator activeSection={activeSection} onNavigate={navigate}/>
       <Suspense fallback={null}>
-        <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>
+        {adminOpen && <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>}
         <PrivacyNotice/>
       </Suspense>
       <ServiceWorkerUpdateNotice/>
