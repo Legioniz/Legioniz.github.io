@@ -785,6 +785,11 @@ export default function App() {
       || hash.get('type') === 'recovery'
       || Boolean(hash.get('error') || hash.get('error_code'))
   })
+  // Load the large console on first use, then keep it mounted to preserve its session state.
+  const [adminPortalRequested, setAdminPortalRequested] = useState(adminOpen)
+  useEffect(() => {
+    if (adminOpen) setAdminPortalRequested(true)
+  }, [adminOpen])
   const [activeSection, setActiveSection] = useState('home')
   const progressRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
@@ -1300,7 +1305,7 @@ export default function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} theme={theme} onTheme={toggleTheme}/>
       <QuickNavigator activeSection={activeSection} onNavigate={navigate}/>
       <Suspense fallback={null}>
-        {adminOpen && <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>}
+        {adminPortalRequested && <AdminPortal open={adminOpen} onClose={() => setAdminOpen(false)}/>}
         <PrivacyNotice/>
       </Suspense>
       <ServiceWorkerUpdateNotice/>

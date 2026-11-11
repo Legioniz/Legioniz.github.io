@@ -96,7 +96,9 @@ check(
     and '<DeferredInquiryAndComments/>' in app_source
     and "import('./PrivacyNotice')" in app_source
     and "import('./BackendPanels')" in app_source
-    and '{adminOpen && <AdminPortal' in app_source
+    and 'const [adminPortalRequested, setAdminPortalRequested] = useState(adminOpen)' in app_source
+    and 'if (adminOpen) setAdminPortalRequested(true)' in app_source
+    and '{adminPortalRequested && <AdminPortal' in app_source
     and '<Suspense fallback={null}><InquiryAndComments/></Suspense>' not in app_source,
     'Backend inquiry/feed and admin code load on demand; privacy settings stay available in a separate module',
 )
