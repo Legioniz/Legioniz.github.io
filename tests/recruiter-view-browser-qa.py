@@ -8,7 +8,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'http://127.0.0.1:4174/'
@@ -289,9 +289,26 @@ def main() -> None:
             header_hidden = page.locator('.site-header').evaluate("el => el.classList.contains('header-hidden')")
             check(header_hidden, 'Rebound masthead controller hides the header on downward scroll')
             page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
-            page.wait_for_timeout(120)
-            header_visible = not page.locator('.site-header').evaluate("el => el.classList.contains('header-hidden')")
-            check(header_visible, 'Rebound masthead controller reveals the header on upward scroll')
+            try:
+                page.wait_for_function(
+                    """() => {
+                      const header = document.querySelector('.site-header');
+                      return window.scrollY <= 76 && header && !header.classList.contains('header-hidden');
+                    }""",
+                    timeout=3000,
+                )
+            except PlaywrightTimeoutError:
+                pass
+            header_state = page.evaluate("""() => ({
+              scrollY: window.scrollY,
+              headerHidden: document.querySelector('.site-header')?.classList.contains('header-hidden') ?? null,
+              headerFocused: document.querySelector('.site-header')?.matches(':focus-within') ?? false,
+              motion: document.documentElement.dataset.motion || null
+            })""")
+            check(
+                header_state['scrollY'] <= 76 and header_state['headerHidden'] is False,
+                f"Rebound masthead controller reveals the header on upward scroll ({header_state})",
+            )
             page.go_back()
             page.get_by_role('heading', name='King Art D. Pacumberto.', level=1).wait_for(timeout=10000)
             check('view=recruiter' in page.url and page.locator('.recruiter-view').is_visible(), 'Browser history restores the shareable recruiter view without stale full-view nodes')
