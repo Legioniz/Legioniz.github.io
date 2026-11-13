@@ -92,6 +92,9 @@ jobs:
       - name: Verify TOKI SATSUEI responsive layout integrity
         run: python tests/toki-layout-browser-qa.py
 
+      - name: Verify TOKI SATSUEI adaptive interactions
+        run: python tests/toki-adaptive-interaction-qa.py
+
       - name: Run complete source, type, build, and browser verification
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL || 'https://pjuwrngnrrvdiwqspkic.supabase.co' }}

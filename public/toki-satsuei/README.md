@@ -62,3 +62,11 @@ Keep the visual direction minimal and editorial: charcoal, warm white, and restr
 ## Responsive layout quality checks
 - A Playwright regression test checks homepage and archive layouts at phone, tablet, laptop, and desktop widths.
 - The test checks horizontal overflow, header navigation, contact columns, pricing cards, footer spacing, archive controls, and album-dialog clipping before deployment.
+
+
+## Adaptive interaction layer
+- Fine-pointer desktop users get restrained pointer-responsive movement on the hero photograph; touch devices keep the composition still.
+- Homepage gallery previews support previous/next controls, keyboard arrows, and touch swipes.
+- Session package links preselect the matching inquiry type.
+- Navigation closes on Escape, outside click, or a switch back to desktop layout; focus and reduced-motion preferences are respected.
+- Layout rules adapt to touch targets, compact landscape screens, and narrow content containers.
