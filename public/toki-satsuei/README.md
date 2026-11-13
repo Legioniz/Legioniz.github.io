@@ -51,3 +51,9 @@ Keep the visual direction minimal and editorial: charcoal, warm white, and restr
 - A compact back-to-top control appears after scrolling down the homepage.
 - Same-origin navigation can use native View Transitions where supported.
 - All nonessential motion respects the device's reduced-motion preference.
+
+
+## Official social accounts
+- Facebook: https://www.facebook.com/tokisatsuiephotography/
+- Instagram: https://www.instagram.com/tokisatsuiephotography/
+- Both profiles are linked from the homepage contact section and the homepage/archive footers. The homepage and archive also expose the profiles through Schema.org `sameAs` metadata.
