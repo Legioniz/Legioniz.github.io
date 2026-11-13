@@ -8,8 +8,6 @@ function setArchiveHeaderHidden(hidden){
  if(!archiveHeader)return;
  const menuOpen=Boolean(archiveHeader.querySelector(".primary-nav.is-open"));
  const shouldHide=Boolean(hidden)&&window.scrollY>64&&!menuOpen;
- archiveHeader.style.transform=shouldHide?"translateY(calc(-100% - 6px))":"";
- archiveHeader.style.pointerEvents=shouldHide?"none":"";
  archiveHeader.classList.toggle("is-auto-hidden",shouldHide);
 }
 function updateArchiveChrome(){
@@ -32,7 +30,7 @@ window.addEventListener("resize",updateArchiveChrome,{passive:true});
 if(archiveHeader){
  window.addEventListener("pointermove",event=>{
   if(!hoverHeaderEnabled||event.pointerType==="touch")return;
-  if(event.clientY<=26){
+  if(event.clientY<=40){
    hoverRevealed=true;setArchiveHeaderHidden(false);return;
   }
   if(hoverRevealed&&event.clientY>archiveHeader.offsetHeight+14){

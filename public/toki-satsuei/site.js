@@ -23,8 +23,6 @@ let hoverRevealed=false;
 function setHeaderHidden(hidden){
   if(!siteHeader)return;
   const shouldHide=Boolean(hidden)&&window.scrollY>64&&!nav?.classList.contains("is-open");
-  siteHeader.style.transform=shouldHide?"translateY(calc(-100% - 6px))":"";
-  siteHeader.style.pointerEvents=shouldHide?"none":"";
   siteHeader.classList.toggle("is-auto-hidden",shouldHide);
 }
 function updatePageChrome(){
@@ -51,7 +49,7 @@ window.addEventListener("resize",updatePageChrome,{passive:true});
 if(siteHeader){
   window.addEventListener("pointermove",event=>{
     if(!hoverHeaderEnabled||event.pointerType==="touch")return;
-    if(event.clientY<=26){
+    if(event.clientY<=40){
       hoverRevealed=true;setHeaderHidden(false);return;
     }
     if(hoverRevealed&&event.clientY>siteHeader.offsetHeight+14){
