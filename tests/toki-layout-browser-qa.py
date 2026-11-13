@@ -72,8 +72,22 @@ def document_width(page, label, width):
     metrics = page.evaluate("""() => ({
       viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth
     })""")
-    assert metrics["document"] <= width + 1, f"{label}: document has horizontal overflow at {width}px: {metrics}"
-    assert metrics["body"] <= width + 1, f"{label}: body has horizontal overflow at {width}px: {metrics}"
+    if metrics["document"] > width + 1 or metrics["body"] > width + 1:
+        offenders = page.evaluate("""(viewportWidth) => Array.from(document.querySelectorAll("body *"))
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return {tag:element.tagName.toLowerCase(), id:element.id, className:typeof element.className === "string" ? element.className : "",
+              left:Math.round(rect.left * 100) / 100, right:Math.round(rect.right * 100) / 100,
+              width:Math.round(rect.width * 100) / 100, position:style.position,
+              text:(element.innerText || "").trim().replace(/\\s+/g, " ").slice(0, 70)};
+          })
+          .filter((item) => item.right > viewportWidth + 1 || item.left < -1)
+          .sort((a, b) => b.right - a.right)
+          .slice(0, 12)""", width)
+        raise AssertionError(
+            f"{label}: horizontal overflow at {width}px: {metrics}; offending elements: {offenders}"
+        )
 
 def check_header(page, width, label):
     header, brand, nav, toggle = boxes(page, [".site-header", ".brand", ".primary-nav", ".menu-toggle"])
