@@ -15,17 +15,52 @@ const progressBar=document.querySelector("#page-progress-bar");
 const siteHeader=document.querySelector(".site-header");
 const backToTop=document.querySelector("#back-to-top");
 const reducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hoverHeaderEnabled=window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 let scrollTicking=false;
+let lastScrollY=window.scrollY;
+let lastScrollDirection="up";
+let hoverRevealed=false;
+function setHeaderHidden(hidden){
+  if(!siteHeader)return;
+  const shouldHide=Boolean(hidden)&&window.scrollY>64&&!nav?.classList.contains("is-open");
+  siteHeader.style.transform=shouldHide?"translateY(calc(-100% - 6px))":"";
+  siteHeader.style.pointerEvents=shouldHide?"none":"";
+  siteHeader.classList.toggle("is-auto-hidden",shouldHide);
+}
 function updatePageChrome(){
   const root=document.documentElement;
-  const progress=Math.min(1,Math.max(0,window.scrollY/Math.max(1,root.scrollHeight-window.innerHeight)));
+  const currentY=window.scrollY;
+  const delta=currentY-lastScrollY;
+  if(currentY<=36){
+    lastScrollDirection="up";hoverRevealed=false;setHeaderHidden(false);
+  }else if(delta>1){
+    lastScrollDirection="down";hoverRevealed=false;setHeaderHidden(true);
+  }else if(delta< -1){
+    lastScrollDirection="up";hoverRevealed=false;setHeaderHidden(false);
+  }
+  if(nav?.classList.contains("is-open"))setHeaderHidden(false);
+  lastScrollY=currentY;
+  const progress=Math.min(1,Math.max(0,currentY/Math.max(1,root.scrollHeight-window.innerHeight)));
   if(progressBar)progressBar.style.transform="scaleX("+progress+")";
-  siteHeader?.classList.toggle("is-scrolled",window.scrollY>28);
-  backToTop?.classList.toggle("is-visible",window.scrollY>520);
+  siteHeader?.classList.toggle("is-scrolled",currentY>28);
+  backToTop?.classList.toggle("is-visible",currentY>520);
   scrollTicking=false;
 }
 window.addEventListener("scroll",()=>{if(!scrollTicking){requestAnimationFrame(updatePageChrome);scrollTicking=true;}},{passive:true});
 window.addEventListener("resize",updatePageChrome,{passive:true});
+if(siteHeader){
+  window.addEventListener("pointermove",event=>{
+    if(!hoverHeaderEnabled||event.pointerType==="touch")return;
+    if(event.clientY<=26){
+      hoverRevealed=true;setHeaderHidden(false);return;
+    }
+    if(hoverRevealed&&event.clientY>siteHeader.offsetHeight+14){
+      hoverRevealed=false;
+      if(lastScrollDirection==="down"&&window.scrollY>64)setHeaderHidden(true);
+    }
+  },{passive:true});
+  siteHeader.addEventListener("focusin",()=>{hoverRevealed=false;setHeaderHidden(false);});
+}
 updatePageChrome();
 backToTop?.addEventListener("click",()=>window.scrollTo({top:0,behavior:reducedMotion?"auto":"smooth"}));
 

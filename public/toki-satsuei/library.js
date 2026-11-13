@@ -1,12 +1,48 @@
 const progressBar=document.querySelector("#page-progress-bar"),archiveHeader=document.querySelector(".site-header");
+const hoverHeaderEnabled=window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 let scrollTicking=false;
+let lastScrollY=window.scrollY;
+let lastScrollDirection="up";
+let hoverRevealed=false;
+function setArchiveHeaderHidden(hidden){
+ if(!archiveHeader)return;
+ const menuOpen=Boolean(archiveHeader.querySelector(".primary-nav.is-open"));
+ const shouldHide=Boolean(hidden)&&window.scrollY>64&&!menuOpen;
+ archiveHeader.style.transform=shouldHide?"translateY(calc(-100% - 6px))":"";
+ archiveHeader.style.pointerEvents=shouldHide?"none":"";
+ archiveHeader.classList.toggle("is-auto-hidden",shouldHide);
+}
 function updateArchiveChrome(){
- const root=document.documentElement,progress=Math.min(1,Math.max(0,window.scrollY/Math.max(1,root.scrollHeight-window.innerHeight)));
+ const root=document.documentElement,currentY=window.scrollY,delta=currentY-lastScrollY;
+ if(currentY<=36){
+  lastScrollDirection="up";hoverRevealed=false;setArchiveHeaderHidden(false);
+ }else if(delta>1){
+  lastScrollDirection="down";hoverRevealed=false;setArchiveHeaderHidden(true);
+ }else if(delta< -1){
+  lastScrollDirection="up";hoverRevealed=false;setArchiveHeaderHidden(false);
+ }
+ if(archiveHeader?.querySelector(".primary-nav.is-open"))setArchiveHeaderHidden(false);
+ lastScrollY=currentY;
+ const progress=Math.min(1,Math.max(0,currentY/Math.max(1,root.scrollHeight-window.innerHeight)));
  if(progressBar)progressBar.style.transform="scaleX("+progress+")";
- archiveHeader?.classList.toggle("is-scrolled",window.scrollY>28);scrollTicking=false;
+ archiveHeader?.classList.toggle("is-scrolled",currentY>28);scrollTicking=false;
 }
 window.addEventListener("scroll",()=>{if(!scrollTicking){requestAnimationFrame(updateArchiveChrome);scrollTicking=true;}},{passive:true});
-window.addEventListener("resize",updateArchiveChrome,{passive:true});updateArchiveChrome();
+window.addEventListener("resize",updateArchiveChrome,{passive:true});
+if(archiveHeader){
+ window.addEventListener("pointermove",event=>{
+  if(!hoverHeaderEnabled||event.pointerType==="touch")return;
+  if(event.clientY<=26){
+   hoverRevealed=true;setArchiveHeaderHidden(false);return;
+  }
+  if(hoverRevealed&&event.clientY>archiveHeader.offsetHeight+14){
+   hoverRevealed=false;
+   if(lastScrollDirection==="down"&&window.scrollY>64)setArchiveHeaderHidden(true);
+  }
+ },{passive:true});
+ archiveHeader.addEventListener("focusin",()=>{hoverRevealed=false;setArchiveHeaderHidden(false);});
+}
+updateArchiveChrome();
 const menuButton=document.querySelector(".menu-toggle");
 const nav=document.querySelector(".primary-nav");
 if(menuButton&&nav){
