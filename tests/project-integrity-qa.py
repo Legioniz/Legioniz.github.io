@@ -147,7 +147,7 @@ check("legion-portfolio-motion-v7" in html_shell and "prefers-reduced-motion: re
 app_source = read("src/App.tsx")
 project_data = read("src/data.ts")
 toki_start = project_data.find("id: 'toki-satsuei',")
-toki_end = project_data.find("\\n  },", toki_start) if toki_start >= 0 else -1
+toki_end = project_data.find(chr(10) + "  },", toki_start) if toki_start >= 0 else -1
 toki_entry = project_data[toki_start:toki_end] if toki_end > toki_start else ""
 check(
     "website?: string" in project_data
