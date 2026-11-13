@@ -230,16 +230,16 @@ function enableMouseDrag(rail){
     originScroll=rail.scrollLeft;
     moved=false;
     rail.classList.add("is-pointer-down");
-    rail.setPointerCapture?.(pointerId);
   });
   rail.addEventListener("pointermove",event=>{
     if(pointerId!==event.pointerId)return;
     const distance=event.clientX-originX;
-    if(Math.abs(distance)>5)moved=true;
-    if(moved){
+    if(Math.abs(distance)>5&&!moved){
+      moved=true;
       rail.classList.add("is-dragging");
-      rail.scrollLeft=originScroll-distance;
+      rail.setPointerCapture?.(pointerId);
     }
+    if(moved)rail.scrollLeft=originScroll-distance;
   });
   const finish=event=>{
     if(pointerId===null||event.pointerId!==pointerId)return;
