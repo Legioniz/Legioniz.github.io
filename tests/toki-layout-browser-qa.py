@@ -165,12 +165,24 @@ def main():
                 check_home(home, width)
                 checks += 1
 
+            archive_route_hits = []
+            def serve_archive_fixture(route):
+                archive_route_hits.append(route.request.url)
+                route.fulfill(status=200, content_type="application/json", body=json.dumps(FIXTURE))
+            context.route("**/media-library.json*", serve_archive_fixture)
             archive = context.new_page()
-            archive.route("**/media-library.json", lambda route: route.fulfill(
-                status=200, content_type="application/json", body=json.dumps(FIXTURE)
-            ))
+            archive_errors = []
+            archive.on("pageerror", lambda error: archive_errors.append(str(error)))
             archive.goto(base + "/toki-satsuei/library.html", wait_until="domcontentloaded")
-            archive.wait_for_selector(".album-card")
+            archive.wait_for_function(
+                "document.querySelector('#library-count')?.textContent !== 'Preparing the archive…'",
+                timeout=10000
+            )
+            assert archive_route_hits, f"Archive fixture was not requested; page errors: {archive_errors}"
+            loaded_count = archive.locator("#library-count").inner_text()
+            assert "1 ALBUM" in loaded_count and "2 FRAMES" in loaded_count, \
+                f"Archive fixture did not populate the expected album cards: {loaded_count!r}; page errors: {archive_errors}"
+            archive.wait_for_selector(".album-card", state="attached", timeout=5000)
             for width, height in VIEWPORTS:
                 archive.set_viewport_size({"width":width,"height":height})
                 archive.wait_for_timeout(35)
