@@ -44,9 +44,17 @@ try {
   const jsRaw = scripts.reduce((sum, file) => sum + file.size, 0)
   let jsGzip = 0
   for (const file of scripts) jsGzip += gzipSync(await readFile(file.absolute)).length
-  const cssRaw = styles.reduce((sum, file) => sum + file.size, 0)
+  // The TOKI SATSUEI microsite is a separately served static site, not part
+  // of the main portfolio application bundle. Keep independent budgets so
+  // an additional public microsite does not consume the portfolio CSS budget.
+  const tokiStyles = styles.filter((file) => file.path.startsWith('toki-satsuei/'))
+  const portfolioStyles = styles.filter((file) => !file.path.startsWith('toki-satsuei/'))
+  const cssRaw = portfolioStyles.reduce((sum, file) => sum + file.size, 0)
   let cssGzip = 0
-  for (const file of styles) cssGzip += gzipSync(await readFile(file.absolute)).length
+  for (const file of portfolioStyles) cssGzip += gzipSync(await readFile(file.absolute)).length
+  const tokiCssRaw = tokiStyles.reduce((sum, file) => sum + file.size, 0)
+  let tokiCssGzip = 0
+  for (const file of tokiStyles) tokiCssGzip += gzipSync(await readFile(file.absolute)).length
   const profileBytes = images.reduce((sum, file) => sum + file.size, 0)
   const largestJs = Math.max(0, ...scripts.map((file) => file.size))
 
@@ -54,8 +62,10 @@ try {
   check(largestJs <= 450 * 1024, 'Largest JavaScript chunk stays within budget', `${(largestJs / 1024).toFixed(1)} KiB / 450 KiB`)
   check(jsRaw <= 800 * 1024, 'Total JavaScript stays within budget', `${(jsRaw / 1024).toFixed(1)} KiB / 800 KiB`)
   check(jsGzip <= 240 * 1024, 'Compressed JavaScript stays within transfer budget', `${(jsGzip / 1024).toFixed(1)} KiB / 240 KiB`)
-  check(cssRaw <= 280 * 1024, 'Total CSS stays within budget', `${(cssRaw / 1024).toFixed(1)} KiB / 280 KiB`)
-  check(cssGzip <= 70 * 1024, 'Compressed CSS stays within transfer budget', `${(cssGzip / 1024).toFixed(1)} KiB / 70 KiB`)
+  check(cssRaw <= 280 * 1024, 'Portfolio application CSS stays within budget', `${(cssRaw / 1024).toFixed(1)} KiB / 280 KiB`)
+  check(cssGzip <= 70 * 1024, 'Compressed portfolio CSS stays within transfer budget', `${(cssGzip / 1024).toFixed(1)} KiB / 70 KiB`)
+  check(tokiStyles.length >= 2 && tokiCssRaw <= 40 * 1024, 'TOKI SATSUEI static-site CSS stays within its independent 40 KiB budget', `${(tokiCssRaw / 1024).toFixed(1)} KiB / 40 KiB`)
+  check(tokiCssGzip <= 12 * 1024, 'Compressed TOKI SATSUEI CSS stays within its 12 KiB transfer budget', `${(tokiCssGzip / 1024).toFixed(1)} KiB / 12 KiB`)
   check(profileBytes <= 900 * 1024, 'Responsive profile image set stays within budget', `${(profileBytes / 1024).toFixed(1)} KiB / 900 KiB`)
 
   const html = await readFile(path.join(DIST, 'index.html'), 'utf8')
