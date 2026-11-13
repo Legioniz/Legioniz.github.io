@@ -21,6 +21,8 @@ const dialogDescription=document.querySelector("#album-dialog-description");
 const dialogCount=document.querySelector("#album-dialog-count");
 const mediaRail=document.querySelector("#album-media-rail");
 const closeDialog=document.querySelector(".album-dialog-close");
+const dialogPosition=document.querySelector("#album-dialog-position");
+const progressBar=document.querySelector("#album-progress-bar");
 let archiveCategories=[];
 let activeCategory="all";
 const reducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -63,7 +65,9 @@ function arrowButton(label,direction){
   return button;
 }
 function makeAlbumCard(category,album){
-  const button=element("button","album-card");
+  const isCinematic=["cosplay","events"].includes(category.id);
+  const cinematicLabel=category.id==="events"?"LIVE MOMENTS / EVENT ARCHIVE":"CHARACTER STUDY / COSPLAY";
+  const button=element("button","album-card"+(isCinematic?" album-card--cinematic album-card--"+category.id:""));
   button.type="button";
   button.setAttribute("aria-label","Open album "+album.title+" in "+category.title);
   const cover=element("span","album-cover");
@@ -79,6 +83,14 @@ function makeAlbumCard(category,album){
   }else{
     cover.append(element("span","album-cover-mark","時"));
   }
+  if(isCinematic){
+    const overlay=element("span","album-cover-overlay");
+    overlay.append(
+      element("small","album-cover-kicker",cinematicLabel),
+      element("span","album-cover-detail",countWords(album.media.length,"FRAME","FRAMES")+"  ·  OPEN ALBUM ↗")
+    );
+    cover.append(overlay);
+  }
   const meta=element("span","album-card-meta");
   const text=element("span");
   text.append(element("strong","album-card-title",album.title));
@@ -89,11 +101,12 @@ function makeAlbumCard(category,album){
   return button;
 }
 function makeCategoryGroup(category){
-  const section=element("section","archive-group");
+  const isCinematic=["cosplay","events"].includes(category.id);
+  const section=element("section","archive-group"+(isCinematic?" archive-group--cinematic archive-group--"+category.id:""));
   const head=element("div","archive-group-head");
   const copy=element("div","archive-group-copy");
   copy.append(
-    element("span","archive-group-kicker",category.code||"COLLECTION"),
+    element("span","archive-group-kicker",isCinematic?(category.id==="events"?"CINEMATIC COLLECTION / FIELD STORIES":"CINEMATIC COLLECTION / CHARACTER WORLDS"):(category.code||"COLLECTION")),
     element("h2","archive-group-title",category.title),
     element("p","archive-group-description",category.description||"A collection of moments worth keeping.")
   );
@@ -136,6 +149,7 @@ function renderGroups(){
   populated.forEach(category=>groups.append(makeCategoryGroup(category)));
 }
 function openAlbum(category,album){
+  dialog.classList.toggle("album-dialog--cinematic",["cosplay","events"].includes(category.id));
   dialogTitle.textContent=album.title;
   dialogCategory.textContent=category.title.toUpperCase();
   dialogDescription.textContent=album.description||"A collection from the TOKI SATSUEI archive.";
@@ -165,9 +179,17 @@ function openAlbum(category,album){
 function updateDialogControls(){
   const left=document.querySelector('[data-dialog-scroll="-1"]');
   const right=document.querySelector('[data-dialog-scroll="1"]');
-  if(!left||!right)return;
-  left.disabled=mediaRail.scrollLeft<=4;
-  right.disabled=mediaRail.scrollLeft+mediaRail.clientWidth>=mediaRail.scrollWidth-4;
+  const maxScroll=Math.max(0,mediaRail.scrollWidth-mediaRail.clientWidth);
+  const progress=maxScroll?Math.min(1,mediaRail.scrollLeft/maxScroll):1;
+  if(left)left.disabled=mediaRail.scrollLeft<=4;
+  if(right)right.disabled=mediaRail.scrollLeft+mediaRail.clientWidth>=mediaRail.scrollWidth-4;
+  if(progressBar)progressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
+  if(dialogPosition){
+    const frames=[...mediaRail.children];
+    let active=0;
+    frames.forEach((frame,index)=>{if(frame.offsetLeft-mediaRail.offsetLeft<=mediaRail.scrollLeft+mediaRail.clientWidth*.35)active=index;});
+    dialogPosition.textContent=String(active+1).padStart(2,"0")+" / "+String(frames.length).padStart(2,"0");
+  }
 }
 document.querySelectorAll("[data-dialog-scroll]").forEach(button=>{
   button.addEventListener("click",()=>scrollTrack(mediaRail,Number(button.dataset.dialogScroll)));

@@ -75,12 +75,16 @@
         <button class="album-dialog-close" type="button" aria-label="Close album">×</button>
       </div>
       <div class="album-dialog-tools">
-        <span class="album-dialog-count" id="album-dialog-count"></span>
+        <div class="album-dialog-status">
+          <span class="album-dialog-count" id="album-dialog-count"></span>
+          <span class="album-dialog-position" id="album-dialog-position">01 / 01</span>
+        </div>
         <div class="rail-controls">
           <button class="rail-button" type="button" data-dialog-scroll="-1" aria-label="Scroll album left">←</button>
           <button class="rail-button" type="button" data-dialog-scroll="1" aria-label="Scroll album right">→</button>
         </div>
       </div>
+      <div class="album-dialog-progress" aria-hidden="true"><span id="album-progress-bar"></span></div>
       <div class="album-media-rail" id="album-media-rail" tabindex="0" role="region" aria-label="Album photographs"></div>
       <p class="album-dialog-note">Swipe, scroll, or use the arrows to move between frames. Images stay at a comfortable viewing size.</p>
     </div>
