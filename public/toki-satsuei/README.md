@@ -57,3 +57,8 @@ Keep the visual direction minimal and editorial: charcoal, warm white, and restr
 - Facebook: https://www.facebook.com/tokisatsuiephotography/
 - Instagram: https://www.instagram.com/tokisatsuiephotography/
 - Both profiles are linked from the homepage contact section and the homepage/archive footers. The homepage and archive also expose the profiles through Schema.org `sameAs` metadata.
+
+
+## Responsive layout quality checks
+- A Playwright regression test checks homepage and archive layouts at phone, tablet, laptop, and desktop widths.
+- The test checks horizontal overflow, header navigation, contact columns, pricing cards, footer spacing, archive controls, and album-dialog clipping before deployment.
