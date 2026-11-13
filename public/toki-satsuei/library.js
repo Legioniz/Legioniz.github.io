@@ -177,6 +177,7 @@ function makeAlbumCard(category,album){
   const visual=album.media.find(item=>item.type==="image")||album.media[0];
   if(visual&&visual.type==="image"){
     const image=element("img");
+    image.draggable=false;
     image.src=visual.src;image.alt="";image.loading="lazy";image.decoding="async";
     addImageFallback(image,cover);
     cover.append(image);
@@ -216,6 +217,7 @@ function updateRailState(rail,left,right,progress){
   progress.style.transform="scaleX("+Math.max(.025,maximum?rail.scrollLeft/maximum:1)+")";
 }
 function enableMouseDrag(rail){
+  rail.addEventListener("dragstart",event=>event.preventDefault());
   let pointerId=null;
   let originX=0;
   let originScroll=0;
@@ -376,6 +378,7 @@ function openAlbum(category,album){
       stage.append(video);
     }else{
       const image=element("img");
+      image.draggable=false;
       image.src=item.src;image.alt=item.alt||item.title||"TOKI SATSUEI photograph";
       image.loading=index<2?"eager":"lazy";image.decoding="async";
       addImageFallback(image,stage);
