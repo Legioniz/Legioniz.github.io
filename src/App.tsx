@@ -575,7 +575,8 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
             <div className="disclosure-panel"><div className="disclosure-panel-inner"><div className="modal-note-list">{project.details.map((detail) => <p className="modal-detail" key={detail}>{detail}</p>)}</div></div></div>
           </details>
           <div className="modal-actions">
-            {project.repo && <a className="button button-primary" href={project.repo} target="_blank" rel="noopener noreferrer">View repository <Icon name="external" size={16}/></a>}
+            {project.website && <a className="button button-primary" href={project.website} target="_blank" rel="noopener noreferrer">Visit live website <Icon name="external" size={16}/></a>}
+            {project.repo && <a className={project.website ? 'button button-quiet' : 'button button-primary'} href={project.repo} target="_blank" rel="noopener noreferrer">View repository <Icon name="external" size={16}/></a>}
             <button className="button button-quiet" data-sfx="copy" onClick={copyProjectLink}><Icon name={linkCopied ? 'check' : 'copy'} size={15}/>{linkCopied ? 'Project link copied' : 'Copy project link'}</button>
             <button className="button button-quiet" data-sfx="close" onClick={onClose}>Back to portfolio</button>
           </div>
