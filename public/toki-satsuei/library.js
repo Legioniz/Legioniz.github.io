@@ -1,4 +1,4 @@
-const progressBar=document.querySelector("#page-progress-bar"),archiveHeader=document.querySelector(".site-header");
+const pageProgressBar=document.querySelector("#page-progress-bar"),archiveHeader=document.querySelector(".site-header");
 const hoverHeaderEnabled=window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 let scrollTicking=false;
 let lastScrollY=window.scrollY;
@@ -22,7 +22,7 @@ function updateArchiveChrome(){
  if(archiveHeader?.querySelector(".primary-nav.is-open"))setArchiveHeaderHidden(false);
  lastScrollY=currentY;
  const progress=Math.min(1,Math.max(0,currentY/Math.max(1,root.scrollHeight-window.innerHeight)));
- if(progressBar)progressBar.style.transform="scaleX("+progress+")";
+ if(pageProgressBar)pageProgressBar.style.transform="scaleX("+progress+")";
  archiveHeader?.classList.toggle("is-scrolled",currentY>28);scrollTicking=false;
 }
 window.addEventListener("scroll",()=>{if(!scrollTicking){requestAnimationFrame(updateArchiveChrome);scrollTicking=true;}},{passive:true});
@@ -65,7 +65,7 @@ const dialogCategory=document.querySelector("#album-dialog-category");
 const dialogDescription=document.querySelector("#album-dialog-description");
 const dialogCount=document.querySelector("#album-dialog-count");
 const dialogPosition=document.querySelector("#album-dialog-position");
-const progressBar=document.querySelector("#album-progress-bar");
+const albumProgressBar=document.querySelector("#album-progress-bar");
 const mediaRail=document.querySelector("#album-media-rail");
 const closeDialog=document.querySelector(".album-dialog-close");
 let archiveCategories=[];
@@ -344,7 +344,7 @@ function renderGroups(){
 function updateDialogProgress(){
   const maxScroll=Math.max(0,mediaRail.scrollWidth-mediaRail.clientWidth);
   const progress=maxScroll?Math.min(1,mediaRail.scrollLeft/maxScroll):1;
-  if(progressBar)progressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
+  if(albumProgressBar)albumProgressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
   if(dialogPosition){
     const frames=[...mediaRail.children];
     let active=0;
