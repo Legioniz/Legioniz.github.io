@@ -192,11 +192,25 @@ def main():
 
             for width, height in [(320,568),(390,844),(768,900),(1024,768),(1440,900)]:
                 archive.set_viewport_size({"width":width,"height":height})
+                archive.evaluate("""() => {
+                    window.__qaCardClicks = 0;
+                    window.__qaShowModalCalls = 0;
+                    document.addEventListener("click", (event) => {
+                        if (event.target.closest(".album-card")) window.__qaCardClicks += 1;
+                    }, true);
+                    const originalShowModal = HTMLDialogElement.prototype.showModal;
+                    HTMLDialogElement.prototype.showModal = function () {
+                        window.__qaShowModalCalls += 1;
+                        return originalShowModal.call(this);
+                    };
+                }""")
+                card_state = archive.locator(".album-card").first.evaluate("(element) => ({disabled:element.disabled, tag:element.tagName, text:element.innerText, rect:(() => {const r=element.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}})()})")
                 archive.locator(".album-card").first.click()
                 dialog = boxes(archive, [".album-dialog", ".album-dialog-panel", ".album-media-rail", ".album-dialog-note"])
                 dialog_state = archive.locator("#album-dialog").evaluate("(element) => ({open:element.open, display:getComputedStyle(element).display, connected:element.isConnected})")
+                event_state = archive.evaluate("() => ({cardClicks:window.__qaCardClicks, showModalCalls:window.__qaShowModalCalls})")
                 assert dialog_state["open"] and dialog_state["display"] != "none", \
-                    f"archive dialog did not open at {width}px: {dialog_state}; page errors: {archive_errors}"
+                    f"archive dialog did not open at {width}px: {dialog_state}; events: {event_state}; card: {card_state}; page errors: {archive_errors}"
                 for item in dialog[1:]:
                     assert_inside(item, dialog[0], f"archive dialog/{width}")
                 panel_metrics = archive.locator(".album-dialog-panel").evaluate(
