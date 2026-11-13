@@ -1,4 +1,4 @@
-const progressBar=document.querySelector("#page-progress-bar"),archiveHeader=document.querySelector(".site-header");
+const pageProgressBar=document.querySelector("#page-progress-bar"),archiveHeader=document.querySelector(".site-header");
 const hoverHeaderEnabled=window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 let scrollTicking=false;
 let lastScrollY=window.scrollY;
@@ -22,7 +22,7 @@ function updateArchiveChrome(){
  if(archiveHeader?.querySelector(".primary-nav.is-open"))setArchiveHeaderHidden(false);
  lastScrollY=currentY;
  const progress=Math.min(1,Math.max(0,currentY/Math.max(1,root.scrollHeight-window.innerHeight)));
- if(progressBar)progressBar.style.transform="scaleX("+progress+")";
+ if(pageProgressBar)pageProgressBar.style.transform="scaleX("+progress+")";
  archiveHeader?.classList.toggle("is-scrolled",currentY>28);scrollTicking=false;
 }
 window.addEventListener("scroll",()=>{if(!scrollTicking){requestAnimationFrame(updateArchiveChrome);scrollTicking=true;}},{passive:true});
@@ -65,7 +65,7 @@ const dialogCategory=document.querySelector("#album-dialog-category");
 const dialogDescription=document.querySelector("#album-dialog-description");
 const dialogCount=document.querySelector("#album-dialog-count");
 const dialogPosition=document.querySelector("#album-dialog-position");
-const progressBar=document.querySelector("#album-progress-bar");
+const albumProgressBar=document.querySelector("#album-progress-bar");
 const mediaRail=document.querySelector("#album-media-rail");
 const closeDialog=document.querySelector(".album-dialog-close");
 let archiveCategories=[];
@@ -177,6 +177,7 @@ function makeAlbumCard(category,album){
   const visual=album.media.find(item=>item.type==="image")||album.media[0];
   if(visual&&visual.type==="image"){
     const image=element("img");
+    image.draggable=false;
     image.src=visual.src;image.alt="";image.loading="lazy";image.decoding="async";
     addImageFallback(image,cover);
     cover.append(image);
@@ -216,6 +217,7 @@ function updateRailState(rail,left,right,progress){
   progress.style.transform="scaleX("+Math.max(.025,maximum?rail.scrollLeft/maximum:1)+")";
 }
 function enableMouseDrag(rail){
+  rail.addEventListener("dragstart",event=>event.preventDefault());
   let pointerId=null;
   let originX=0;
   let originScroll=0;
@@ -228,16 +230,16 @@ function enableMouseDrag(rail){
     originScroll=rail.scrollLeft;
     moved=false;
     rail.classList.add("is-pointer-down");
-    rail.setPointerCapture?.(pointerId);
   });
   rail.addEventListener("pointermove",event=>{
     if(pointerId!==event.pointerId)return;
     const distance=event.clientX-originX;
-    if(Math.abs(distance)>5)moved=true;
-    if(moved){
+    if(Math.abs(distance)>5&&!moved){
+      moved=true;
       rail.classList.add("is-dragging");
-      rail.scrollLeft=originScroll-distance;
+      rail.setPointerCapture?.(pointerId);
     }
+    if(moved)rail.scrollLeft=originScroll-distance;
   });
   const finish=event=>{
     if(pointerId===null||event.pointerId!==pointerId)return;
@@ -344,7 +346,7 @@ function renderGroups(){
 function updateDialogProgress(){
   const maxScroll=Math.max(0,mediaRail.scrollWidth-mediaRail.clientWidth);
   const progress=maxScroll?Math.min(1,mediaRail.scrollLeft/maxScroll):1;
-  if(progressBar)progressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
+  if(albumProgressBar)albumProgressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
   if(dialogPosition){
     const frames=[...mediaRail.children];
     let active=0;
@@ -376,6 +378,7 @@ function openAlbum(category,album){
       stage.append(video);
     }else{
       const image=element("img");
+      image.draggable=false;
       image.src=item.src;image.alt=item.alt||item.title||"TOKI SATSUEI photograph";
       image.loading=index<2?"eager":"lazy";image.decoding="async";
       addImageFallback(image,stage);

@@ -165,6 +165,7 @@ def main():
                 check_home(home, width)
                 checks += 1
 
+            home.close()
             archive_route_hits = []
             def serve_archive_fixture(route):
                 archive_route_hits.append(route.request.url)
@@ -173,7 +174,9 @@ def main():
             archive = context.new_page()
             archive_errors = []
             archive.on("pageerror", lambda error: archive_errors.append(str(error)))
+            archive.on("console", lambda message: archive_errors.append(f"console {message.type}: {message.text}") if message.type == "error" else None)
             archive.goto(base + "/toki-satsuei/library.html", wait_until="domcontentloaded")
+            archive.bring_to_front()
             archive.wait_for_function(
                 "document.querySelector('#library-count')?.textContent !== 'Preparing the archive…'",
                 timeout=10000
@@ -191,9 +194,38 @@ def main():
 
             for width, height in [(320,568),(390,844),(768,900),(1024,768),(1440,900)]:
                 archive.set_viewport_size({"width":width,"height":height})
-                archive.locator(".album-card").first.click()
+                card = archive.locator(".album-card").first
+                card.evaluate("(element) => element.scrollIntoView({block:'center', inline:'nearest', behavior:'instant'})")
+                archive.wait_for_function("""() => {
+                    const element = document.querySelector(".album-card");
+                    if (!element) return false;
+                    const rect = element.getBoundingClientRect();
+                    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+                }""")
+                archive.evaluate("""() => {
+                    window.__qaCardClicks = 0;
+                    window.__qaShowModalCalls = 0;
+                    document.addEventListener("click", (event) => {
+                        if (event.target.closest(".album-card")) window.__qaCardClicks += 1;
+                    }, true);
+                    const originalShowModal = HTMLDialogElement.prototype.showModal;
+                    HTMLDialogElement.prototype.showModal = function () {
+                        window.__qaShowModalCalls += 1;
+                        return originalShowModal.call(this);
+                    };
+                }""")
+                card_state = archive.locator(".album-card").first.evaluate("(element) => { const r=element.getBoundingClientRect(); const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); return {disabled:element.disabled, tag:element.tagName, text:element.innerText, pointerEvents:getComputedStyle(element).pointerEvents, railClass:element.closest('.album-rail')?.className, centerTarget:hit?.tagName+' '+(typeof hit?.className==='string'?hit.className:'' ), hasFocus:document.hasFocus(), scrollY:window.scrollY, rect:{left:r.left,right:r.right,top:r.top,bottom:r.bottom}}; }")
+                card_box = archive.locator(".album-card").first.bounding_box()
+                click_x = card_box["x"] + card_box["width"] / 2
+                click_y = card_box["y"] + card_box["height"] / 2
+                archive.mouse.move(click_x, click_y)
+                archive.mouse.down()
+                archive.mouse.up()
                 dialog = boxes(archive, [".album-dialog", ".album-dialog-panel", ".album-media-rail", ".album-dialog-note"])
-                assert dialog[0]["display"] != "none", f"archive dialog did not open at {width}px"
+                dialog_state = archive.locator("#album-dialog").evaluate("(element) => ({open:element.open, display:getComputedStyle(element).display, connected:element.isConnected})")
+                event_state = archive.evaluate("() => ({cardClicks:window.__qaCardClicks, showModalCalls:window.__qaShowModalCalls})")
+                assert dialog_state["open"] and dialog_state["display"] != "none", \
+                    f"archive dialog did not open at {width}px: {dialog_state}; events: {event_state}; card: {card_state}; page errors: {archive_errors}"
                 for item in dialog[1:]:
                     assert_inside(item, dialog[0], f"archive dialog/{width}")
                 panel_metrics = archive.locator(".album-dialog-panel").evaluate(
