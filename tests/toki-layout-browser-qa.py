@@ -165,6 +165,7 @@ def main():
                 check_home(home, width)
                 checks += 1
 
+            home.close()
             archive_route_hits = []
             def serve_archive_fixture(route):
                 archive_route_hits.append(route.request.url)
@@ -175,6 +176,7 @@ def main():
             archive.on("pageerror", lambda error: archive_errors.append(str(error)))
             archive.on("console", lambda message: archive_errors.append(f"console {message.type}: {message.text}") if message.type == "error" else None)
             archive.goto(base + "/toki-satsuei/library.html", wait_until="domcontentloaded")
+            archive.bring_to_front()
             archive.wait_for_function(
                 "document.querySelector('#library-count')?.textContent !== 'Preparing the archive…'",
                 timeout=10000
