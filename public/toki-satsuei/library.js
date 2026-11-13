@@ -49,15 +49,20 @@ function safePlay(video){
   const promise=video.play();
   if(promise&&typeof promise.catch==="function")promise.catch(()=>{});
 }
+const activeTransitions=new WeakMap();
 function animateChange(node,render){
   if(!node){render();return;}
   if(reducedMotion||!node.animate){render();return;}
-  node.animate([{opacity:1,transform:"translateY(0)"},{opacity:0,transform:"translateY(7px)"}],{duration:110,easing:"ease-in"}).finished
-    .catch(()=>{})
-    .then(()=>{
-      render();
-      node.animate([{opacity:0,transform:"translateY(-5px)"},{opacity:1,transform:"translateY(0)"}],{duration:230,easing:"cubic-bezier(.2,.7,.2,1)"});
-    });
+  const token=(activeTransitions.get(node)?.token||0)+1;
+  activeTransitions.set(node,{token,animation:null});
+  const fade=node.animate([{opacity:1,transform:"translateY(0)"},{opacity:0,transform:"translateY(7px)"}],{duration:110,easing:"ease-in"});
+  activeTransitions.set(node,{token,animation:fade});
+  fade.finished.then(()=>{
+    if(activeTransitions.get(node)?.token!==token)return;
+    render();
+    const entrance=node.animate([{opacity:0,transform:"translateY(-5px)"},{opacity:1,transform:"translateY(0)"}],{duration:230,easing:"cubic-bezier(.2,.7,.2,1)"});
+    activeTransitions.set(node,{token,animation:entrance});
+  }).catch(()=>{});
 }
 function revealWithin(root){
   const items=root.querySelectorAll(".reveal-on-scroll");
@@ -193,7 +198,7 @@ function enableMouseDrag(rail){
   });
   const finish=event=>{
     if(pointerId===null||event.pointerId!==pointerId)return;
-    if(moved)suppressClick=true;
+    if(moved){suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);}
     pointerId=null;
     rail.classList.remove("is-pointer-down","is-dragging");
     if(rail.hasPointerCapture?.(event.pointerId))rail.releasePointerCapture(event.pointerId);
@@ -228,7 +233,7 @@ function makeCategoryGroup(category){
     element("h2","archive-group-title",category.title),
     element("p","archive-group-description",category.description||"A collection of moments worth keeping.")
   );
-  head.append(copy,element("span","archive-group-meta",countWords(category.albums.length,"ALBUM","ALBUM")+"  ·  "+category.image_count+" FRAMES"));
+  head.append(copy,element("span","archive-group-meta",countWords(category.albums.length,"ALBUM","ALBUMS")+"  ·  "+category.image_count+" FRAMES"));
   const rail=element("div","album-rail");
   rail.tabIndex=0;rail.setAttribute("role","region");rail.setAttribute("aria-label",category.title+" albums. Use arrow keys or drag to browse.");
   category.albums.forEach(album=>rail.append(makeAlbumCard(category,album)));
@@ -281,7 +286,7 @@ function renderGroups(){
       if(!activeQuery)return true;
       return normalize(category.title+" "+album.title+" "+(album.description||"")).includes(activeQuery);
     });
-    return {...category,albums};
+    return {...category,albums,image_count:albums.reduce((total,album)=>total+album.media.length,0)};
   });
   const populated=matching.filter(category=>category.albums.length);
   groups.replaceChildren();
