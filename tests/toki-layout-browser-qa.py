@@ -173,6 +173,7 @@ def main():
             archive = context.new_page()
             archive_errors = []
             archive.on("pageerror", lambda error: archive_errors.append(str(error)))
+            archive.on("console", lambda message: archive_errors.append(f"console {message.type}: {message.text}") if message.type == "error" else None)
             archive.goto(base + "/toki-satsuei/library.html", wait_until="domcontentloaded")
             archive.wait_for_function(
                 "document.querySelector('#library-count')?.textContent !== 'Preparing the archive…'",
@@ -193,7 +194,9 @@ def main():
                 archive.set_viewport_size({"width":width,"height":height})
                 archive.locator(".album-card").first.click()
                 dialog = boxes(archive, [".album-dialog", ".album-dialog-panel", ".album-media-rail", ".album-dialog-note"])
-                assert dialog[0]["display"] != "none", f"archive dialog did not open at {width}px"
+                dialog_state = archive.locator("#album-dialog").evaluate("(element) => ({open:element.open, display:getComputedStyle(element).display, connected:element.isConnected})")
+                assert dialog_state["open"] and dialog_state["display"] != "none", \
+                    f"archive dialog did not open at {width}px: {dialog_state}; page errors: {archive_errors}"
                 for item in dialog[1:]:
                     assert_inside(item, dialog[0], f"archive dialog/{width}")
                 panel_metrics = archive.locator(".album-dialog-panel").evaluate(
