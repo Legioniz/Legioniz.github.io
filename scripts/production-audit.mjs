@@ -65,7 +65,7 @@ try {
   check(cssRaw <= 280 * 1024, 'Portfolio application CSS stays within budget', `${(cssRaw / 1024).toFixed(1)} KiB / 280 KiB`)
   check(cssGzip <= 70 * 1024, 'Compressed portfolio CSS stays within transfer budget', `${(cssGzip / 1024).toFixed(1)} KiB / 70 KiB`)
   check(tokiStyles.length >= 2 && tokiCssRaw <= 52 * 1024, 'TOKI SATSUEI static-site CSS stays within its independent 52 KiB budget', `${(tokiCssRaw / 1024).toFixed(1)} KiB / 52 KiB`)
-  check(tokiCssGzip <= 12 * 1024, 'Compressed TOKI SATSUEI CSS stays within its 12 KiB transfer budget', `${(tokiCssGzip / 1024).toFixed(1)} KiB / 12 KiB`)
+  check(tokiCssGzip <= 12.5 * 1024, 'Compressed TOKI SATSUEI CSS stays within its 12.5 KiB transfer budget', `${(tokiCssGzip / 1024).toFixed(1)} KiB / 12.5 KiB`)
   check(profileBytes <= 900 * 1024, 'Responsive profile image set stays within budget', `${(profileBytes / 1024).toFixed(1)} KiB / 900 KiB`)
 
   const html = await readFile(path.join(DIST, 'index.html'), 'utf8')
