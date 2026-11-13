@@ -215,7 +215,12 @@ def main():
                     };
                 }""")
                 card_state = archive.locator(".album-card").first.evaluate("(element) => { const r=element.getBoundingClientRect(); const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); return {disabled:element.disabled, tag:element.tagName, text:element.innerText, pointerEvents:getComputedStyle(element).pointerEvents, railClass:element.closest('.album-rail')?.className, centerTarget:hit?.tagName+' '+(typeof hit?.className==='string'?hit.className:'' ), hasFocus:document.hasFocus(), scrollY:window.scrollY, rect:{left:r.left,right:r.right,top:r.top,bottom:r.bottom}}; }")
-                archive.locator(".album-card").first.click()
+                card_box = archive.locator(".album-card").first.bounding_box()
+                click_x = card_box["x"] + card_box["width"] / 2
+                click_y = card_box["y"] + card_box["height"] / 2
+                archive.mouse.move(click_x, click_y)
+                archive.mouse.down()
+                archive.mouse.up()
                 dialog = boxes(archive, [".album-dialog", ".album-dialog-panel", ".album-media-rail", ".album-dialog-note"])
                 dialog_state = archive.locator("#album-dialog").evaluate("(element) => ({open:element.open, display:getComputedStyle(element).display, connected:element.isConnected})")
                 event_state = archive.evaluate("() => ({cardClicks:window.__qaCardClicks, showModalCalls:window.__qaShowModalCalls})")
