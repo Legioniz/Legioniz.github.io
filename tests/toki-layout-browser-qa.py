@@ -214,7 +214,7 @@ def main():
                         return originalShowModal.call(this);
                     };
                 }""")
-                card_state = archive.locator(".album-card").first.evaluate("(element) => ({disabled:element.disabled, tag:element.tagName, text:element.innerText, rect:(() => {const r=element.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}})()})")
+                card_state = archive.locator(".album-card").first.evaluate("(element) => { const r=element.getBoundingClientRect(); const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); return {disabled:element.disabled, tag:element.tagName, text:element.innerText, pointerEvents:getComputedStyle(element).pointerEvents, railClass:element.closest('.album-rail')?.className, centerTarget:hit?.tagName+' '+(typeof hit?.className==='string'?hit.className:'' ), hasFocus:document.hasFocus(), scrollY:window.scrollY, rect:{left:r.left,right:r.right,top:r.top,bottom:r.bottom}}; }")
                 archive.locator(".album-card").first.click()
                 dialog = boxes(archive, [".album-dialog", ".album-dialog-panel", ".album-media-rail", ".album-dialog-note"])
                 dialog_state = archive.locator("#album-dialog").evaluate("(element) => ({open:element.open, display:getComputedStyle(element).display, connected:element.isConnected})")
