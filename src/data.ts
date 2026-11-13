@@ -128,6 +128,7 @@ export const projects: Project[] = [
       'The work builds on school-event photography experience and continued practice with a DSLR camera.',
     ],
     status: 'Creative practice',
+    repo: 'https://github.com/Legioniz/toki-satsuei',
     featured: false,
     visual: 'toki',
   },

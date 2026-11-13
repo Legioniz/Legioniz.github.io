@@ -42,4 +42,6 @@
 - Status: Early-stage creative practice
 - Summary: Quezon City-based photography initiative for cosplay, individual portraits, duo/group sessions, and event coverage.
 - Tools and practice: Canon EOS 3000D, photography, photo editing, visual direction, and brand development.
+- Repository: https://github.com/Legioniz/toki-satsuei
+- Website: https://legioniz.github.io/toki-satsuei/
 - Scope note: A small early-stage practice built on school-event photography experience and ongoing DSLR learning; not presented as a large commercial studio or advanced professional service.
