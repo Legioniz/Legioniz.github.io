@@ -46,11 +46,18 @@
     </section>
     <section class="library-content section-wrap" aria-label="Media archive">
       <div class="library-toolbar">
-        <div>
+        <div class="library-toolbar-main">
           <p class="eyebrow"><span>01</span> BROWSE COLLECTIONS</p>
           <div class="library-filters" id="library-filters" role="group" aria-label="Filter archive by category"></div>
         </div>
-        <p class="library-count" id="library-count" aria-live="polite">Preparing the archive…</p>
+        <div class="library-tools">
+          <label class="archive-search" for="archive-search">
+            <span class="archive-search-icon" aria-hidden="true">⌕</span>
+            <input id="archive-search" type="search" placeholder="Find an album" autocomplete="off" spellcheck="false">
+            <kbd>/</kbd>
+          </label>
+          <p class="library-count" id="library-count" aria-live="polite">Preparing the archive…</p>
+        </div>
       </div>
       <div class="library-groups" id="library-groups" aria-live="polite"></div>
       <noscript><p class="library-empty">Please enable JavaScript to browse the interactive archive.</p></noscript>

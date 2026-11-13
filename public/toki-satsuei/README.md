@@ -35,3 +35,10 @@ Files uploaded directly into a category folder appear together in an album named
 
 ## Brand
 Keep the visual direction minimal and editorial: charcoal, warm white, and restrained crimson. Preserve the TOKI SATSUEI brushstroke emblem, Japanese subtitle `時の記憶`, and tagline “CAPTURING MOMENTS, PRESERVING MEMORIES.”
+
+
+## Interaction and motion
+- The archive supports category filters and live album search (press `/` to focus search; press `Esc` to clear).
+- Album rails support touch/trackpad scrolling, desktop click-and-drag, arrow keys, Home/End, and previous/next controls.
+- Album viewers include frame progress, keyboard navigation, lazy image loading, and video playback controls.
+- Page and album transitions are intentionally short and subtle. `prefers-reduced-motion` disables nonessential motion.

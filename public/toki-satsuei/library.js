@@ -11,21 +11,28 @@ if(menuButton&&nav){
     menuButton.setAttribute("aria-expanded","false");
   }));
 }
+
 const filters=document.querySelector("#library-filters");
 const groups=document.querySelector("#library-groups");
 const countLabel=document.querySelector("#library-count");
+const searchInput=document.querySelector("#archive-search");
 const dialog=document.querySelector("#album-dialog");
 const dialogTitle=document.querySelector("#album-dialog-title");
 const dialogCategory=document.querySelector("#album-dialog-category");
 const dialogDescription=document.querySelector("#album-dialog-description");
 const dialogCount=document.querySelector("#album-dialog-count");
-const mediaRail=document.querySelector("#album-media-rail");
-const closeDialog=document.querySelector(".album-dialog-close");
 const dialogPosition=document.querySelector("#album-dialog-position");
 const progressBar=document.querySelector("#album-progress-bar");
+const mediaRail=document.querySelector("#album-media-rail");
+const closeDialog=document.querySelector(".album-dialog-close");
 let archiveCategories=[];
 let activeCategory="all";
+let activeQuery="";
+let activeAlbum=null;
+let revealObserver=null;
 const reducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hasViewTransitions=typeof document.startViewTransition==="function";
+
 function element(tag,className,text){
   const node=document.createElement(tag);
   if(className)node.className=className;
@@ -37,23 +44,63 @@ function scrollTrack(track,direction){
   if(!track)return;
   track.scrollBy({left:Math.max(220,Math.round(track.clientWidth*.78))*direction,behavior:reducedMotion?"auto":"smooth"});
 }
-function setCount(){
-  const populated=archiveCategories.filter(category=>category.albums.length);
-  const albums=populated.reduce((sum,category)=>sum+category.albums.length,0);
-  const frames=populated.reduce((sum,category)=>sum+category.image_count,0);
+function normalize(value){return String(value||"").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();}
+function safePlay(video){
+  const promise=video.play();
+  if(promise&&typeof promise.catch==="function")promise.catch(()=>{});
+}
+function animateChange(node,render){
+  if(!node){render();return;}
+  if(reducedMotion||!node.animate){render();return;}
+  node.animate([{opacity:1,transform:"translateY(0)"},{opacity:0,transform:"translateY(7px)"}],{duration:110,easing:"ease-in"}).finished
+    .catch(()=>{})
+    .then(()=>{
+      render();
+      node.animate([{opacity:0,transform:"translateY(-5px)"},{opacity:1,transform:"translateY(0)"}],{duration:230,easing:"cubic-bezier(.2,.7,.2,1)"});
+    });
+}
+function revealWithin(root){
+  const items=root.querySelectorAll(".reveal-on-scroll");
+  if(!items.length)return;
+  if(reducedMotion||!("IntersectionObserver" in window)){
+    items.forEach(item=>item.classList.add("is-revealed"));
+    return;
+  }
+  if(!revealObserver){
+    revealObserver=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add("is-revealed");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },{threshold:.08,rootMargin:"0px 0px -36px 0px"});
+  }
+  items.forEach(item=>revealObserver.observe(item));
+}
+function setCount(visibleCategories){
+  const albums=visibleCategories.reduce((sum,category)=>sum+category.albums.length,0);
+  const frames=visibleCategories.reduce((sum,category)=>sum+category.albums.reduce((total,album)=>total+album.media.length,0),0);
   countLabel.textContent=countWords(albums,"ALBUM","ALBUMS")+"  /  "+countWords(frames,"FRAME","FRAMES");
+}
+function updateFilters(){
+  filters.querySelectorAll("button").forEach(button=>{
+    button.setAttribute("aria-pressed",String(button.dataset.category===activeCategory));
+  });
 }
 function buildFilters(){
   filters.replaceChildren();
-  [{id:"all",title:"All collections"}].concat(archiveCategories.map(category=>({id:category.id,title:category.title}))).forEach(item=>{
+  const definitions=[{id:"all",title:"All collections"}].concat(archiveCategories.map(category=>({id:category.id,title:category.title})));
+  definitions.forEach(item=>{
     const button=element("button","library-filter",item.title);
     button.type="button";
     button.dataset.category=item.id;
     button.setAttribute("aria-pressed",String(item.id===activeCategory));
     button.addEventListener("click",()=>{
+      if(activeCategory===item.id)return;
       activeCategory=item.id;
-      filters.querySelectorAll("button").forEach(filter=>filter.setAttribute("aria-pressed",String(filter===button)));
-      renderGroups();
+      updateFilters();
+      animateChange(groups,renderGroups);
     });
     filters.append(button);
   });
@@ -63,6 +110,14 @@ function arrowButton(label,direction){
   button.type="button";
   button.setAttribute("aria-label",label);
   return button;
+}
+function addImageFallback(image,container){
+  image.addEventListener("error",()=>{
+    image.remove();
+    container.classList.add("media-unavailable");
+    if(!container.querySelector(".media-fallback"))container.append(element("span","media-fallback","FRAME UNAVAILABLE"));
+  },{once:true});
+  image.addEventListener("load",()=>image.classList.add("is-loaded"),{once:true});
 }
 function makeAlbumCard(category,album){
   const isCinematic=["cosplay","events"].includes(category.id);
@@ -75,11 +130,17 @@ function makeAlbumCard(category,album){
   if(visual&&visual.type==="image"){
     const image=element("img");
     image.src=visual.src;image.alt="";image.loading="lazy";image.decoding="async";
+    addImageFallback(image,cover);
     cover.append(image);
   }else if(visual&&visual.type==="video"){
     const video=element("video");
-    video.src=visual.src;video.muted=true;video.playsInline=true;video.preload="metadata";
+    video.src=visual.src;video.muted=true;video.playsInline=true;video.preload="metadata";video.loop=true;
+    video.setAttribute("aria-hidden","true");
     cover.append(video,element("span","album-cover-type","VIDEO"));
+    button.addEventListener("pointerenter",()=>{if(!reducedMotion)safePlay(video);});
+    button.addEventListener("pointerleave",()=>{video.pause();video.currentTime=0;});
+    button.addEventListener("focus",()=>{if(!reducedMotion)safePlay(video);});
+    button.addEventListener("blur",()=>{video.pause();video.currentTime=0;});
   }else{
     cover.append(element("span","album-cover-mark","時"));
   }
@@ -100,9 +161,66 @@ function makeAlbumCard(category,album){
   button.addEventListener("click",()=>openAlbum(category,album));
   return button;
 }
+function updateRailState(rail,left,right,progress){
+  const maximum=Math.max(0,rail.scrollWidth-rail.clientWidth);
+  left.disabled=rail.scrollLeft<=3;
+  right.disabled=rail.scrollLeft>=maximum-3;
+  progress.style.transform="scaleX("+Math.max(.025,maximum?rail.scrollLeft/maximum:1)+")";
+}
+function enableMouseDrag(rail){
+  let pointerId=null;
+  let originX=0;
+  let originScroll=0;
+  let moved=false;
+  let suppressClick=false;
+  rail.addEventListener("pointerdown",event=>{
+    if(event.pointerType!=="mouse"||event.button!==0||event.target.closest("video,a"))return;
+    pointerId=event.pointerId;
+    originX=event.clientX;
+    originScroll=rail.scrollLeft;
+    moved=false;
+    rail.classList.add("is-pointer-down");
+    rail.setPointerCapture?.(pointerId);
+  });
+  rail.addEventListener("pointermove",event=>{
+    if(pointerId!==event.pointerId)return;
+    const distance=event.clientX-originX;
+    if(Math.abs(distance)>5)moved=true;
+    if(moved){
+      rail.classList.add("is-dragging");
+      rail.scrollLeft=originScroll-distance;
+    }
+  });
+  const finish=event=>{
+    if(pointerId===null||event.pointerId!==pointerId)return;
+    if(moved)suppressClick=true;
+    pointerId=null;
+    rail.classList.remove("is-pointer-down","is-dragging");
+    if(rail.hasPointerCapture?.(event.pointerId))rail.releasePointerCapture(event.pointerId);
+  };
+  rail.addEventListener("pointerup",finish);
+  rail.addEventListener("pointercancel",finish);
+  rail.addEventListener("lostpointercapture",()=>{pointerId=null;rail.classList.remove("is-pointer-down","is-dragging");});
+  rail.addEventListener("click",event=>{
+    if(suppressClick){
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClick=false;
+    }
+  },true);
+  rail.addEventListener("keydown",event=>{
+    if(event.key==="ArrowRight"||event.key==="ArrowLeft"){
+      event.preventDefault();
+      scrollTrack(rail,event.key==="ArrowRight"?1:-1);
+    }else if(event.key==="Home"||event.key==="End"){
+      event.preventDefault();
+      rail.scrollTo({left:event.key==="Home"?0:rail.scrollWidth,behavior:reducedMotion?"auto":"smooth"});
+    }
+  });
+}
 function makeCategoryGroup(category){
   const isCinematic=["cosplay","events"].includes(category.id);
-  const section=element("section","archive-group"+(isCinematic?" archive-group--cinematic archive-group--"+category.id:""));
+  const section=element("section","archive-group"+(isCinematic?" archive-group--cinematic archive-group--"+category.id:"")+" reveal-on-scroll");
   const head=element("div","archive-group-head");
   const copy=element("div","archive-group-copy");
   copy.append(
@@ -110,45 +228,89 @@ function makeCategoryGroup(category){
     element("h2","archive-group-title",category.title),
     element("p","archive-group-description",category.description||"A collection of moments worth keeping.")
   );
-  head.append(copy,element("span","archive-group-meta",countWords(category.albums.length,"ALBUM","ALBUMS")+"  ·  "+category.image_count+" FRAMES"));
+  head.append(copy,element("span","archive-group-meta",countWords(category.albums.length,"ALBUM","ALBUM")+"  ·  "+category.image_count+" FRAMES"));
   const rail=element("div","album-rail");
-  rail.tabIndex=0;rail.setAttribute("role","region");rail.setAttribute("aria-label",category.title+" albums");
+  rail.tabIndex=0;rail.setAttribute("role","region");rail.setAttribute("aria-label",category.title+" albums. Use arrow keys or drag to browse.");
   category.albums.forEach(album=>rail.append(makeAlbumCard(category,album)));
-  const controls=element("div","rail-controls");
+  const controls=element("div","archive-rail-controls");
   const left=arrowButton("Scroll "+category.title+" albums left",-1);
   const right=arrowButton("Scroll "+category.title+" albums right",1);
+  const progress=element("span","archive-rail-progress");
+  const progressFill=element("span","archive-rail-progress-fill");
+  progress.append(progressFill);
   left.addEventListener("click",()=>scrollTrack(rail,-1));
   right.addEventListener("click",()=>scrollTrack(rail,1));
+  rail.addEventListener("scroll",()=>updateRailState(rail,left,right,progressFill),{passive:true});
   controls.append(left,right);
-  head.append(controls);
+  const railTop=element("div","archive-rail-top");
+  railTop.append(progress,controls);
+  enableMouseDrag(rail);
   const wrap=element("div","album-rail-wrap");
-  wrap.append(rail);
+  wrap.append(railTop,rail);
   section.append(head,wrap);
+  requestAnimationFrame(()=>updateRailState(rail,left,right,progressFill));
   return section;
 }
-function showEmpty(message){
+function showEmpty(message,query=""){
   const empty=element("div","archive-empty");
   empty.append(element("div","archive-empty-mark","時の記憶"));
   empty.append(element("h2","",message));
-  empty.append(element("p","","Create a folder for each shoot inside a category, then upload your web-ready photos or videos. The album index rebuilds automatically during deployment."));
-  const link=element("a","","OPEN MEDIA FOLDERS ↗");
-  link.href="https://github.com/Legioniz/Legioniz.github.io/tree/main/public/toki-satsuei/media-library";
-  link.target="_blank";link.rel="noopener noreferrer";
-  empty.append(link);
+  empty.append(element("p","","Try another search or choose a different collection. The archive will fill itself as new albums are uploaded."));
+  if(query){
+    const clear=element("button","archive-clear-search","CLEAR SEARCH");
+    clear.type="button";
+    clear.addEventListener("click",()=>{
+      searchInput.value="";
+      activeQuery="";
+      renderGroups();
+      searchInput.focus();
+    });
+    empty.append(clear);
+  }else{
+    const link=element("a","","OPEN MEDIA FOLDERS ↗");
+    link.href="https://github.com/Legioniz/Legioniz.github.io/tree/main/public/toki-satsuei/media-library";
+    link.target="_blank";link.rel="noopener noreferrer";
+    empty.append(link);
+  }
   groups.replaceChildren(empty);
 }
 function renderGroups(){
   const selected=activeCategory==="all"?archiveCategories:archiveCategories.filter(category=>category.id===activeCategory);
-  const populated=selected.filter(category=>category.albums.length);
+  const matching=selected.map(category=>{
+    const albums=category.albums.filter(album=>{
+      if(!activeQuery)return true;
+      return normalize(category.title+" "+album.title+" "+(album.description||"")).includes(activeQuery);
+    });
+    return {...category,albums};
+  });
+  const populated=matching.filter(category=>category.albums.length);
   groups.replaceChildren();
+  setCount(populated);
   if(!populated.length){
-    const chosen=archiveCategories.find(category=>category.id===activeCategory);
-    showEmpty(chosen?"No "+chosen.title.toLowerCase()+" albums yet.":"The archive is ready for its first frame.");
+    showEmpty(activeQuery?"No albums match “"+activeQuery+"”.":(selected[0]?"No "+selected[0].title.toLowerCase()+" albums yet.":"The archive is ready for its first frame."),activeQuery);
     return;
   }
   populated.forEach(category=>groups.append(makeCategoryGroup(category)));
+  revealWithin(groups);
+}
+function updateDialogProgress(){
+  const maxScroll=Math.max(0,mediaRail.scrollWidth-mediaRail.clientWidth);
+  const progress=maxScroll?Math.min(1,mediaRail.scrollLeft/maxScroll):1;
+  if(progressBar)progressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
+  if(dialogPosition){
+    const frames=[...mediaRail.children];
+    let active=0;
+    const marker=mediaRail.getBoundingClientRect().left+mediaRail.clientWidth*.34;
+    frames.forEach((frame,index)=>{if(frame.getBoundingClientRect().left<=marker)active=index;});
+    dialogPosition.textContent=String(active+1).padStart(2,"0")+" / "+String(frames.length).padStart(2,"0");
+  }
+  const left=document.querySelector('[data-dialog-scroll="-1"]');
+  const right=document.querySelector('[data-dialog-scroll="1"]');
+  if(left)left.disabled=mediaRail.scrollLeft<=3;
+  if(right)right.disabled=mediaRail.scrollLeft>=maxScroll-3;
 }
 function openAlbum(category,album){
+  activeAlbum={category,album};
   dialog.classList.toggle("album-dialog--cinematic",["cosplay","events"].includes(category.id));
   dialogTitle.textContent=album.title;
   dialogCategory.textContent=category.title.toUpperCase();
@@ -157,6 +319,7 @@ function openAlbum(category,album){
   mediaRail.replaceChildren();
   album.media.forEach((item,index)=>{
     const figure=element("figure","album-frame");
+    figure.style.setProperty("--frame-index",String(Math.min(index,12)));
     const stage=element("div","album-frame-media");
     if(item.type==="video"){
       const video=element("video");
@@ -167,6 +330,7 @@ function openAlbum(category,album){
       const image=element("img");
       image.src=item.src;image.alt=item.alt||item.title||"TOKI SATSUEI photograph";
       image.loading=index<2?"eager":"lazy";image.decoding="async";
+      addImageFallback(image,stage);
       stage.append(image);
     }
     figure.append(stage,element("figcaption","",item.title||("FRAME "+String(index+1).padStart(2,"0"))));
@@ -174,34 +338,47 @@ function openAlbum(category,album){
   });
   mediaRail.scrollLeft=0;
   dialog.showModal();
-  updateDialogControls();
+  dialog.classList.remove("is-opening");
+  requestAnimationFrame(()=>dialog.classList.add("is-opening"));
+  requestAnimationFrame(updateDialogProgress);
+  closeDialog.focus();
 }
-function updateDialogControls(){
-  const left=document.querySelector('[data-dialog-scroll="-1"]');
-  const right=document.querySelector('[data-dialog-scroll="1"]');
-  const maxScroll=Math.max(0,mediaRail.scrollWidth-mediaRail.clientWidth);
-  const progress=maxScroll?Math.min(1,mediaRail.scrollLeft/maxScroll):1;
-  if(left)left.disabled=mediaRail.scrollLeft<=4;
-  if(right)right.disabled=mediaRail.scrollLeft+mediaRail.clientWidth>=mediaRail.scrollWidth-4;
-  if(progressBar)progressBar.style.transform="scaleX("+Math.max(.04,progress)+")";
-  if(dialogPosition){
-    const frames=[...mediaRail.children];
-    let active=0;
-    frames.forEach((frame,index)=>{if(frame.offsetLeft-mediaRail.offsetLeft<=mediaRail.scrollLeft+mediaRail.clientWidth*.35)active=index;});
-    dialogPosition.textContent=String(active+1).padStart(2,"0")+" / "+String(frames.length).padStart(2,"0");
-  }
+function closeAlbum(){
+  if(dialog.open)dialog.close();
 }
 document.querySelectorAll("[data-dialog-scroll]").forEach(button=>{
   button.addEventListener("click",()=>scrollTrack(mediaRail,Number(button.dataset.dialogScroll)));
 });
-mediaRail.addEventListener("scroll",updateDialogControls,{passive:true});
-closeDialog.addEventListener("click",()=>dialog.close());
-dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
-dialog.addEventListener("close",()=>mediaRail.querySelectorAll("video").forEach(video=>video.pause()));
+mediaRail.addEventListener("scroll",updateDialogProgress,{passive:true});
+closeDialog.addEventListener("click",closeAlbum);
+dialog.addEventListener("click",event=>{if(event.target===dialog)closeAlbum();});
+dialog.addEventListener("close",()=>{
+  mediaRail.querySelectorAll("video").forEach(video=>{video.pause();video.currentTime=0;});
+  dialog.classList.remove("is-opening","album-dialog--cinematic");
+  activeAlbum=null;
+});
 document.addEventListener("keydown",event=>{
-  if(!dialog.open)return;
-  if(event.key==="ArrowRight"){event.preventDefault();scrollTrack(mediaRail,1);}
-  if(event.key==="ArrowLeft"){event.preventDefault();scrollTrack(mediaRail,-1);}
+  if(dialog.open){
+    if(event.key==="ArrowRight"){event.preventDefault();scrollTrack(mediaRail,1);}
+    else if(event.key==="ArrowLeft"){event.preventDefault();scrollTrack(mediaRail,-1);}
+    return;
+  }
+  if(event.key==="/"&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&document.activeElement!==searchInput){
+    event.preventDefault();
+    searchInput.focus();
+  }
+  if(event.key==="Escape"&&searchInput===document.activeElement&&searchInput.value){
+    searchInput.value="";activeQuery="";renderGroups();
+  }
+});
+searchInput.addEventListener("input",()=>{
+  activeQuery=normalize(searchInput.value);
+  animateChange(groups,renderGroups);
+});
+searchInput.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&searchInput.value){
+    searchInput.value="";activeQuery="";renderGroups();
+  }
 });
 const year=document.querySelector("#year");
 if(year)year.textContent=String(new Date().getFullYear());
@@ -216,10 +393,16 @@ async function loadArchive(){
       category.albums=Array.isArray(category.albums)?category.albums:[];
       category.image_count=Number(category.image_count||category.albums.reduce((total,album)=>total+(album.media||[]).length,0));
     });
-    setCount();buildFilters();renderGroups();
+    buildFilters();
+    renderGroups();
+    revealWithin(document);
   }catch(error){
     countLabel.textContent="ARCHIVE INDEX UNAVAILABLE";
     showEmpty("The archive is being prepared.");
   }
 }
 loadArchive();
+
+if(hasViewTransitions&&document.documentElement){
+  document.documentElement.classList.add("supports-view-transitions");
+}
