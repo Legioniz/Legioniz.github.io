@@ -192,6 +192,14 @@ def main():
 
             for width, height in [(320,568),(390,844),(768,900),(1024,768),(1440,900)]:
                 archive.set_viewport_size({"width":width,"height":height})
+                card = archive.locator(".album-card").first
+                card.evaluate("(element) => element.scrollIntoView({block:'center', inline:'nearest', behavior:'instant'})")
+                archive.wait_for_function("""() => {
+                    const element = document.querySelector(".album-card");
+                    if (!element) return false;
+                    const rect = element.getBoundingClientRect();
+                    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+                }""")
                 archive.evaluate("""() => {
                     window.__qaCardClicks = 0;
                     window.__qaShowModalCalls = 0;
