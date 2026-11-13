@@ -70,7 +70,14 @@ def assert_inside(inner, outer, label):
 
 def document_width(page, label, width):
     metrics = page.evaluate("""() => ({
-      viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth
+      viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth,
+      offenders: [...document.body.querySelectorAll('*')].map(element => {
+        const r=element.getBoundingClientRect(), s=getComputedStyle(element);
+        return {tag:element.tagName,cls:String(element.className||''),text:(element.innerText||'').slice(0,70),
+          left:Math.round(r.left*10)/10,right:Math.round(r.right*10)/10,width:Math.round(r.width*10)/10,
+          scrollWidth:element.scrollWidth,clientWidth:element.clientWidth,position:s.position,overflowX:s.overflowX};
+      }).filter(item => item.right > innerWidth + .5 || item.left < -.5)
+        .sort((a,b) => b.right-a.right).slice(0,12)
     })""")
     assert metrics["document"] <= width + 1, f"{label}: document has horizontal overflow at {width}px: {metrics}"
     assert metrics["body"] <= width + 1, f"{label}: body has horizontal overflow at {width}px: {metrics}"
