@@ -42,3 +42,12 @@ Keep the visual direction minimal and editorial: charcoal, warm white, and restr
 - Album rails support touch/trackpad scrolling, desktop click-and-drag, arrow keys, Home/End, and previous/next controls.
 - Album viewers include frame progress, keyboard navigation, lazy image loading, and video playback controls.
 - Page and album transitions are intentionally short and subtle. `prefers-reduced-motion` disables nonessential motion.
+
+
+## Visual system and scroll design
+- Homepage and archive share a slim reading-progress indicator and a compact sticky-header state.
+- Homepage content reveals as it enters the viewport, with directional entrances and a restrained stagger.
+- Navigation tracks the reader's current section; selected cards and buttons provide subtle interaction feedback.
+- A compact back-to-top control appears after scrolling down the homepage.
+- Same-origin navigation can use native View Transitions where supported.
+- All nonessential motion respects the device's reduced-motion preference.

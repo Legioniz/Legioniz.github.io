@@ -1,3 +1,12 @@
+const progressBar=document.querySelector("#page-progress-bar"),archiveHeader=document.querySelector(".site-header");
+let scrollTicking=false;
+function updateArchiveChrome(){
+ const root=document.documentElement,progress=Math.min(1,Math.max(0,window.scrollY/Math.max(1,root.scrollHeight-window.innerHeight)));
+ if(progressBar)progressBar.style.transform="scaleX("+progress+")";
+ archiveHeader?.classList.toggle("is-scrolled",window.scrollY>28);scrollTicking=false;
+}
+window.addEventListener("scroll",()=>{if(!scrollTicking){requestAnimationFrame(updateArchiveChrome);scrollTicking=true;}},{passive:true});
+window.addEventListener("resize",updateArchiveChrome,{passive:true});updateArchiveChrome();
 const menuButton=document.querySelector(".menu-toggle");
 const nav=document.querySelector(".primary-nav");
 if(menuButton&&nav){
