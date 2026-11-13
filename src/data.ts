@@ -16,6 +16,7 @@ export type Project = {
   details: string[]
   status: string
   repo?: string
+  website?: string
   featured: boolean
   visual: 'lens' | 'meter' | 'fan' | 'game' | 'toki'
 }
@@ -129,6 +130,7 @@ export const projects: Project[] = [
     ],
     status: 'Creative practice',
     repo: 'https://github.com/Legioniz/toki-satsuei',
+    website: 'https://legioniz.github.io/toki-satsuei/',
     featured: false,
     visual: 'toki',
   },

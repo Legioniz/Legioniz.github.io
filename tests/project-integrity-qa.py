@@ -145,6 +145,19 @@ check("legion-portfolio-shell-v18" in service_worker and "favicon.ico?v=20261109
 check("legion-portfolio-motion-v7" in html_shell and "prefers-reduced-motion: reduce" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)" in html_shell,
       "Early boot follows the OS reduced-motion preference unless a visitor explicitly overrides it")
 app_source = read("src/App.tsx")
+project_data = read("src/data.ts")
+toki_start = project_data.find("id: 'toki-satsuei',")
+toki_end = project_data.find(chr(10) + "  },", toki_start) if toki_start >= 0 else -1
+toki_entry = project_data[toki_start:toki_end] if toki_end > toki_start else ""
+check(
+    "website?: string" in project_data
+    and bool(toki_entry)
+    and "website: 'https://legioniz.github.io/toki-satsuei/'" in toki_entry
+    and "project.website &&" in app_source
+    and "Visit live website" in app_source
+    and 'target="_blank" rel="noopener noreferrer"' in app_source,
+    "TOKI SATSUEI exposes its published website as a safe external link in the project details dialog",
+)
 intro_source = read("src/PortfolioChrome.tsx")
 check("return saved === 'on' || saved === 'off' ? saved : 'system'" in app_source and "motionPreference === 'system' && !systemMotionReduced" in app_source and "query.addEventListener('change', update)" in app_source,
       "React motion controls follow live system preference changes while preserving explicit visitor overrides")
