@@ -4223,3 +4223,52 @@ body {
 
 /* ARIA tab panels remain mounted so every tab's aria-controls target exists. */
 .lab-shell [role="tabpanel"][hidden] { display: none !important; }
+
+
+/* TOKI private booking queue */
+.admin-toki-booking-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.admin-toki-booking-meta span { min-width: 0; }
+.admin-toki-booking-meta b {
+  display: block;
+  color: var(--muted-2);
+  font: 8px var(--font-mono);
+  letter-spacing: .1em;
+}
+.admin-toki-private-note {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--muted-2);
+  font: 8px var(--font-mono);
+  letter-spacing: .1em;
+}
+.admin-toki-private-note textarea {
+  width: 100%;
+  min-height: 68px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--text);
+  font: 12px/1.6 var(--font-body);
+  letter-spacing: 0;
+}
+.admin-record-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+@media (max-width: 560px) {
+  .admin-toki-booking-meta { grid-template-columns: minmax(0, 1fr); }
+}

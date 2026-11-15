@@ -95,21 +95,42 @@ function readText(value: unknown): string | null {
   return typeof value === 'string' ? value.trim() : null
 }
 
-async function insertRecord(table: string, record: Record<string, unknown>) {
-  const result = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+function manilaToday(): string {
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? ''
+  return `${part('year')}-${part('month')}-${part('day')}`
+}
+
+function isValidDateOnly(value: string, notBefore: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  return Number.isFinite(parsed.getTime())
+    && parsed.toISOString().slice(0, 10) === value
+    && value >= notBefore
+}
+
+async function insertRecord(table: string, record: Record<string, unknown>, returning?: string) {
+  const query = returning ? `?select=${encodeURIComponent(returning)}` : ''
+  const result = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
     method: 'POST',
     headers: {
       ...serviceKeyHeaders,
       'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
+      Prefer: returning ? 'return=representation' : 'return=minimal',
     },
     body: JSON.stringify(record),
   })
   if (!result.ok) {
     const detail = await result.text()
     console.error(`Insert failed for ${table}:`, detail.slice(0, 500))
-    throw new Error('The record could not be saved. Please retry or use the email fallback.')
+    throw new Error('The request could not be saved. Please retry or use the official contact channel listed on the website.')
   }
+  return returning ? await result.json() as Array<Record<string, unknown>> : null
 }
 
 Deno.serve(async (request) => {
@@ -140,7 +161,7 @@ Deno.serve(async (request) => {
     payload = parsed as Record<string, unknown>
   } catch { return response({ ok: false, message: 'Invalid JSON body.' }, 400, origin) }
   const kind = String(payload.kind ?? '')
-  if (!['inquiry', 'comment', 'page_view'].includes(kind)) return response({ ok: false, message: 'Unsupported submission type.' }, 400, origin)
+  if (!['inquiry', 'comment', 'page_view', 'toki_booking'].includes(kind)) return response({ ok: false, message: 'Unsupported submission type.' }, 400, origin)
 
   // Honeypot: respond successfully without storing anything so simple bots do not learn the trap.
   if (typeof payload.website === 'string' && payload.website.trim()) return response({ ok: true }, 200, origin)
@@ -148,7 +169,7 @@ Deno.serve(async (request) => {
   const forwarded = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unavailable'
   // Only an HMAC digest reaches Postgres; the raw address is neither stored nor logged.
   const bucket = await hmacHex(RATE_SECRET, forwarded)
-  const limits: Record<string, number> = { inquiry: 4, comment: 6, page_view: 60 }
+  const limits: Record<string, number> = { inquiry: 4, comment: 6, page_view: 60, toki_booking: 4 }
   try {
     const allowed = await consumeQuota(bucket, kind, limits[kind] ?? 4)
     if (!allowed) return response({ ok: false, message: 'Too many submissions from this network. Please try again later.' }, 429, origin)
@@ -157,13 +178,71 @@ Deno.serve(async (request) => {
     return response({ ok: false, message: 'Submission protection is temporarily unavailable.' }, 503, origin)
   }
 
-  if (kind !== 'page_view') {
+  if (kind !== 'page_view' && kind !== 'toki_booking') {
     const token = typeof payload.turnstileToken === 'string' ? payload.turnstileToken : ''
     const expectedAction = kind === 'inquiry' ? 'portfolio_inquiry' : 'portfolio_comment'
     if (!(await verifyTurnstile(token, expectedAction))) return response({ ok: false, message: 'Human verification failed. Please retry the challenge.' }, 400, origin)
   }
 
   try {
+    if (kind === 'toki_booking') {
+      const name = readText(payload.name)
+      const contactMethod = readText(payload.contact_method)
+      const contactValue = readText(payload.contact_value)
+      const sessionType = readText(payload.session_type)
+      const preferredDate = readText(payload.preferred_date)
+      const alternateDate = readText(payload.alternate_date) || null
+      const preferredTime = readText(payload.preferred_time)
+      const location = readText(payload.location)
+      const notes = readText(payload.notes)
+      const participants = payload.participants
+      const privacyConsent = payload.privacy_consent === true
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const allowedContactMethods = ['instagram', 'facebook', 'email']
+      const allowedSessions = [
+        'Quick Snap', 'Toki Portraits', 'Signature Session',
+        'Duo Session', 'Outdoor session', 'Event coverage', 'Custom session',
+      ]
+      const allowedTimes = ['Morning', 'Afternoon', 'Evening', 'Flexible']
+      const today = manilaToday()
+      const valid = name !== null && name.length >= 1 && name.length <= 100
+        && contactMethod !== null && allowedContactMethods.includes(contactMethod)
+        && contactValue !== null && contactValue.length >= 2 && contactValue.length <= 254
+        && (contactMethod !== 'email' || emailPattern.test(contactValue))
+        && sessionType !== null && allowedSessions.includes(sessionType)
+        && preferredDate !== null && isValidDateOnly(preferredDate, today)
+        && (!alternateDate || isValidDateOnly(alternateDate, today))
+        && alternateDate !== preferredDate
+        && preferredTime !== null && allowedTimes.includes(preferredTime)
+        && location !== null && location.length >= 2 && location.length <= 200
+        && typeof participants === 'number' && Number.isInteger(participants) && participants >= 1 && participants <= 12
+        && notes !== null && notes.length >= 10 && notes.length <= 2000
+        && privacyConsent
+      if (!valid) {
+        return response({ ok: false, message: 'Please review your contact details, session, dates, location, participant count, and privacy confirmation.' }, 400, origin)
+      }
+
+      const referenceCode = `TOKI-${crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase()}`
+      const rows = await insertRecord('toki_booking_requests', {
+        reference_code: referenceCode,
+        name,
+        contact_method: contactMethod,
+        contact_value: contactValue,
+        session_type: sessionType,
+        preferred_date: preferredDate,
+        alternate_date: alternateDate,
+        preferred_time: preferredTime,
+        location,
+        participants,
+        notes,
+        privacy_consent: true,
+        status: 'new',
+      }, 'reference_code')
+      const savedReference = Array.isArray(rows) ? readText(rows[0]?.reference_code) : null
+      if (!savedReference) throw new Error('The request was saved but its reference could not be confirmed.')
+      return response({ ok: true, reference_code: savedReference }, 200, origin)
+    }
+
     if (kind === 'inquiry') {
       const name = readText(payload.name)
       const email = readText(payload.email)
