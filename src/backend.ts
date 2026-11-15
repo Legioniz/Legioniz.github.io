@@ -43,6 +43,26 @@ export type PortfolioComment = {
   updated_at: string
 }
 
+export type TokiBookingRequest = {
+  id: string
+  reference_code: string
+  name: string
+  contact_method: 'instagram' | 'facebook' | 'email'
+  contact_value: string
+  session_type: 'Quick Snap' | 'Toki Portraits' | 'Signature Session' | 'Duo Session' | 'Outdoor session' | 'Event coverage' | 'Custom session'
+  preferred_date: string
+  alternate_date: string | null
+  preferred_time: 'Morning' | 'Afternoon' | 'Evening' | 'Flexible'
+  location: string
+  participants: number
+  notes: string
+  privacy_consent: boolean
+  status: 'new' | 'reviewing' | 'confirmed' | 'declined' | 'cancelled'
+  admin_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type AdminActivity = {
   id: string
   actor_id: string
@@ -198,6 +218,34 @@ export async function updateAdminInquiry(session: AdminSession, id: string, patc
 
 export async function deleteAdminInquiry(session: AdminSession, id: string) {
   return request<null>(`/rest/v1/inquiries?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' }, session.access_token)
+}
+
+export async function getAdminTokiBookings(session: AdminSession) {
+  return request<TokiBookingRequest[]>(
+    '/rest/v1/toki_booking_requests?select=*&order=created_at.desc&limit=250',
+    {},
+    session.access_token,
+  )
+}
+
+export async function updateAdminTokiBooking(
+  session: AdminSession,
+  id: string,
+  patch: Partial<Pick<TokiBookingRequest, 'status' | 'admin_notes'>>,
+) {
+  return request<TokiBookingRequest[]>(
+    `/rest/v1/toki_booking_requests?id=eq.${encodeURIComponent(id)}`,
+    { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(patch) },
+    session.access_token,
+  )
+}
+
+export async function deleteAdminTokiBooking(session: AdminSession, id: string) {
+  return request<null>(
+    `/rest/v1/toki_booking_requests?id=eq.${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    session.access_token,
+  )
 }
 
 export async function getAdminComments(session: AdminSession) {
