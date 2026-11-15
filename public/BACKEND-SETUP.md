@@ -1,6 +1,6 @@
 # Secure portfolio backend setup
 
-The frontend contains private inquiry and public-note forms, a moderated comment feed, an owner dashboard, and an opt-in analytics view. The comments workflow supports the complete lifecycle: visitors create pending notes; the public feed reads approved notes only; the owner can review, edit, approve, hide, archive, export, or permanently delete records. The production repository is connected to a dedicated Supabase project in Singapore, with the database migrations applied and the `portfolio-submit` Edge Function deployed. GitHub Actions supplies the public project URL and publishable key to the frontend build. The one-time owner Auth invitation is still required before the private admin console can be used; visitors can submit notes before then, but they remain pending and are not publicly visible.
+The frontend contains private portfolio inquiries, public notes, a moderated comment feed, a Supabase-backed TOKI SATSUEI booking-request intake, an owner dashboard, and an opt-in analytics view. The comments workflow supports the complete lifecycle: visitors create pending notes; the public feed reads approved notes only; the owner can review, edit, approve, hide, archive, export, or permanently delete records. The production repository is connected to a dedicated Supabase project in Singapore, with the database migrations applied and the `portfolio-submit` Edge Function deployed. GitHub Actions supplies the public project URL and publishable key to the frontend build. The one-time owner Auth invitation is still required before the private admin console can be used; visitors can submit notes before then, but they remain pending and are not publicly visible.
 
 For password recovery, set the Supabase **Authentication → URL Configuration** Site URL to `https://legioniz.github.io/` and add `https://legioniz.github.io/**` to the allowed Redirect URLs. The admin console sends password-reset emails back to `https://legioniz.github.io/?auth=recovery`; the portfolio then consumes the recovery token and presents a new-password form. Recovery tokens are kept only in tab-scoped session storage and removed from the address bar.
 
@@ -8,7 +8,7 @@ For password recovery, set the Supabase **Authentication → URL Configuration**
 
 - **Static frontend:** React/Vite hosted on GitHub Pages.
 - **Database and authentication:** Supabase PostgreSQL + Supabase Auth.
-- **Public intake:** `supabase/functions/portfolio-submit` validates inquiries/comments and consented page-view events, applies a server-side quota, optionally verifies Cloudflare Turnstile, then inserts through the service role.
+- **Public intake:** `supabase/functions/portfolio-submit` validates portfolio inquiries, comments, TOKI booking requests, and consented page-view events; applies exact-origin checks, body-size limits, honeypots, HMAC rate quotas, and optional Cloudflare Turnstile; then inserts through the server-only service key.
 - **Owner dashboard:** Supabase Auth password sign-in, followed by an allowlist check against `admin_users`. All database authorization is enforced again by RLS.
 - **Analytics:** off by default. When a visitor opts in, the site records only a random session UUID, the path, and timestamp. Raw IPs, precise location, browser fingerprints, and user-agent strings are not stored. A one-way HMAC of the request network address is used only for rate limiting and is not reversible without the server secret.
 
@@ -37,7 +37,7 @@ Deploy from the repository root:
 supabase functions deploy portfolio-submit
 ```
 
-The function is deployed with JWT gateway verification disabled because it accepts public submissions. It performs exact Origin validation, streamed request-size checks, a honeypot, server-side quotas, and optional Turnstile verification itself. Rate limiting is 4 inquiries, 6 comments, and 60 opt-in page-view events per ten-minute window per HMAC-derived network bucket. The GET readiness probe reports only whether required configuration is present; it never returns credentials.
+The function is deployed with JWT gateway verification disabled because it accepts public submissions. It performs exact Origin validation, streamed request-size checks, a honeypot, server-side quotas, and optional Turnstile verification itself. Rate limiting is 4 portfolio inquiries, 4 TOKI booking requests, 6 comments, and 60 opt-in page-view events per ten-minute window per HMAC-derived network bucket. The GET readiness probe reports only whether required configuration is present; it never returns credentials.
 
 Cloudflare Turnstile is recommended for inquiry and comment submissions. Configure a Turnstile site key for the published domain and set it in the frontend. When `TURNSTILE_SECRET_KEY` is configured on Supabase, a valid challenge token is required for public inquiry and comment submissions. Page-view events do not invoke Turnstile.
 
@@ -56,6 +56,7 @@ The GitHub Actions workflow already has the project's public URL and publishable
 ## 4. Verify the controls before production
 
 - Anonymous users can read only comments with `status = 'approved'`.
+- TOKI booking requests can be created only through the rate-limited `portfolio-submit` function; anonymous roles have no direct table privileges, and authenticated owner access is restricted by RLS.
 - Anonymous users cannot read, create directly, edit, archive, or delete inquiries/comments.
 - Anonymous users cannot read analytics, allowlist records, quota rows, or administrator activity.
 - The owner account can read its own `admin_users` row and can manage records only while it remains in the allowlist. The dashboard additionally refreshes expired Auth sessions and keeps its session in tab-scoped `sessionStorage`.
@@ -64,6 +65,15 @@ The GitHub Actions workflow already has the project's public URL and publishable
 - Analytics remain disabled unless a visitor opts in; declining analytics does not affect forms or site functionality.
 - Test the inquiry fallback when backend configuration is absent. The form should open a prefilled email rather than falsely claim that a record was stored.
 
+## TOKI SATSUEI booking requests
+
+The separate static TOKI SATSUEI website submits structured booking requests to the same `portfolio-submit` Edge Function using the `toki_booking` kind. The browser sends only the project's public publishable key in the `apikey` header; it never receives a server secret. The Edge Function checks the allowlisted site Origin, a bounded request body, the honeypot, a four-request/ten-minute HMAC quota, contact and session fields, Manila-local dates, participant limits, and explicit privacy acknowledgement before inserting into `public.toki_booking_requests`.
+
+The table has RLS enabled and no anonymous policies or direct anonymous table grants. Authenticated table privileges are limited to SELECT, UPDATE, and DELETE; direct authenticated INSERT is revoked. Those operations are still restricted by `private.is_portfolio_admin()` to the owner allowlist. The server-only service role is the only insert path. Updates and deletes create entries in the existing administrator activity log.
+
+New requests enter with status `new`. The form returns a `TOKI-XXXXXXXX` reference only after the database insert is confirmed. A submitted request is not a reservation: there is no automatic calendar hold, price commitment, payment, or booking email. The owner reviews the **TOKI BOOKINGS** tab in the private Legioniz portfolio control room and contacts the visitor through the selected channel. Change a request to **Confirmed in writing** only after all booking terms are agreed with the visitor.
+
+The TOKI form collects only details needed to coordinate a shoot: name, contact method/detail, session, preferred and alternative dates, time window, location, participant count, notes, and a privacy acknowledgement. Public photo-sharing permission remains a separate decision. Do not add public table policies or expose the service key to the static website.
 ## 5. Admin dashboard behavior
 
 The footer's **ADMIN** link or the command palette's “Open admin console” opens the private dashboard. It provides:
