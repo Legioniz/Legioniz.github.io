@@ -2,12 +2,12 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { siteConfig } from './config'
 import {
-  backendConfig, deleteAdminComment, deleteAdminInquiry, exportRecords,
-  fetchApprovedComments, getAdminActivity, getAdminComments, getAdminInquiries,
+  backendConfig, deleteAdminComment, deleteAdminInquiry, deleteAdminTokiBooking, exportRecords,
+  fetchApprovedComments, getAdminActivity, getAdminComments, getAdminInquiries, getAdminTokiBookings,
   getAnalyticsSummary, readStoredAdminSession, refreshAdminSession, requestAdminPasswordRecovery, signInAdmin,
-  storeAdminSession, submitPublicRecord, updateAdminComment, updateAdminInquiry, updateAdminPassword,
+  storeAdminSession, submitPublicRecord, updateAdminComment, updateAdminInquiry, updateAdminPassword, updateAdminTokiBooking,
 } from './backend'
-import type { AdminActivity, AdminSession, PortfolioComment, PortfolioInquiry } from './backend'
+import type { AdminActivity, AdminSession, PortfolioComment, PortfolioInquiry, TokiBookingRequest } from './backend'
 
 type TurnstileAPI = {
   render: (element: HTMLElement, options: {
@@ -345,8 +345,12 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [tab, setTab] = useState<'inquiries' | 'comments' | 'analytics' | 'activity'>('inquiries')
+  const [tab, setTab] = useState<'inquiries' | 'toki_bookings' | 'comments' | 'analytics' | 'activity'>('inquiries')
   const [inquiries, setInquiries] = useState<PortfolioInquiry[]>([])
+  const [tokiBookings, setTokiBookings] = useState<TokiBookingRequest[]>([])
+  const [tokiBookingFilter, setTokiBookingFilter] = useState<'all' | TokiBookingRequest['status']>('new')
+  const [tokiBookingSearch, setTokiBookingSearch] = useState('')
+  const [tokiBookingNotes, setTokiBookingNotes] = useState<Record<string, string>>({})
   const [comments, setComments] = useState<PortfolioComment[]>([])
   const [activity, setActivity] = useState<AdminActivity[]>([])
   const [analytics, setAnalytics] = useState<{ views: number; uniqueSessions: number; pathCounts: Record<string, number> } | null>(null)
@@ -412,20 +416,24 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
     setBusy(true)
     setDashboardError('')
     try {
-      const [nextInquiries, nextComments, nextActivity, nextAnalytics] = await Promise.all([
-        getAdminInquiries(nextSession), getAdminComments(nextSession), getAdminActivity(nextSession), getAnalyticsSummary(nextSession),
+      const [nextInquiries, nextTokiBookings, nextComments, nextActivity, nextAnalytics] = await Promise.all([
+        getAdminInquiries(nextSession), getAdminTokiBookings(nextSession), getAdminComments(nextSession),
+        getAdminActivity(nextSession), getAnalyticsSummary(nextSession),
       ])
       setSession(nextSession); storeAdminSession(nextSession)
-      setInquiries(nextInquiries); setComments(nextComments); setActivity(nextActivity); setAnalytics(nextAnalytics)
+      setInquiries(nextInquiries); setTokiBookings(nextTokiBookings); setComments(nextComments)
+      setActivity(nextActivity); setAnalytics(nextAnalytics)
     } catch (error) {
       if (error instanceof Error && /JWT|token|expired/i.test(error.message)) {
         try {
           const refreshed = await refreshAdminSession(nextSession)
           setSession(refreshed); storeAdminSession(refreshed)
-          const [nextInquiries, nextComments, nextActivity, nextAnalytics] = await Promise.all([
-            getAdminInquiries(refreshed), getAdminComments(refreshed), getAdminActivity(refreshed), getAnalyticsSummary(refreshed),
+          const [nextInquiries, nextTokiBookings, nextComments, nextActivity, nextAnalytics] = await Promise.all([
+            getAdminInquiries(refreshed), getAdminTokiBookings(refreshed), getAdminComments(refreshed),
+            getAdminActivity(refreshed), getAnalyticsSummary(refreshed),
           ])
-          setInquiries(nextInquiries); setComments(nextComments); setActivity(nextActivity); setAnalytics(nextAnalytics)
+          setInquiries(nextInquiries); setTokiBookings(nextTokiBookings); setComments(nextComments)
+          setActivity(nextActivity); setAnalytics(nextAnalytics)
         } catch (refreshError) { storeAdminSession(null); setSession(null); setDashboardError(refreshError instanceof Error ? refreshError.message : 'Your administrator session expired.') }
       } else setDashboardError(error instanceof Error ? error.message : 'The dashboard data could not be loaded.')
     } finally { setBusy(false) }
@@ -497,6 +505,31 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
     try { await deleteAdminInquiry(session, id); await refresh() }
     catch (error) { setDashboardError(error instanceof Error ? error.message : 'Inquiry deletion failed.') }
   }
+
+  async function updateTokiBooking(id: string, patch: Partial<TokiBookingRequest>) {
+    if (!session) return
+    try {
+      await updateAdminTokiBooking(session, id, patch)
+      setTokiBookingNotes((current) => {
+        const next = { ...current }
+        delete next[id]
+        return next
+      })
+      await refresh()
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : 'TOKI booking request update failed.')
+    }
+  }
+
+  async function removeTokiBooking(id: string) {
+    if (!session || !window.confirm('Permanently delete this TOKI booking request? This cannot be undone.')) return
+    try {
+      await deleteAdminTokiBooking(session, id)
+      await refresh()
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : 'TOKI booking request deletion failed.')
+    }
+  }
   async function updateComment(id: string, patch: Partial<PortfolioComment>) {
     if (!session) return
     try { await updateAdminComment(session, id, patch); setEditCommentId(null); setCommentDraft({}); await refresh() }
@@ -510,7 +543,16 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
 
   if (!open) return null
   const newInquiryCount = inquiries.filter((item) => item.status === 'new').length
+  const newTokiBookingCount = tokiBookings.filter((item) => item.status === 'new').length
   const pendingCommentCount = comments.filter((item) => item.status === 'pending').length
+  const normalizedTokiBookingSearch = tokiBookingSearch.trim().toLocaleLowerCase()
+  const visibleTokiBookings = tokiBookings.filter((item) => {
+    const matchesStatus = tokiBookingFilter === 'all' || item.status === tokiBookingFilter
+    const matchesSearch = !normalizedTokiBookingSearch
+      || [item.reference_code, item.name, item.contact_value, item.session_type, item.location]
+        .some((value) => value.toLocaleLowerCase().includes(normalizedTokiBookingSearch))
+    return matchesStatus && matchesSearch
+  })
   const commentFilters = ['pending', 'approved', 'hidden', 'archived', 'all'] as const
   const normalizedCommentSearch = commentSearch.trim().toLocaleLowerCase()
   const visibleComments = comments.filter((item) => {
@@ -523,12 +565,47 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
       <section ref={dialogRef} className="admin-panel" role="dialog" aria-modal="true" aria-labelledby="admin-title" tabIndex={-1}>
         <header className="admin-head"><div><span className="feature-code">OWNER CONSOLE / PRIVATE</span><h2 id="admin-title">Portfolio <em>control room.</em></h2></div><button className="feature-close" onClick={onClose} aria-label="Close admin panel">×</button></header>
         {!backendConfig.configured ? <div className="admin-unconfigured"><strong>Backend connection required.</strong><p>No administrator mode is enabled in this build. Configure <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, apply the SQL schema, deploy the Edge Function, and add the owner’s Auth user ID to the admin allowlist. The site deliberately does not use a client-side password or fake administrator switch.</p><a href="/BACKEND-SETUP.md" target="_blank" rel="noopener noreferrer">Open backend setup instructions ↗</a></div> : !session ? recoveryToken ? <form className="admin-login" onSubmit={handlePasswordUpdate}><p>Your email has been verified. Choose a new password for the private portfolio administrator account.</p><label>NEW PASSWORD<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength={8} required/></label><label>CONFIRM NEW PASSWORD<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'UPDATING…' : 'SET NEW PASSWORD ↗'}</button>{(loginError || authNotice) && <p className="form-status" role="alert">{loginError || authNotice}</p>}</form> : recoveryRequestOpen ? <form className="admin-login" onSubmit={handleRecoveryRequest}><p>Enter the administrator email address. We’ll send a secure, time-limited link to choose a new password.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'SENDING…' : 'SEND PASSWORD RESET LINK ↗'}</button><button className="admin-auth-link" type="button" onClick={() => { setRecoveryRequestOpen(false); setLoginError('') }}>BACK TO SIGN IN</button>{(loginError || authNotice) && <p className="form-status" role="status">{loginError || authNotice}</p>}</form> : <form className="admin-login" onSubmit={handleLogin}><p>Sign in with the owner account created in Supabase Auth. Access is checked against the database allowlist and enforced again by Row Level Security.</p><label>ADMIN EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" required/></label><label>PASSWORD<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required/></label><button className="feature-button" type="submit" disabled={busy}>{busy ? 'VERIFYING…' : 'SIGN IN SECURELY ↗'}</button><button className="admin-auth-link" type="button" onClick={() => { setRecoveryRequestOpen(true); setLoginError('') }}>FORGOT PASSWORD?</button>{(loginError || dashboardError || authNotice) && <p className="form-status" role="alert">{loginError || dashboardError || authNotice}</p>}</form> : <>
-          <div className="admin-session-bar"><span>AUTHENTICATED / {session.user.email ?? session.user.id}</span><div><button onClick={() => void refresh()}>REFRESH</button><button onClick={() => { setSession(null); storeAdminSession(null); setInquiries([]); setComments([]); setActivity([]); setAnalytics(null) }}>SIGN OUT</button></div></div>
-          <div className="admin-metrics"><span><small>NEW INQUIRIES</small><b>{newInquiryCount}</b></span><span><small>PENDING COMMENTS</small><b>{pendingCommentCount}</b></span><span><small>RECORDED VIEWS</small><b>{analytics?.views ?? '—'}</b></span></div>
-          <nav className="admin-tabs" aria-label="Admin data views" role="group">{(['inquiries', 'comments', 'analytics', 'activity'] as const).map((item) => <button type="button" key={item} className={tab === item ? 'active' : ''} aria-pressed={tab === item} onClick={() => setTab(item)}>{item.toUpperCase()}</button>)}</nav>
+          <div className="admin-session-bar"><span>AUTHENTICATED / {session.user.email ?? session.user.id}</span><div><button onClick={() => void refresh()}>REFRESH</button><button onClick={() => { setSession(null); storeAdminSession(null); setInquiries([]); setTokiBookings([]); setComments([]); setActivity([]); setAnalytics(null) }}>SIGN OUT</button></div></div>
+          <div className="admin-metrics"><span><small>NEW INQUIRIES</small><b>{newInquiryCount}</b></span><span><small>NEW TOKI REQUESTS</small><b>{newTokiBookingCount}</b></span><span><small>PENDING COMMENTS</small><b>{pendingCommentCount}</b></span></div>
+          <nav className="admin-tabs" aria-label="Admin data views" role="group">{(['inquiries', 'toki_bookings', 'comments', 'analytics', 'activity'] as const).map((item) => <button type="button" key={item} className={tab === item ? 'active' : ''} aria-pressed={tab === item} onClick={() => setTab(item)}>{item === 'toki_bookings' ? 'TOKI BOOKINGS' : item.toUpperCase()}</button>)}</nav>
           {busy && <p className="admin-loading">SYNCING PRIVATE RECORDS…</p>}
           {dashboardError && <p className="form-status" role="alert">{dashboardError}</p>}
           {tab === 'inquiries' && <div className="admin-record-list">{inquiries.length ? inquiries.map((item) => <article className="admin-record" key={item.id}><div className="admin-record-top"><span>{new Date(item.created_at).toLocaleString()}</span><select aria-label={`Status for ${item.name}`} value={item.status} onChange={(event) => void updateInquiry(item.id, { status: event.target.value as PortfolioInquiry['status'] })}><option value="new">New</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="archived">Archived</option></select></div>{editInquiryId === item.id ? <div className="admin-edit-fields"><input value={String(inquiryDraft.name ?? item.name)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, name: event.target.value }))} aria-label="Edit sender name"/><input value={String(inquiryDraft.email ?? item.email)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, email: event.target.value }))} aria-label="Edit sender email"/><input value={String(inquiryDraft.subject ?? item.subject)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, subject: event.target.value }))} aria-label="Edit inquiry subject"/><textarea value={String(inquiryDraft.message ?? item.message)} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, message: event.target.value }))} aria-label="Edit inquiry message"/><textarea value={String(inquiryDraft.admin_notes ?? item.admin_notes ?? '')} onChange={(event) => setInquiryDraft((draft) => ({ ...draft, admin_notes: event.target.value }))} aria-label="Administrator notes" placeholder="Private admin notes"/><div><button onClick={() => void updateInquiry(item.id, inquiryDraft)}>SAVE</button><button onClick={() => { setEditInquiryId(null); setInquiryDraft({}) }}>CANCEL</button></div></div> : <><h3>{item.subject}</h3><p>{item.message}</p><div className="admin-contact-line">{item.name} · <a href={`mailto:${item.email}`}>{item.email}</a></div>{item.admin_notes && <small className="admin-note">PRIVATE NOTE: {item.admin_notes}</small>}<div className="admin-record-actions"><button onClick={() => { setEditInquiryId(item.id); setInquiryDraft({}) }}>EDIT RECORD / NOTES</button><button onClick={() => void removeInquiry(item.id)}>DELETE</button></div></>}</article>) : <div className="admin-empty">No inquiry records.</div>}</div>}
+          {tab === 'toki_bookings' && <section className="admin-toki-bookings" aria-label="TOKI SATSUEI private booking requests">
+            <div className="admin-comment-toolbar">
+              <label>SEARCH TOKI REQUESTS<input type="search" value={tokiBookingSearch} onChange={(event) => setTokiBookingSearch(event.target.value)} placeholder="Reference, name, contact, session…" aria-label="Search TOKI booking requests"/></label>
+              <div className="admin-comment-filters" role="group" aria-label="Filter TOKI booking requests by status">
+                {(['new', 'reviewing', 'confirmed', 'declined', 'cancelled', 'all'] as const).map((filter) => <button type="button" key={filter} className={tokiBookingFilter === filter ? 'active' : ''} aria-pressed={tokiBookingFilter === filter} onClick={() => setTokiBookingFilter(filter)}>
+                  {filter.toUpperCase()} <b>{filter === 'all' ? tokiBookings.length : tokiBookings.filter((item) => item.status === filter).length}</b>
+                </button>)}
+              </div>
+            </div>
+            <div className="admin-record-list">
+              {visibleTokiBookings.length ? visibleTokiBookings.map((item) => <article className="admin-record admin-toki-booking-record" data-status={item.status} key={item.id}>
+                <div className="admin-record-top">
+                  <span>{item.reference_code} · {new Date(item.created_at).toLocaleString()}</span>
+                  <select aria-label={`Status for TOKI request ${item.reference_code}`} value={item.status} onChange={(event) => void updateTokiBooking(item.id, { status: event.target.value as TokiBookingRequest['status'] })}>
+                    <option value="new">New request</option><option value="reviewing">Reviewing</option><option value="confirmed">Confirmed in writing</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <h3>{item.name} · {item.session_type}</h3>
+                <div className="admin-toki-booking-meta">
+                  <span><b>CONTACT</b> {item.contact_method === 'instagram' ? 'Instagram' : item.contact_method === 'facebook' ? 'Facebook' : 'Email'}: {item.contact_value}</span>
+                  <span><b>PREFERRED</b> {item.preferred_date} · {item.preferred_time}</span>
+                  {item.alternate_date && <span><b>ALTERNATE</b> {item.alternate_date}</span>}
+                  <span><b>LOCATION</b> {item.location}</span>
+                  <span><b>PEOPLE</b> {item.participants}</span>
+                </div>
+                <p>{item.notes}</p>
+                <label className="admin-toki-private-note">PRIVATE ADMIN NOTES<textarea rows={2} maxLength={2000} value={tokiBookingNotes[item.id] ?? item.admin_notes ?? ''} onChange={(event) => setTokiBookingNotes((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="Internal follow-up, agreed package, confirmation details…"/></label>
+                <div className="admin-record-actions">
+                  <button type="button" disabled={(tokiBookingNotes[item.id] ?? item.admin_notes ?? '') === (item.admin_notes ?? '')} onClick={() => void updateTokiBooking(item.id, { admin_notes: tokiBookingNotes[item.id] ?? '' })}>SAVE PRIVATE NOTE</button>
+                  <button type="button" onClick={() => void removeTokiBooking(item.id)}>DELETE REQUEST</button>
+                </div>
+              </article>) : <div className="admin-empty">{tokiBookings.length ? 'No TOKI requests match this filter.' : 'No TOKI booking requests yet. New requests will appear here for private review.'}</div>}
+            </div>
+            <p className="admin-note">A submitted request is not a confirmed reservation. Change its status to “Confirmed in writing” only after the date, time, location, deliverables, and final price have been agreed with the client.</p>
+          </section>}
           {tab === 'comments' && <section className="admin-comments-workspace" aria-label="Comment moderation workspace">
             <div className="admin-comment-toolbar">
               <label>SEARCH PUBLIC NOTES<input type="search" value={commentSearch} onChange={(event) => setCommentSearch(event.target.value)} placeholder="Name or comment text…" aria-label="Search public notes"/></label>
