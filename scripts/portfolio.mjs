@@ -20,7 +20,7 @@ const expectedFiles = [
   'public/profile/king-art-portrait-480.webp', 'public/profile/king-art-portrait-800.webp', 'public/profile/king-art-portrait-1023.webp',
   'public/profile/king-art-portrait-480.jpg', 'public/profile/king-art-portrait-800.jpg', 'public/profile/king-art-portrait-1023.jpg',
   'design-assets/README.md', 'design-assets/og-card.svg',
-  'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/migrations/20261115144346_toki_booking_requests.sql', 'supabase/functions/portfolio-submit/index.ts',
+  'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/migrations/20261115144346_toki_booking_requests.sql', 'supabase/migrations/20261115145015_toki_booking_grant_hardening.sql', 'supabase/functions/portfolio-submit/index.ts',
   'scripts/portfolio.mjs', 'scripts/production-audit.mjs',
   'tests/adaptive-smoke.ts', 'tests/feature-security-qa.py', 'tests/production-quality-qa.py', 'tests/project-integrity-qa.py',
   'tests/design-motion-browser-qa.py', 'tests/interactions-browser-qa.py', 'tests/portfolio-motion-qa.py',
