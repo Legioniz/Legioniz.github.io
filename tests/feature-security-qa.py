@@ -108,7 +108,7 @@ check('create trigger inquiries_admin_audit after update or delete' in sql and '
 check('grant select on public.comments to anon;' in sql and 'grant all on public.admin_users' in sql and 'grant select on public.page_views, public.admin_activity to authenticated;' in sql, 'Table grants separate public comment reads from private admin data')
 
 
-confirmed_schedule_sql = (ROOT / 'supabase/migrations/202611160001_toki_booking_confirmed_schedule.sql').read_text(encoding='utf-8')
+confirmed_schedule_sql = (ROOT / 'supabase/migrations/20261116042322_toki_booking_confirmed_schedule.sql').read_text(encoding='utf-8')
 check('confirmed_date: string | null' in backend and 'confirmed_time:' in backend, 'TOKI booking types separate final confirmed schedule from client preferences')
 check('FINAL AGREED SCHEDULE' in backend_ui and 'SAVE FINAL SCHEDULE' in backend_ui and 'confirmed_date: schedule.date' in backend_ui, 'Owner booking queue saves final agreed date/time before allowing confirmation')
 check('toki_booking_confirmed_requires_schedule' in confirmed_schedule_sql and "status <> 'confirmed'" in confirmed_schedule_sql, 'Database rejects confirmed TOKI bookings without a final agreed date and time')
