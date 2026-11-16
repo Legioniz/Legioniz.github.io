@@ -52,6 +52,8 @@ export type TokiBookingRequest = {
   session_type: 'Quick Snap' | 'Toki Portraits' | 'Signature Session' | 'Duo Session' | 'Outdoor session' | 'Event coverage' | 'Custom session'
   preferred_date: string
   alternate_date: string | null
+  confirmed_date: string | null
+  confirmed_time: 'Morning' | 'Afternoon' | 'Evening' | 'Flexible' | null
   preferred_time: 'Morning' | 'Afternoon' | 'Evening' | 'Flexible'
   location: string
   participants: number
@@ -231,7 +233,7 @@ export async function getAdminTokiBookings(session: AdminSession) {
 export async function updateAdminTokiBooking(
   session: AdminSession,
   id: string,
-  patch: Partial<Pick<TokiBookingRequest, 'status' | 'admin_notes'>>,
+  patch: Partial<Pick<TokiBookingRequest, 'status' | 'admin_notes' | 'confirmed_date' | 'confirmed_time'>>,
 ) {
   return request<TokiBookingRequest[]>(
     `/rest/v1/toki_booking_requests?id=eq.${encodeURIComponent(id)}`,
