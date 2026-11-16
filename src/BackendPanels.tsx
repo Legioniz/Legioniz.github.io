@@ -351,7 +351,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
   const [tokiBookingFilter, setTokiBookingFilter] = useState<'all' | TokiBookingRequest['status']>('new')
   const [tokiBookingSearch, setTokiBookingSearch] = useState('')
   const [tokiBookingNotes, setTokiBookingNotes] = useState<Record<string, string>>({})
-  const [tokiBookingConfirmedSchedules, setTokiBookingConfirmedSchedules] = useState<Record<string, { date: string; time: string }>>({})
+  const [tokiBookingConfirmedSchedules, setTokiBookingConfirmedSchedules] = useState<Record<string, { date: string; startTime: string; endTime: string }>>({})
   const [comments, setComments] = useState<PortfolioComment[]>([])
   const [activity, setActivity] = useState<AdminActivity[]>([])
   const [analytics, setAnalytics] = useState<{ views: number; uniqueSessions: number; pathCounts: Record<string, number> } | null>(null)
@@ -525,7 +525,10 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
       })
       await refresh()
     } catch (error) {
-      setDashboardError(error instanceof Error ? error.message : 'TOKI booking request update failed.')
+      const message = error instanceof Error ? error.message : 'TOKI booking request update failed.'
+      setDashboardError(/23P01|exclusion constraint|toki_booking_no_overlapping_confirmed_time_windows/i.test(message)
+        ? 'That time window overlaps another confirmed TOKI session. Choose a different start or end time.'
+        : message)
     }
   }
 
@@ -595,13 +598,22 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                   <select aria-label={`Status for TOKI request ${item.reference_code}`} value={item.status} onChange={(event) => {
                     const nextStatus = event.target.value as TokiBookingRequest['status']
                     if (nextStatus === 'confirmed') {
-                      const schedule = tokiBookingConfirmedSchedules[item.id] ?? { date: item.confirmed_date ?? '', time: item.confirmed_time ?? '' }
-                      if (!schedule.date || !schedule.time) {
-                        setDashboardError('Set the final agreed date and time before marking this request confirmed.')
+                      const schedule = tokiBookingConfirmedSchedules[item.id] ?? {
+                        date: item.confirmed_date ?? '',
+                        startTime: item.confirmed_start_time?.slice(0, 5) ?? '',
+                        endTime: item.confirmed_end_time?.slice(0, 5) ?? '',
+                      }
+                      if (!schedule.date || !schedule.startTime || !schedule.endTime || schedule.startTime >= schedule.endTime) {
+                        setDashboardError('Set a valid final date, start time, and end time before confirming this booking.')
                         return
                       }
                       setDashboardError('')
-                      void updateTokiBooking(item.id, { status: nextStatus, confirmed_date: schedule.date, confirmed_time: schedule.time as NonNullable<TokiBookingRequest['confirmed_time']> })
+                      void updateTokiBooking(item.id, {
+                        status: nextStatus,
+                        confirmed_date: schedule.date,
+                        confirmed_start_time: schedule.startTime,
+                        confirmed_end_time: schedule.endTime,
+                      })
                     } else {
                       setDashboardError('')
                       void updateTokiBooking(item.id, { status: nextStatus })
@@ -621,15 +633,16 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                 <p>{item.notes}</p>
                 <div className="admin-toki-confirmed-schedule">
                   <div className="admin-toki-confirmed-heading"><b>FINAL AGREED SCHEDULE</b><span>{item.status === 'confirmed' ? 'VISIBLE ON PUBLIC CALENDAR' : 'HIDDEN FROM PUBLIC CALENDAR'}</span></div>
-                  <div className="admin-toki-confirmed-fields">
-                    <label>CONFIRMED DATE<input type="date" value={tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: event.target.value, time: current[item.id]?.time ?? item.confirmed_time ?? '' } }))}/></label>
-                    <label>CONFIRMED TIME WINDOW<select value={tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: current[item.id]?.date ?? item.confirmed_date ?? '', time: event.target.value } }))}>
-                      <option value="">Choose final time</option><option value="Morning">Morning</option><option value="Afternoon">Afternoon</option><option value="Evening">Evening</option><option value="Flexible">Flexible</option>
-                    </select></label>
+                  <div className="admin-toki-confirmed-fields admin-toki-exact-time-fields">
+                    <label>CONFIRMED DATE<input type="date" value={tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: event.target.value, startTime: current[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? '', endTime: current[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? '' } }))}/></label>
+                    <label>START TIME (PHT)<input type="time" step={300} value={tokiBookingConfirmedSchedules[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: current[item.id]?.date ?? item.confirmed_date ?? '', startTime: event.target.value, endTime: current[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? '' } }))}/></label>
+                    <label>END TIME (PHT)<input type="time" step={300} value={tokiBookingConfirmedSchedules[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: current[item.id]?.date ?? item.confirmed_date ?? '', startTime: current[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? '', endTime: event.target.value } }))}/></label>
                   </div>
+                  <p className="admin-toki-schedule-hint">Use the actual agreed session window. Multiple bookings can share this date when their time windows do not overlap. Times are stored in Philippine time.</p>
                   <div className="admin-record-actions">
-                    <button type="button" disabled={!(tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '') || !(tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? '') || ((tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '') === (item.confirmed_date ?? '') && (tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? '') === (item.confirmed_time ?? ''))} onClick={() => void updateTokiBooking(item.id, { confirmed_date: tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '', confirmed_time: (tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? '') as NonNullable<TokiBookingRequest['confirmed_time']> })}>SAVE FINAL SCHEDULE</button>
+                    <button type="button" disabled={!(tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '') || !(tokiBookingConfirmedSchedules[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? '') || !(tokiBookingConfirmedSchedules[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? '') || (tokiBookingConfirmedSchedules[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? '') >= (tokiBookingConfirmedSchedules[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? '') || ((tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '') === (item.confirmed_date ?? '') && (tokiBookingConfirmedSchedules[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? '') === (item.confirmed_start_time?.slice(0, 5) ?? '') && (tokiBookingConfirmedSchedules[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? '') === (item.confirmed_end_time?.slice(0, 5) ?? ''))} onClick={() => void updateTokiBooking(item.id, { confirmed_date: tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '', confirmed_start_time: tokiBookingConfirmedSchedules[item.id]?.startTime ?? item.confirmed_start_time?.slice(0, 5) ?? '', confirmed_end_time: tokiBookingConfirmedSchedules[item.id]?.endTime ?? item.confirmed_end_time?.slice(0, 5) ?? '' })}>SAVE FINAL SCHEDULE</button>
                   </div>
+                  {item.status === 'confirmed' && item.confirmed_date && item.confirmed_start_time && item.confirmed_end_time && <p className="admin-toki-current-slot">PUBLIC SLOT: {item.confirmed_date} · {item.confirmed_start_time.slice(0, 5)}–{item.confirmed_end_time.slice(0, 5)} PHT</p>}
                 </div>
                 <label className="admin-toki-private-note">PRIVATE ADMIN NOTES<textarea rows={2} maxLength={2000} value={tokiBookingNotes[item.id] ?? item.admin_notes ?? ''} onChange={(event) => setTokiBookingNotes((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="Internal follow-up, agreed package, confirmation details…"/></label>
                 <div className="admin-record-actions">
@@ -638,7 +651,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                 </div>
               </article>) : <div className="admin-empty">{tokiBookings.length ? 'No TOKI requests match this filter.' : 'No TOKI booking requests yet. New requests will appear here for private review.'}</div>}
             </div>
-            <p className="admin-note">A request is not a reservation. Set the final agreed date and time above, then mark it “Confirmed in writing” only after the schedule, location, deliverables, and final price have been agreed with the client. The public calendar uses this final date, never the original preferred or alternate date. Cancelled and declined requests disappear from public availability.</p>
+            <p className="admin-note">A request is not a reservation. Set the final agreed date, start time, and end time above, then mark it “Confirmed in writing” only after the schedule, location, deliverables, and final price have been agreed with the client. Multiple sessions may share a day when their times do not overlap. The public calendar shows confirmed time windows only; cancelled and declined requests disappear from public availability.</p>
           </section>}
           {tab === 'comments' && <section className="admin-comments-workspace" aria-label="Comment moderation workspace">
             <div className="admin-comment-toolbar">
