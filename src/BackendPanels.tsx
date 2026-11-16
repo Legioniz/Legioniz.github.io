@@ -509,9 +509,16 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
 
   async function updateTokiBooking(id: string, patch: Partial<TokiBookingRequest>) {
     if (!session) return
+    setDashboardError('')
     try {
       await updateAdminTokiBooking(session, id, patch)
       setTokiBookingNotes((current) => {
+        const next = { ...current }
+        delete next[id]
+        return next
+      })
+      setTokiBookingConfirmedSchedules((current) => {
+        if (!(id in current)) return current
         const next = { ...current }
         delete next[id]
         return next
