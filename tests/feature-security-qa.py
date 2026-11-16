@@ -116,6 +116,13 @@ check('FINAL AGREED SCHEDULE' in backend_ui and 'SAVE FINAL SCHEDULE' in backend
 check('toki_booking_confirmed_requires_schedule' in confirmed_schedule_sql and "status <> 'confirmed'" in confirmed_schedule_sql, 'Database rejects confirmed TOKI bookings without a final agreed date and time')
 check('toki_booking_requests_confirmed_date_idx' in confirmed_schedule_sql and 'where status = \'confirmed\'' in confirmed_schedule_sql, 'Confirmed calendar queries have a focused partial date index')
 
+
+toki_time_migration = (ROOT / 'supabase/migrations/20261116053000_toki_multiple_daily_booking_time_windows.sql').read_text(encoding='utf-8')
+check('confirmed_start_time: string | null' in backend and 'confirmed_end_time: string | null' in backend, 'TOKI booking types expose precise confirmed time windows')
+check('START TIME (PHT)' in backend_ui and 'END TIME (PHT)' in backend_ui and 'confirmed_start_time: schedule.startTime' in backend_ui, 'Owner dashboard manages exact agreed start and end times')
+check('toki_booking_no_overlapping_confirmed_time_windows' in toki_time_migration and 'exclude using gist' in toki_time_migration.lower(), 'Database prevents overlapping confirmed sessions using time-range exclusion')
+check('drop index if exists public.toki_booking_requests_one_confirmed_per_day_idx' in toki_time_migration and "where status = 'confirmed'" in toki_time_migration, 'Database removes one-booking-per-day restriction and indexes confirmed schedule reads')
+
 # TOKI booking requests remain private and are managed through the owner allowlist.
 check('create table public.toki_booking_requests' in toki_sql and 'enable row level security' in toki_sql, 'TOKI booking request table is created with RLS enabled')
 check('revoke all on table public.toki_booking_requests from public, anon' in toki_sql, 'TOKI booking requests grant no direct public or anonymous table access')
