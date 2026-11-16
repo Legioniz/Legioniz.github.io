@@ -43,5 +43,7 @@ comment on column public.toki_booking_requests.confirmed_start_time is
   'Final agreed local start time in Asia/Manila. Public calendar may display this time without booking identity.';
 comment on column public.toki_booking_requests.confirmed_end_time is
   'Final agreed local end time in Asia/Manila. Database exclusion constraint prevents overlapping confirmed sessions.';
+comment on column public.toki_booking_requests.confirmed_time is
+  'Legacy broad time-of-day field retained for compatibility. Exact confirmed booking windows use confirmed_start_time and confirmed_end_time.';
 comment on constraint toki_booking_no_overlapping_confirmed_time_windows on public.toki_booking_requests is
   'Confirmed TOKI sessions may share a calendar date only when their half-open time ranges do not overlap.';
