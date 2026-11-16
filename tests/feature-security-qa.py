@@ -117,7 +117,7 @@ check('toki_booking_confirmed_requires_schedule' in confirmed_schedule_sql and "
 check('toki_booking_requests_confirmed_date_idx' in confirmed_schedule_sql and 'where status = \'confirmed\'' in confirmed_schedule_sql, 'Confirmed calendar queries have a focused partial date index')
 
 
-toki_time_migration = (ROOT / 'supabase/migrations/20261116053000_toki_multiple_daily_booking_time_windows.sql').read_text(encoding='utf-8')
+toki_time_migration = (ROOT / 'supabase/migrations/20261116045418_toki_multiple_daily_booking_time_windows.sql').read_text(encoding='utf-8')
 check('confirmed_start_time: string | null' in backend and 'confirmed_end_time: string | null' in backend, 'TOKI booking types expose precise confirmed time windows')
 check('START TIME (PHT)' in backend_ui and 'END TIME (PHT)' in backend_ui and 'confirmed_start_time: schedule.startTime' in backend_ui, 'Owner dashboard manages exact agreed start and end times')
 check('toki_booking_no_overlapping_confirmed_time_windows' in toki_time_migration and 'exclude using gist' in toki_time_migration.lower(), 'Database prevents overlapping confirmed sessions using time-range exclusion')
