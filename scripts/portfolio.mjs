@@ -20,7 +20,7 @@ const expectedFiles = [
   'public/profile/king-art-portrait-480.webp', 'public/profile/king-art-portrait-800.webp', 'public/profile/king-art-portrait-1023.webp',
   'public/profile/king-art-portrait-480.jpg', 'public/profile/king-art-portrait-800.jpg', 'public/profile/king-art-portrait-1023.jpg',
   'design-assets/README.md', 'design-assets/og-card.svg',
-  'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/migrations/20261115144346_toki_booking_requests.sql', 'supabase/migrations/20261115145015_toki_booking_grant_hardening.sql', 'supabase/migrations/20261116042322_toki_booking_confirmed_schedule.sql', 'supabase/functions/portfolio-submit/index.ts',
+  'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/migrations/20261115144346_toki_booking_requests.sql', 'supabase/migrations/20261115145015_toki_booking_grant_hardening.sql', 'supabase/migrations/20261116042322_toki_booking_confirmed_schedule.sql', 'supabase/migrations/20261116043523_toki_one_confirmed_booking_per_day.sql', 'supabase/functions/portfolio-submit/index.ts',
   'scripts/portfolio.mjs', 'scripts/production-audit.mjs',
   'tests/adaptive-smoke.ts', 'tests/feature-security-qa.py', 'tests/production-quality-qa.py', 'tests/project-integrity-qa.py',
   'tests/design-motion-browser-qa.py', 'tests/interactions-browser-qa.py', 'tests/portfolio-motion-qa.py',
@@ -248,7 +248,7 @@ async function check() {
   log(await exists('.github/dependabot.yml'), 'Dependabot monitors npm and GitHub Actions dependencies')
   log(await exists('scripts/production-audit.mjs') && await exists('tests/production-quality-qa.py') && await exists('tests/recruiter-view-browser-qa.py') && await exists('tests/accessibility-browser-qa.py'), 'Production budgets, source checks, and full/recruiter accessibility browser tests are included')
 
-  const sourceFiles = ['src/App.tsx', 'src/PrivacyNotice.tsx', 'src/RecruiterView.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/migrations/20261115144346_toki_booking_requests.sql', 'supabase/migrations/20261115145015_toki_booking_grant_hardening.sql', 'supabase/migrations/20261116042322_toki_booking_confirmed_schedule.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
+  const sourceFiles = ['src/App.tsx', 'src/PrivacyNotice.tsx', 'src/RecruiterView.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/BackendPanels.tsx', 'src/backend.ts', 'src/serviceWorker.ts', 'src/adaptive.ts', 'src/reveal.ts', 'src/masthead.ts', 'src/ErrorBoundary.tsx', 'src/data.ts', 'src/config.ts', 'src/sound.ts', 'src/styles.css', 'supabase/migrations/202611090001_portfolio_backend.sql', 'supabase/migrations/20261115144346_toki_booking_requests.sql', 'supabase/migrations/20261115145015_toki_booking_grant_hardening.sql', 'supabase/migrations/20261116042322_toki_booking_confirmed_schedule.sql', 'supabase/migrations/20261116043523_toki_one_confirmed_booking_per_day.sql', 'supabase/functions/portfolio-submit/index.ts', 'public/sw.js']
   let totalBytes = 0
   for (const relative of sourceFiles) totalBytes += (await stat(path.join(ROOT, relative))).size
   console.log(`\nSource footprint: ${(totalBytes / 1024).toFixed(1)} KB across ${sourceFiles.length} source, backend, and PWA files.`)
