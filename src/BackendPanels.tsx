@@ -594,7 +594,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                         return
                       }
                       setDashboardError('')
-                      void updateTokiBooking(item.id, { status: nextStatus, confirmed_date: schedule.date, confirmed_time: schedule.time })
+                      void updateTokiBooking(item.id, { status: nextStatus, confirmed_date: schedule.date, confirmed_time: schedule.time as NonNullable<TokiBookingRequest['confirmed_time']> })
                     } else {
                       setDashboardError('')
                       void updateTokiBooking(item.id, { status: nextStatus })
