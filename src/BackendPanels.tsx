@@ -351,6 +351,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
   const [tokiBookingFilter, setTokiBookingFilter] = useState<'all' | TokiBookingRequest['status']>('new')
   const [tokiBookingSearch, setTokiBookingSearch] = useState('')
   const [tokiBookingNotes, setTokiBookingNotes] = useState<Record<string, string>>({})
+  const [tokiBookingConfirmedSchedules, setTokiBookingConfirmedSchedules] = useState<Record<string, { date: string; time: string }>>({})
   const [comments, setComments] = useState<PortfolioComment[]>([])
   const [activity, setActivity] = useState<AdminActivity[]>([])
   const [analytics, setAnalytics] = useState<{ views: number; uniqueSessions: number; pathCounts: Record<string, number> } | null>(null)
@@ -584,7 +585,21 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
               {visibleTokiBookings.length ? visibleTokiBookings.map((item) => <article className="admin-record admin-toki-booking-record" data-status={item.status} key={item.id}>
                 <div className="admin-record-top">
                   <span>{item.reference_code} · {new Date(item.created_at).toLocaleString()}</span>
-                  <select aria-label={`Status for TOKI request ${item.reference_code}`} value={item.status} onChange={(event) => void updateTokiBooking(item.id, { status: event.target.value as TokiBookingRequest['status'] })}>
+                  <select aria-label={`Status for TOKI request ${item.reference_code}`} value={item.status} onChange={(event) => {
+                    const nextStatus = event.target.value as TokiBookingRequest['status']
+                    if (nextStatus === 'confirmed') {
+                      const schedule = tokiBookingConfirmedSchedules[item.id] ?? { date: item.confirmed_date ?? '', time: item.confirmed_time ?? '' }
+                      if (!schedule.date || !schedule.time) {
+                        setDashboardError('Set the final agreed date and time before marking this request confirmed.')
+                        return
+                      }
+                      setDashboardError('')
+                      void updateTokiBooking(item.id, { status: nextStatus, confirmed_date: schedule.date, confirmed_time: schedule.time })
+                    } else {
+                      setDashboardError('')
+                      void updateTokiBooking(item.id, { status: nextStatus })
+                    }
+                  }}>
                     <option value="new">New request</option><option value="reviewing">Reviewing</option><option value="confirmed">Confirmed in writing</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option>
                   </select>
                 </div>
@@ -597,6 +612,18 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                   <span><b>PEOPLE</b> {item.participants}</span>
                 </div>
                 <p>{item.notes}</p>
+                <div className="admin-toki-confirmed-schedule">
+                  <div className="admin-toki-confirmed-heading"><b>FINAL AGREED SCHEDULE</b><span>{item.confirmed_date ? 'PUBLISHED TO PUBLIC CALENDAR WHEN CONFIRMED' : 'PRIVATE UNTIL CONFIRMED'}</span></div>
+                  <div className="admin-toki-confirmed-fields">
+                    <label>CONFIRMED DATE<input type="date" value={tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: event.target.value, time: current[item.id]?.time ?? item.confirmed_time ?? '' } }))}/></label>
+                    <label>CONFIRMED TIME WINDOW<select value={tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: current[item.id]?.date ?? item.confirmed_date ?? '', time: event.target.value } }))}>
+                      <option value="">Choose final time</option><option value="Morning">Morning</option><option value="Afternoon">Afternoon</option><option value="Evening">Evening</option><option value="Flexible">Flexible</option>
+                    </select></label>
+                  </div>
+                  <div className="admin-record-actions">
+                    <button type="button" disabled={!(tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '') || !(tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? '') || ((tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '') === (item.confirmed_date ?? '') && (tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? '') === (item.confirmed_time ?? ''))} onClick={() => void updateTokiBooking(item.id, { confirmed_date: tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? '', confirmed_time: (tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? '') as NonNullable<TokiBookingRequest['confirmed_time']> })}>SAVE FINAL SCHEDULE</button>
+                  </div>
+                </div>
                 <label className="admin-toki-private-note">PRIVATE ADMIN NOTES<textarea rows={2} maxLength={2000} value={tokiBookingNotes[item.id] ?? item.admin_notes ?? ''} onChange={(event) => setTokiBookingNotes((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="Internal follow-up, agreed package, confirmation details…"/></label>
                 <div className="admin-record-actions">
                   <button type="button" disabled={(tokiBookingNotes[item.id] ?? item.admin_notes ?? '') === (item.admin_notes ?? '')} onClick={() => void updateTokiBooking(item.id, { admin_notes: tokiBookingNotes[item.id] ?? '' })}>SAVE PRIVATE NOTE</button>
@@ -604,7 +631,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                 </div>
               </article>) : <div className="admin-empty">{tokiBookings.length ? 'No TOKI requests match this filter.' : 'No TOKI booking requests yet. New requests will appear here for private review.'}</div>}
             </div>
-            <p className="admin-note">A submitted request is not a confirmed reservation. Change its status to “Confirmed in writing” only after the date, time, location, deliverables, and final price have been agreed with the client.</p>
+            <p className="admin-note">A request is not a reservation. Set the final agreed date and time above, then mark it “Confirmed in writing” only after the schedule, location, deliverables, and final price have been agreed with the client. The public calendar uses this final date, never the original preferred or alternate date. Cancelled and declined requests disappear from public availability.</p>
           </section>}
           {tab === 'comments' && <section className="admin-comments-workspace" aria-label="Comment moderation workspace">
             <div className="admin-comment-toolbar">
