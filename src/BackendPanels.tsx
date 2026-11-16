@@ -613,7 +613,7 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                 </div>
                 <p>{item.notes}</p>
                 <div className="admin-toki-confirmed-schedule">
-                  <div className="admin-toki-confirmed-heading"><b>FINAL AGREED SCHEDULE</b><span>{item.confirmed_date ? 'PUBLISHED TO PUBLIC CALENDAR WHEN CONFIRMED' : 'PRIVATE UNTIL CONFIRMED'}</span></div>
+                  <div className="admin-toki-confirmed-heading"><b>FINAL AGREED SCHEDULE</b><span>{item.status === 'confirmed' ? 'VISIBLE ON PUBLIC CALENDAR' : 'HIDDEN FROM PUBLIC CALENDAR'}</span></div>
                   <div className="admin-toki-confirmed-fields">
                     <label>CONFIRMED DATE<input type="date" value={tokiBookingConfirmedSchedules[item.id]?.date ?? item.confirmed_date ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: event.target.value, time: current[item.id]?.time ?? item.confirmed_time ?? '' } }))}/></label>
                     <label>CONFIRMED TIME WINDOW<select value={tokiBookingConfirmedSchedules[item.id]?.time ?? item.confirmed_time ?? ''} onChange={(event) => setTokiBookingConfirmedSchedules((current) => ({ ...current, [item.id]: { date: current[item.id]?.date ?? item.confirmed_date ?? '', time: event.target.value } }))}>
