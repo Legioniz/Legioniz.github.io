@@ -625,8 +625,9 @@ export function AdminPortal({ open, onClose }: { open: boolean; onClose: () => v
                 <h3>{item.name} · {item.session_type}</h3>
                 <div className="admin-toki-booking-meta">
                   <span><b>CONTACT</b> {item.contact_method === 'instagram' ? 'Instagram' : item.contact_method === 'facebook' ? 'Facebook' : 'Email'}: {item.contact_value}</span>
-                  <span><b>PREFERRED</b> {item.preferred_date} · {item.preferred_time}</span>
+                  <span><b>PREFERRED</b> {item.preferred_date} · {item.preferred_time ? item.preferred_time.slice(0, 5) : item.requested_time_of_day_legacy ?? 'Not specified'}</span>
                   {item.alternate_date && <span><b>ALTERNATE</b> {item.alternate_date}</span>}
+                  <span><b>TERMS</b> {item.booking_terms_accepted_at ? `Accepted · ${item.booking_terms_version ?? 'version not recorded'}` : 'Legacy request · not recorded'}</span>
                   <span><b>LOCATION</b> {item.location}</span>
                   <span><b>PEOPLE</b> {item.participants}</span>
                 </div>
