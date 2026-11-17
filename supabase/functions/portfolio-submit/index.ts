@@ -20,6 +20,13 @@ const ALLOWED_HOSTNAME = (() => {
 })()
 const RATE_SECRET = Deno.env.get('PORTFOLIO_RATE_LIMIT_SECRET') ?? SERVICE_ROLE_KEY
 const TURNSTILE_SECRET = Deno.env.get('TURNSTILE_SECRET_KEY') ?? ''
+// Separate key for the TOKI widget so the shared personal-portfolio widget keeps its own secret.
+const TOKI_TURNSTILE_SECRET = Deno.env.get('TOKI_TURNSTILE_SECRET_KEY') ?? ''
+// Emit configuration presence only; never include secret material in logs.
+console.info('TOKI Turnstile configuration', {
+  secretConfigured: Boolean(TOKI_TURNSTILE_SECRET),
+  hostnameConfigured: Boolean(ALLOWED_HOSTNAME),
+})
 
 const serviceKeyHeaders = {
   apikey: SERVICE_ROLE_KEY,
@@ -28,7 +35,11 @@ const serviceKeyHeaders = {
 
 const jsonHeaders = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
 
-function response(body: unknown, status: number, origin: string | null) {
+// Errors whose message is written for visitors and is safe to show them.
+// Anything else is logged server-side and replaced by a generic message.
+class PublicError extends Error {}
+
+function response(body: unknown, status: number, origin: string | null, extraHeaders: Record<string, string> = {}) {
   const corsOrigin = ALLOWED_ORIGIN && origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : 'null'
   return new Response(status === 204 ? null : JSON.stringify(body), {
     status,
@@ -38,6 +49,7 @@ function response(body: unknown, status: number, origin: string | null) {
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
       'Vary': 'Origin',
+      ...extraHeaders,
     },
   })
 }
@@ -58,16 +70,74 @@ async function consumeQuota(hash: string, scope: string, limit: number) {
   return await result.json() === true
 }
 
-async function verifyTurnstile(token: string, expectedAction: 'portfolio_inquiry' | 'portfolio_comment') {
-  if (!TURNSTILE_SECRET) return true
-  if (!token || !ALLOWED_HOSTNAME) return false
-  const body = new URLSearchParams({ secret: TURNSTILE_SECRET, response: token })
-  const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body })
-  if (!result.ok) return false
-  const payload = await result.json() as { success?: boolean; hostname?: string; action?: string }
-  return payload.success === true
-    && payload.hostname === ALLOWED_HOSTNAME
-    && payload.action === expectedAction
+async function verifyTurnstile(
+  token: string,
+  expectedAction: 'portfolio_inquiry' | 'portfolio_comment' | 'toki_booking',
+  secret: string,
+  failClosedWhenUnconfigured = false,
+) {
+  // Keep the personal portfolio's existing optional-secret behavior, but require
+  // the TOKI booking secret. Any configured secret is always verified strictly.
+  if (!secret) {
+    if (failClosedWhenUnconfigured) {
+      console.error('Turnstile verification secret is not configured', { expectedAction })
+    }
+    return !failClosedWhenUnconfigured
+  }
+  if (!token || token.length > 2048 || !ALLOWED_HOSTNAME) {
+    console.warn('Turnstile verification blocked before provider call', {
+      tokenPresent: Boolean(token),
+      tokenLength: token.length,
+      hostnameConfigured: Boolean(ALLOWED_HOSTNAME),
+      expectedAction,
+    })
+    return false
+  }
+
+  const body = new URLSearchParams({ secret, response: token })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5000)
+  try {
+    const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body,
+      signal: controller.signal,
+    })
+    if (!result.ok) {
+      console.warn('Turnstile Siteverify returned an HTTP error', { status: result.status })
+      return false
+    }
+
+    const payload = await result.json() as {
+      success?: boolean
+      hostname?: string
+      action?: string
+      'error-codes'?: unknown
+    }
+    const errorCodes = Array.isArray(payload['error-codes'])
+      ? payload['error-codes'].filter((code): code is string => typeof code === 'string').slice(0, 8)
+      : []
+    const hostnameMatches = payload.hostname === ALLOWED_HOSTNAME
+    const actionMatches = payload.action === expectedAction
+    if (payload.success !== true || !hostnameMatches || !actionMatches) {
+      // Never log the token or secret. Cloudflare error codes and match flags
+      // are enough to diagnose configuration versus token-lifetime failures.
+      console.warn('Turnstile Siteverify rejected verification', {
+        providerSuccess: payload.success === true,
+        errorCodes,
+        hostnameMatches,
+        actionMatches,
+      })
+    }
+    return payload.success === true && hostnameMatches && actionMatches
+  } catch (error) {
+    console.warn('Turnstile Siteverify request failed', {
+      reason: error instanceof Error ? error.name : 'unknown',
+    })
+    return false
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 async function readLimitedBody(request: Request, maximumBytes: number): Promise<string | null> {
@@ -91,21 +161,25 @@ async function readLimitedBody(request: Request, maximumBytes: number): Promise<
   return new TextDecoder().decode(body)
 }
 
+// Trim and drop control characters (keeps tabs/newlines) so stored text and
+// the notification email cannot be polluted by hidden characters.
 function readText(value: unknown): string | null {
-  return typeof value === 'string' ? value.trim() : null
+  return typeof value === 'string'
+    ? value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim()
+    : null
 }
 
-function manilaToday(): string {
+function manilaNow(): { date: string; time: string } {
   const parts = new Intl.DateTimeFormat('en', {
-    timeZone: 'Asia/Manila',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(new Date())
   const part = (type: string) => parts.find((item) => item.type === type)?.value ?? ''
-  return `${part('year')}-${part('month')}-${part('day')}`
+  return {
+    date: part('year') + '-' + part('month') + '-' + part('day'),
+    time: part('hour') + ':' + part('minute'),
+  }
 }
-
 function isValidDateOnly(value: string, notBefore: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
   const parsed = new Date(`${value}T00:00:00.000Z`)
@@ -128,9 +202,45 @@ async function insertRecord(table: string, record: Record<string, unknown>, retu
   if (!result.ok) {
     const detail = await result.text()
     console.error(`Insert failed for ${table}:`, detail.slice(0, 500))
-    throw new Error('The request could not be saved. Please retry or use the official contact channel listed on the website.')
+    throw new PublicError('The request could not be saved. Please retry or use the official contact channel listed on the website.')
   }
   return returning ? await result.json() as Array<Record<string, unknown>> : null
+}
+
+
+const TOKI_EMAIL_WEBHOOK_URL = Deno.env.get('TOKI_EMAIL_WEBHOOK_URL') ?? ''
+const TOKI_EMAIL_WEBHOOK_API_KEY = Deno.env.get('TOKI_EMAIL_WEBHOOK_API_KEY') ?? ''
+
+async function sendTokiBookingNotification(booking: Record<string, unknown>) {
+  if (!TOKI_EMAIL_WEBHOOK_URL) {
+    console.warn('TOKI Make webhook is not configured; booking remains saved.')
+    return 'not_configured'
+  }
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 8000)
+  try {
+    const result = await fetch(TOKI_EMAIL_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(TOKI_EMAIL_WEBHOOK_API_KEY ? { 'x-make-apikey': TOKI_EMAIL_WEBHOOK_API_KEY } : {}),
+      },
+      body: JSON.stringify({ kind: 'toki_booking_notification', booking }),
+      signal: controller.signal,
+    })
+    // Make's default Custom Webhook response is HTTP 200 with plain-text "Accepted".
+    // That confirms queue acceptance, not successful completion of later Gmail/Sheets modules.
+    if (!result.ok) {
+      console.warn('TOKI Make webhook rejected the booking notification:', result.status)
+      return 'failed'
+    }
+    return 'queued'
+  } catch (error) {
+    console.warn('TOKI Make webhook request failed:', error instanceof Error ? error.name : 'unknown')
+    return 'failed'
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 Deno.serve(async (request) => {
@@ -166,22 +276,28 @@ Deno.serve(async (request) => {
   // Honeypot: respond successfully without storing anything so simple bots do not learn the trap.
   if (typeof payload.website === 'string' && payload.website.trim()) return response({ ok: true }, 200, origin)
 
-  const forwarded = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unavailable'
+  const forwarded = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? `unavailable|${(request.headers.get('user-agent') ?? 'unknown').slice(0, 160)}`
   // Only an HMAC digest reaches Postgres; the raw address is neither stored nor logged.
   const bucket = await hmacHex(RATE_SECRET, forwarded)
   const limits: Record<string, number> = { inquiry: 4, comment: 6, page_view: 60, toki_booking: 4 }
   try {
     const allowed = await consumeQuota(bucket, kind, limits[kind] ?? 4)
-    if (!allowed) return response({ ok: false, message: 'Too many submissions from this network. Please try again later.' }, 429, origin)
+    if (!allowed) return response({ ok: false, message: 'Too many submissions from this network. Please try again later.' }, 429, origin, { 'Retry-After': '600' })
   } catch (error) {
     console.error('Quota check failed:', error)
     return response({ ok: false, message: 'Submission protection is temporarily unavailable.' }, 503, origin)
   }
 
-  if (kind !== 'page_view' && kind !== 'toki_booking') {
+  if (kind !== 'page_view') {
     const token = typeof payload.turnstileToken === 'string' ? payload.turnstileToken : ''
-    const expectedAction = kind === 'inquiry' ? 'portfolio_inquiry' : 'portfolio_comment'
-    if (!(await verifyTurnstile(token, expectedAction))) return response({ ok: false, message: 'Human verification failed. Please retry the challenge.' }, 400, origin)
+    const expectedAction = kind === 'inquiry'
+      ? 'portfolio_inquiry'
+      : kind === 'comment'
+        ? 'portfolio_comment'
+        : 'toki_booking'
+    const isTokiBooking = kind === 'toki_booking'
+    const secret = isTokiBooking ? TOKI_TURNSTILE_SECRET : TURNSTILE_SECRET
+    if (!(await verifyTurnstile(token, expectedAction, secret, isTokiBooking))) return response({ ok: false, message: 'Human verification failed. Please retry the challenge.' }, 400, origin)
   }
 
   try {
@@ -197,32 +313,39 @@ Deno.serve(async (request) => {
       const notes = readText(payload.notes)
       const participants = payload.participants
       const privacyConsent = payload.privacy_consent === true
+      const bookingTermsConsent = payload.booking_terms_consent === true
+      const bookingTermsVersion = readText(payload.booking_terms_version)
+      const expectedBookingTermsVersion = '2026-11-16-v1'
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       const allowedContactMethods = ['instagram', 'facebook', 'email']
       const allowedSessions = [
         'Quick Snap', 'Toki Portraits', 'Signature Session',
         'Duo Session', 'Outdoor session', 'Event coverage', 'Custom session',
       ]
-      const allowedTimes = ['Morning', 'Afternoon', 'Evening', 'Flexible']
-      const today = manilaToday()
+      const preferredTimePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+      const now = manilaNow()
       const valid = name !== null && name.length >= 1 && name.length <= 100
         && contactMethod !== null && allowedContactMethods.includes(contactMethod)
         && contactValue !== null && contactValue.length >= 2 && contactValue.length <= 254
         && (contactMethod !== 'email' || emailPattern.test(contactValue))
         && sessionType !== null && allowedSessions.includes(sessionType)
-        && preferredDate !== null && isValidDateOnly(preferredDate, today)
-        && (!alternateDate || isValidDateOnly(alternateDate, today))
+        && preferredDate !== null && isValidDateOnly(preferredDate, now.date)
+        && (!alternateDate || isValidDateOnly(alternateDate, now.date))
         && alternateDate !== preferredDate
-        && preferredTime !== null && allowedTimes.includes(preferredTime)
+        && preferredTime !== null && preferredTimePattern.test(preferredTime)
+        && (preferredDate !== now.date || preferredTime > now.time)
         && location !== null && location.length >= 2 && location.length <= 200
         && typeof participants === 'number' && Number.isInteger(participants) && participants >= 1 && participants <= 12
         && notes !== null && notes.length >= 10 && notes.length <= 2000
         && privacyConsent
+        && bookingTermsConsent
+        && bookingTermsVersion === expectedBookingTermsVersion
       if (!valid) {
-        return response({ ok: false, message: 'Please review your contact details, session, dates, location, participant count, and privacy confirmation.' }, 400, origin)
+        return response({ ok: false, message: 'Please review your contact details, session, dates, exact requested time (24-hour HH:MM), location, participant count, privacy acknowledgement, and booking/payment/cancellation terms acknowledgement. Same-day requests must be for a future time in Philippine Time.' }, 400, origin)
       }
 
       const referenceCode = `TOKI-${crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase()}`
+      const bookingTermsAcceptedAt = new Date().toISOString()
       const rows = await insertRecord('toki_booking_requests', {
         reference_code: referenceCode,
         name,
@@ -236,11 +359,29 @@ Deno.serve(async (request) => {
         participants,
         notes,
         privacy_consent: true,
+        booking_terms_accepted_at: bookingTermsAcceptedAt,
+        booking_terms_version: expectedBookingTermsVersion,
         status: 'new',
       }, 'reference_code')
       const savedReference = Array.isArray(rows) ? readText(rows[0]?.reference_code) : null
-      if (!savedReference) throw new Error('The request was saved but its reference could not be confirmed.')
-      return response({ ok: true, reference_code: savedReference }, 200, origin)
+      if (!savedReference) throw new PublicError('The request was saved but its reference could not be confirmed.')
+      const notificationStatus = await sendTokiBookingNotification({
+        reference_code: savedReference,
+        name,
+        contact_method: contactMethod,
+        contact_value: contactValue,
+        session_type: sessionType,
+        preferred_date: preferredDate,
+        alternate_date: alternateDate,
+        preferred_time: preferredTime,
+        location,
+        participants,
+        notes,
+        booking_terms_accepted_at: bookingTermsAcceptedAt,
+        booking_terms_version: expectedBookingTermsVersion,
+      })
+      // Email is best-effort: a mail outage must never make a saved booking look unsaved.
+      return response({ ok: true, reference_code: savedReference, notification_status: notificationStatus }, 200, origin)
     }
 
     if (kind === 'inquiry') {
@@ -278,7 +419,9 @@ Deno.serve(async (request) => {
     await insertRecord('page_views', { session_id, path })
     return response({ ok: true }, 200, origin)
   } catch (error) {
-    console.error('Portfolio submission failed:', error)
-    return response({ ok: false, message: error instanceof Error ? error.message : 'Submission failed.' }, 500, origin)
+    const requestId = crypto.randomUUID().slice(0, 8)
+    console.error('Portfolio submission failed:', { requestId, error })
+    const message = error instanceof PublicError ? error.message : 'Submission failed. Please try again in a moment.'
+    return response({ ok: false, message, request_id: requestId }, 500, origin)
   }
 })

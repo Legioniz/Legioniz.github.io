@@ -52,17 +52,20 @@ export type TokiBookingRequest = {
   session_type: 'Quick Snap' | 'Toki Portraits' | 'Signature Session' | 'Duo Session' | 'Outdoor session' | 'Event coverage' | 'Custom session'
   preferred_date: string
   alternate_date: string | null
-  confirmed_date: string | null
-  confirmed_time: 'Morning' | 'Afternoon' | 'Evening' | 'Flexible' | null
-  confirmed_start_time: string | null
-  confirmed_end_time: string | null
-  preferred_time: 'Morning' | 'Afternoon' | 'Evening' | 'Flexible'
+  requested_time_of_day_legacy: string | null
+  preferred_time: string | null
   location: string
   participants: number
   notes: string
   privacy_consent: boolean
+  booking_terms_accepted_at: string | null
+  booking_terms_version: string | null
   status: 'new' | 'reviewing' | 'confirmed' | 'declined' | 'cancelled'
   admin_notes: string | null
+  confirmed_date: string | null
+  confirmed_time_of_day_legacy: string | null
+  confirmed_start_time: string | null
+  confirmed_end_time: string | null
   created_at: string
   updated_at: string
 }
@@ -235,7 +238,7 @@ export async function getAdminTokiBookings(session: AdminSession) {
 export async function updateAdminTokiBooking(
   session: AdminSession,
   id: string,
-  patch: Partial<Pick<TokiBookingRequest, 'status' | 'admin_notes' | 'confirmed_date' | 'confirmed_time' | 'confirmed_start_time' | 'confirmed_end_time'>>,
+  patch: Partial<Pick<TokiBookingRequest, 'status' | 'admin_notes' | 'confirmed_date' | 'confirmed_time_of_day_legacy' | 'confirmed_start_time' | 'confirmed_end_time'>>,
 ) {
   return request<TokiBookingRequest[]>(
     `/rest/v1/toki_booking_requests?id=eq.${encodeURIComponent(id)}`,
