@@ -1,5 +1,5 @@
 /* Versioned, same-origin shell/static cache. Never caches form, auth, or database traffic. */
-const CACHE_NAME = 'legion-portfolio-shell-v18';
+const CACHE_NAME = 'legion-portfolio-shell-v19';
 const SHELL_URLS = [
   '/',
   '/robots.txt',
@@ -11,6 +11,12 @@ const SHELL_URLS = [
   '/favicon.ico?v=20261109-4',
 ];
 const API_PREFIXES = ['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'];
+// The standalone TOKI project site shares this origin but owns its own Pages deployment and cache lifecycle.
+const EXCLUDED_PATH_PREFIXES = ['/toki-satsuei'];
+
+function isExcludedPath(pathname) {
+  return EXCLUDED_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_URLS)));
@@ -33,13 +39,17 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (isExcludedPath(url.pathname)) return;
   if (API_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) return;
 
   if (request.mode === 'navigate') {
+    // This is a single-page portfolio shell. Do not cache project-site navigations as '/'.
+    if (url.pathname !== '/') return;
     event.respondWith((async () => {
       try {
         const response = await fetch(request);
-        if (response.ok) {
+        // Query views (for example, ?view=recruiter) must never replace the canonical offline shell.
+        if (response.ok && !url.search) {
           const cache = await caches.open(CACHE_NAME);
           await cache.put('/', response.clone());
         }

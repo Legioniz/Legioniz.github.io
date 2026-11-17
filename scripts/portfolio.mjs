@@ -135,7 +135,8 @@ async function check() {
   log(edge.includes('PORTFOLIO_ALLOWED_ORIGIN') && edge.includes('verifyTurnstile') && edge.includes('consume_portfolio_quota') && edge.includes('payload.website.trim()'), 'Submission Edge Function includes origin, CAPTCHA, quota, and honeypot controls')
   const serviceWorker = await read('public/sw.js')
   log(['/rest/v1/', '/auth/v1/', '/functions/v1/', '/storage/v1/'].every((prefix) => serviceWorker.includes(prefix)), 'Service worker excludes backend API paths from caching')
-  log(serviceWorker.includes("legion-portfolio-shell-v18") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4"), 'Versioned service-worker cache refreshes and precaches all favicon formats')
+  log(serviceWorker.includes("legion-portfolio-shell-v19") && serviceWorker.includes("/favicon.svg?v=20261109-4") && serviceWorker.includes("/favicon-32.png?v=20261109-4") && serviceWorker.includes("/favicon.ico?v=20261109-4") && serviceWorker.includes("EXCLUDED_PATH_PREFIXES = ['/toki-satsuei']"), 'Versioned service-worker cache refreshes favicons and excludes the standalone TOKI Pages deployment')
+  log(serviceWorker.includes("if (url.pathname !== '/') return;") && serviceWorker.includes("response.ok && !url.search"), 'Service worker caches only the canonical portfolio root, not project-site or query-view navigations')
 
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')

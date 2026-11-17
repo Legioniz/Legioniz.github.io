@@ -140,8 +140,10 @@ check(favicon_svg.lstrip().startswith("<svg") and favicon_png.startswith(bytes([
       "All deployed favicon source formats have valid file signatures")
 check('favicon.svg?v=20261109-4' in manifest and 'favicon-32.png?v=20261109-4' in manifest,
       "Web app manifest includes refreshed vector and raster icons")
-check("legion-portfolio-shell-v18" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker,
-      "Service-worker cache version refreshes and caches every favicon format")
+check("legion-portfolio-shell-v19" in service_worker and "favicon.ico?v=20261109-4" in service_worker and "|ico)$/i" in service_worker and "EXCLUDED_PATH_PREFIXES = ['/toki-satsuei']" in service_worker,
+      "Service-worker cache version refreshes favicons and excludes the standalone TOKI Pages deployment")
+check("if (url.pathname !== '/') return;" in service_worker and "response.ok && !url.search" in service_worker,
+      "Only the canonical portfolio root is cached as the offline shell; query views cannot overwrite it")
 check("legion-portfolio-motion-v7" in html_shell and "prefers-reduced-motion: reduce" in html_shell and "const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'" in html_shell and "const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)" in html_shell,
       "Early boot follows the OS reduced-motion preference unless a visitor explicitly overrides it")
 app_source = read("src/App.tsx")
