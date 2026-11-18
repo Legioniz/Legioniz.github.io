@@ -293,6 +293,7 @@ for doc_name in active_docs:
 check(not missing_doc_links, "Active documentation links resolve")
 for item in missing_doc_links:
     print(f"  BROKEN LINK {item}")
+check(re.search(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", read("BACKEND-SETUP.md"), re.I) is None, "Backend setup guide does not publish an administrative email address")
 check(read("BACKEND-SETUP.md") == read("public/BACKEND-SETUP.md"), "Deployed backend setup guide exactly matches its maintained source")
 check((ROOT / "design-assets/og-card.svg").is_file() and (ROOT / "public/og-card.png").is_file() and "og-card.svg" not in read("index.html"),
       "Social-card vector master is retained outside public assets; PNG is the deployed crawler image")
