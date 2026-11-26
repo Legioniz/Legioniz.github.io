@@ -46,7 +46,11 @@ export function installMotionZoneObserver(options: MotionZoneObserverOptions = {
             unregister(element)
             return
           }
-          element.classList.toggle(activeClass, entry.isIntersecting)
+
+          // IntersectionObserver callbacks are queued asynchronously. Re-read
+          // the current geometry instead of applying a possibly stale entry
+          // after a resize, zoom, or scroll that happened while it was queued.
+          element.classList.toggle(activeClass, isNearViewport(element))
         })
       }, { rootMargin: ROOT_MARGIN, threshold: 0 })
     : null
