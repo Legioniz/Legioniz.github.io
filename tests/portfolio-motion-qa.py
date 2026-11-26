@@ -116,7 +116,7 @@ with sync_playwright() as p:
         <section id="lazy-feature-root" style="min-height:220px"></section>
       </main></body></html>''')
     motion_page.add_script_tag(content=motion_zones_js + '\nwindow.__installMotionZoneObserver = installMotionZoneObserver;')
-    motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')})")
+    motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')}); true")
     # Wait for the controller's first frame-based viewport reconciliation.
     motion_page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
     initial_zone_state = motion_page.locator('#initial-motion-zone').evaluate("""element => {
