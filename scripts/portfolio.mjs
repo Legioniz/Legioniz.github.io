@@ -152,6 +152,7 @@ async function check() {
   log(app.includes('headerHidden') && app.includes('headerRef') && app.includes('installMastheadScrollBehavior'), 'Direction-aware auto-hiding masthead is connected to the React header')
   const masthead = await read('src/masthead.ts')
   log(app.includes('installMastheadScrollBehavior') && masthead.includes('requestAnimationFrame') && masthead.includes('HIDE_AFTER') && masthead.includes('REVEAL_AFTER'), 'Direction-aware masthead behavior is isolated, testable, and frame-batched')
+  log(masthead.includes("header.addEventListener('pointerenter'") && masthead.includes("header.addEventListener('focusin'") && masthead.includes("header.addEventListener('focusout'") && masthead.includes('HIDE_AFTER = 48') && masthead.includes('REVEAL_AFTER = 10'), 'Masthead stays available during pointer/keyboard interaction and ignores short scroll jitter')
   log(chrome.includes("window.addEventListener('resize', update") && chrome.includes("window.visualViewport?.addEventListener('resize', update") && chrome.includes("window.removeEventListener('orientationchange', update"), 'Quick navigator recalculates its scroll threshold after resize, zoom, and orientation changes')
   log((app.match(/data-reveal(?:=|\s|>)/g) || []).length >= 15 && app.includes('data-hero-line') && app.includes('data-hero-sequence'), 'Main sections retain scroll reveals while first-screen hero content uses its independent fail-open sequence')
   const reveal = await read('src/reveal.ts')
@@ -220,7 +221,7 @@ async function check() {
 
   const html = await read('index.html')
   log(html.includes('id="root"') && html.includes('boot-fallback') && html.includes('<noscript>'), 'Boot and no-JavaScript fallbacks exist')
-  log(html.includes("localStorage.getItem('legion-portfolio-motion-v7')") && html.includes("const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'") && html.includes("const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)") && html.includes('prefers-reduced-motion: reduce') && html.includes('dataset.motionOverride'), 'Early boot follows system reduced motion before paint while preserving explicit saved overrides')
+  log(html.includes("readPreference('legion-portfolio-motion-v7')") && html.includes("const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'") && html.includes("const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)") && html.includes('prefers-reduced-motion: reduce') && html.includes('dataset.motionOverride'), 'Early boot follows system reduced motion before paint while preserving explicit saved overrides')
   log(!/King-Art-Pacumberto-(?:Resume|CV)\.pdf|resume PDF|CV PDF/i.test(html), 'Startup and no-JavaScript fallbacks contain no personal-document downloads')
   log(html.includes('/favicon.svg?v=20261109-4') && html.includes('/favicon-32.png?v=20261109-4') && html.includes('/favicon.ico?v=20261109-4'), 'Cache-busted SVG, PNG, and ICO favicon fallbacks are linked from the HTML shell')
   const faviconPng = await readFile(path.join(ROOT, 'public', 'favicon-32.png'))
