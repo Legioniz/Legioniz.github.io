@@ -95,15 +95,18 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     frame = window.requestAnimationFrame(update)
   }
 
-  const onPointerEnter = (event: PointerEvent) => {
-    // Touch has no persistent hover state. Do not pin the masthead after a tap.
+  const onPointerOver = (event: PointerEvent) => {
+    // pointerover/out bubble, so ignore transitions between descendants.
+    // Touch pointers have no persistent hover state and must not pin the header.
     if (event.pointerType === 'touch') return
+    if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return
     pointerInside = true
     revealForInteraction()
   }
 
-  const onPointerLeave = (event: PointerEvent) => {
+  const onPointerOut = (event: PointerEvent) => {
     if (event.pointerType === 'touch') return
+    if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return
     pointerInside = false
     resetScrollIntent()
   }
@@ -120,8 +123,8 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
   window.addEventListener('scroll', scheduleUpdate, { passive: true })
   window.addEventListener('resize', scheduleUpdate, { passive: true })
   window.visualViewport?.addEventListener('resize', scheduleUpdate, { passive: true })
-  header.addEventListener('pointerenter', onPointerEnter)
-  header.addEventListener('pointerleave', onPointerLeave)
+  header.addEventListener('pointerover', onPointerOver)
+  header.addEventListener('pointerout', onPointerOut)
   header.addEventListener('focusin', onFocusIn)
   header.addEventListener('focusout', onFocusOut)
 
@@ -131,8 +134,8 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     window.removeEventListener('scroll', scheduleUpdate)
     window.removeEventListener('resize', scheduleUpdate)
     window.visualViewport?.removeEventListener('resize', scheduleUpdate)
-    header.removeEventListener('pointerenter', onPointerEnter)
-    header.removeEventListener('pointerleave', onPointerLeave)
+    header.removeEventListener('pointerover', onPointerOver)
+    header.removeEventListener('pointerout', onPointerOut)
     header.removeEventListener('focusin', onFocusIn)
     header.removeEventListener('focusout', onFocusOut)
   }
