@@ -352,6 +352,9 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':1440,'height':900})
     page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
     settle(100)
+    # Place the pointer over the header before installing the controller. This
+    # models React's post-commit effect mounting after the pointer is already there.
+    page.mouse.move(700, 42)
     page.evaluate('''() => {
       const header=document.querySelector('#site-header');
       window.__headerCleanup=window.__installMastheadScrollBehavior({

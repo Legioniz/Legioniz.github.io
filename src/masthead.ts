@@ -32,7 +32,10 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
   let direction = 0
   let accumulated = 0
   let hiddenState: boolean | null = null
-  let pointerInside = false
+  const supportsHover = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false
+  // React effects may mount after the pointer has already entered the header.
+  // Read the initial hover state so the first scroll cannot hide an in-use header.
+  let pointerInside = supportsHover && header.matches(':hover')
   let disposed = false
 
   const setHidden = (hidden: boolean) => {
@@ -98,14 +101,14 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
   const onPointerOver = (event: PointerEvent) => {
     // pointerover/out bubble, so ignore transitions between descendants.
     // Touch pointers have no persistent hover state and must not pin the header.
-    if (event.pointerType === 'touch') return
+    if (!supportsHover || event.pointerType === 'touch') return
     if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return
     pointerInside = true
     revealForInteraction()
   }
 
   const onPointerOut = (event: PointerEvent) => {
-    if (event.pointerType === 'touch') return
+    if (!supportsHover || event.pointerType === 'touch') return
     if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return
     pointerInside = false
     resetScrollIntent()

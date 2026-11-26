@@ -5,7 +5,7 @@
  * current nodes. Lazy React chunks, filtered cards, and other inserted content
  * are registered automatically. Removed nodes are unobserved and released.
  */
-export type MotionZoneObserverOptions = {
+type MotionZoneObserverOptions = {
   scope?: ParentNode
   activeClass?: string
 }
