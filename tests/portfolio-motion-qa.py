@@ -117,8 +117,17 @@ with sync_playwright() as p:
       </main></body></html>''')
     motion_page.add_script_tag(content=motion_zones_js + '\nwindow.__installMotionZoneObserver = installMotionZoneObserver;')
     motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')})")
-    initial_zone_active = motion_page.locator('#initial-motion-zone').evaluate("element => element.classList.contains('motion-active')")
-    assert initial_zone_active, {'initialZoneMustStartActive': initial_zone_active}
+    initial_zone_state = motion_page.locator('#initial-motion-zone').evaluate("""element => {
+      const bounds = element.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      return {
+        active: element.classList.contains('motion-active'),
+        bounds: {top:bounds.top,bottom:bounds.bottom,height:bounds.height},
+        layoutViewport: {width:window.innerWidth,height:window.innerHeight,scrollY:window.scrollY},
+        visualViewport: viewport ? {offsetTop:viewport.offsetTop,height:viewport.height,scale:viewport.scale} : null,
+      };
+    }""")
+    assert initial_zone_state['active'], initial_zone_state
     motion_page.evaluate("window.scrollTo({top:900,behavior:'instant'})")
     motion_page.wait_for_function("!document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
 
@@ -185,7 +194,7 @@ with sync_playwright() as p:
     }""")
     motion_page.close()
     motion_zone_results = {
-        'initialZoneObserved': initial_zone_active,
+        'initialZoneObserved': initial_zone_state['active'],
         'lazyZoneActivated': lazy_entered,
         'lazyZoneReactivatedAfterLeaving': lazy_reentered,
         'removedZoneReleased': True,
