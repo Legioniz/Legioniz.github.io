@@ -27,6 +27,19 @@ assert.equal(touch.particleLimit, 18)
 assert.equal(touch.orientation, 'portrait')
 assert.notEqual(adaptiveEffectKey(desktop), adaptiveEffectKey(touch), 'A quality/pointer change should update the rendering profile.')
 
+const narrowFinePointer = deriveAdaptiveProfile({
+  width: 400, height: 844, devicePixelRatio: 2, visualScale: 1,
+  pointer: 'fine', saveData: false, deviceMemory: 8, hardwareConcurrency: 8, reducedMotion: false,
+})
+assert.equal(narrowFinePointer.quality, 'balanced', 'A narrow viewport uses balanced motion even with a fine pointer and capable hardware.')
+assert.equal(narrowFinePointer.orientation, 'portrait')
+
+const shortLandscape = deriveAdaptiveProfile({
+  width: 900, height: 320, devicePixelRatio: 2, visualScale: 1,
+  pointer: 'fine', saveData: false, deviceMemory: 8, hardwareConcurrency: 8, reducedMotion: false,
+})
+assert.equal(shortLandscape.quality, 'balanced', 'Short landscape viewports avoid full-quality motion.')
+
 const constrained = deriveAdaptiveProfile({
   width: 1280, height: 800, devicePixelRatio: 2, visualScale: 1,
   pointer: 'fine', saveData: true, deviceMemory: 8, hardwareConcurrency: 8, reducedMotion: false,
@@ -46,6 +59,14 @@ const zoomed = deriveAdaptiveProfile({
 })
 assert.equal(zoomed.quality, 'balanced')
 
+const highlyZoomed = deriveAdaptiveProfile({
+  width: 760, height: 900, devicePixelRatio: 2, visualScale: 1.7,
+  pointer: 'fine', saveData: false, deviceMemory: 8, hardwareConcurrency: 8, reducedMotion: false,
+})
+assert.equal(highlyZoomed.quality, 'economy', 'High visual zoom selects the constrained rendering profile.')
+
+assert.equal(reduced.quality, 'economy', 'Reduced motion also uses the economy rendering profile.')
+
 const invalidInput = deriveAdaptiveProfile({
   width: Number.NaN, height: Number.POSITIVE_INFINITY, devicePixelRatio: Number.NaN, visualScale: Number.NaN,
   pointer: 'fine', saveData: false, deviceMemory: Number.NaN, hardwareConcurrency: Number.NaN, reducedMotion: false,
@@ -55,4 +76,4 @@ assert.equal(invalidInput.height, 1)
 assert.equal(invalidInput.visualScale, 1)
 assert.equal(invalidInput.pixelRatioCap, 1)
 
-console.log('Adaptive profile smoke tests passed: desktop, touch, data-saver, reduced-motion, zoomed viewport, DPR cap, invalid-input fallback, and resize-work coalescing.')
+console.log('Adaptive profile smoke tests passed: desktop, touch, narrow and short viewports, data-saver, reduced motion, zoom thresholds, DPR cap, invalid-input fallback, and resize-work coalescing.')

@@ -14,32 +14,45 @@
     <script>
       (() => {
         const root = document.documentElement
-        // Follow the operating-system motion preference unless the visitor explicitly chooses otherwise.
-        root.dataset.motionOverride = 'system'
-        root.dataset.motion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on'
-        try {
-          const savedTheme = (() => { try { return localStorage.getItem('legion-portfolio-theme') } catch { return null } })()
-          const theme = savedTheme === 'light' ? 'light' : 'dark'
-          document.documentElement.dataset.theme = theme
-          const themeColor = document.querySelector('meta[name="theme-color"]')
-          if (themeColor) themeColor.content = theme === 'light' ? '#f3f0e9' : '#151719'
-
-          const hints = navigator
-          const saveData = Boolean(hints.connection && hints.connection.saveData)
-          const reducedGraphics = saveData || (hints.deviceMemory && hints.deviceMemory <= 2) || (hints.hardwareConcurrency && hints.hardwareConcurrency <= 2)
-          const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? (navigator.maxTouchPoints > 0)
-          document.documentElement.dataset.quality = reducedGraphics ? 'economy' : (coarsePointer ? 'balanced' : 'full')
-          document.documentElement.dataset.orientation = innerWidth >= innerHeight ? 'landscape' : 'portrait'
-
-          const savedMotion = (() => { try { return localStorage.getItem('legion-portfolio-motion-v7') } catch { return null } })()
-          const systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-          const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
-          const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)
-          root.dataset.motionOverride = motionOverride
-          root.dataset.motion = motionEnabled ? 'on' : 'off'
-        } catch {
-          // Theme and motion preferences remain usable when storage is unavailable.
+        const hints = navigator
+        const readPreference = (key) => {
+          try { return localStorage.getItem(key) } catch { return null }
         }
+
+        // Resolve motion before the first paint. The same inputs and quality
+        // thresholds are used by src/adaptive.ts after React mounts.
+        const savedMotion = readPreference('legion-portfolio-motion-v7')
+        const systemReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+        const motionOverride = savedMotion === 'on' || savedMotion === 'off' ? savedMotion : 'system'
+        const motionEnabled = savedMotion === 'on' || (savedMotion !== 'off' && !systemReducedMotion)
+        root.dataset.motionOverride = motionOverride
+        root.dataset.motion = motionEnabled ? 'on' : 'off'
+
+        const viewport = window.visualViewport
+        const fallbackWidth = window.innerWidth || 1
+        const fallbackHeight = window.innerHeight || 1
+        const width = Math.max(1, Math.min(fallbackWidth, viewport?.width || fallbackWidth))
+        const height = Math.max(1, Math.min(fallbackHeight, viewport?.height || fallbackHeight))
+        const visualScale = Number.isFinite(viewport?.scale)
+          ? Math.min(4, Math.max(0.5, viewport.scale))
+          : 1
+        const pointerQuery = window.matchMedia?.('(pointer: coarse)')
+        const coarsePointer = pointerQuery ? pointerQuery.matches : (hints.maxTouchPoints > 0)
+        const saveData = hints.connection?.saveData === true
+        const deviceMemory = Number.isFinite(hints.deviceMemory) && hints.deviceMemory > 0 ? hints.deviceMemory : 4
+        const hardwareConcurrency = Number.isFinite(hints.hardwareConcurrency) && hints.hardwareConcurrency > 0 ? hints.hardwareConcurrency : 4
+        const smallViewport = width < 520 || height < 340
+        const constrained = saveData || deviceMemory <= 2 || hardwareConcurrency <= 2 || visualScale >= 1.65
+        const balanced = coarsePointer || smallViewport || deviceMemory <= 4 || hardwareConcurrency <= 4 || visualScale >= 1.25
+
+        root.dataset.quality = constrained || !motionEnabled ? 'economy' : balanced ? 'balanced' : 'full'
+        root.dataset.orientation = width >= height ? 'landscape' : 'portrait'
+
+        const savedTheme = readPreference('legion-portfolio-theme')
+        const theme = savedTheme === 'light' ? 'light' : 'dark'
+        root.dataset.theme = theme
+        const themeColor = document.querySelector('meta[name="theme-color"]')
+        if (themeColor) themeColor.content = theme === 'light' ? '#f3f0e9' : '#151719'
       })()
     </script>
     <meta name="description" content="King Art D. Pacumberto — PUP Quezon City BSIT student building software and embedded projects, with experience in IT support, technical operations, student leadership, and event production." />

@@ -116,12 +116,25 @@ export function QuickNavigator({ activeSection, onNavigate }: { activeSection: s
       if (frame) return
       frame = window.requestAnimationFrame(() => {
         frame = 0
-        setVisible(window.scrollY > Math.max(560, window.innerHeight * 0.72))
+        const viewportHeight = window.visualViewport?.height || window.innerHeight
+        const nextVisible = window.scrollY > Math.max(560, viewportHeight * 0.72)
+        setVisible((current) => current === nextVisible ? current : nextVisible)
       })
     }
+
     update()
     window.addEventListener('scroll', update, { passive: true })
-    return () => { window.removeEventListener('scroll', update); if (frame) window.cancelAnimationFrame(frame) }
+    window.addEventListener('resize', update, { passive: true })
+    window.addEventListener('orientationchange', update, { passive: true })
+    window.visualViewport?.addEventListener('resize', update, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+      window.visualViewport?.removeEventListener('resize', update)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
   }, [])
   if (!visible) return null
   return (

@@ -1,8 +1,8 @@
 /**
  * Direction-aware masthead scroll behavior.
- * One passive scroll listener is batched through requestAnimationFrame.
- * The React component owns rendering; this module only reports hidden state
- * and updates the decorative reading-progress bar.
+ *
+ * Scroll input is frame-batched. The header stays available while the visitor
+ * is interacting with it, and only hides after deliberate downward movement.
  */
 interface MastheadScrollOptions {
   header: HTMLElement
@@ -13,9 +13,9 @@ interface MastheadScrollOptions {
   topThreshold?: number
 }
 
-const HIDE_AFTER = 18
-const REVEAL_AFTER = 8
-const DEFAULT_TOP_THRESHOLD = 76
+const HIDE_AFTER = 48
+const REVEAL_AFTER = 10
+const DEFAULT_TOP_THRESHOLD = 88
 
 export function installMastheadScrollBehavior(options: MastheadScrollOptions): () => void {
   const {
@@ -32,12 +32,33 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
   let direction = 0
   let accumulated = 0
   let hiddenState: boolean | null = null
+  const supportsHover = typeof window.matchMedia === 'function'
+    && (
+      window.matchMedia('(any-hover: hover) and (any-pointer: fine)').matches
+      || window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    )
+  // React effects may mount after the pointer has already entered the header.
+  // Read the initial hover state so the first scroll cannot hide an in-use header.
+  let pointerInside = supportsHover && header.matches(':hover')
   let disposed = false
 
   const setHidden = (hidden: boolean) => {
     if (hiddenState === hidden) return
     hiddenState = hidden
     onHiddenChange(hidden)
+  }
+
+  const resetScrollIntent = () => {
+    direction = 0
+    accumulated = 0
+    // Do not count scrolling that happened while the visitor was interacting
+    // with the header toward the next hide/reveal threshold.
+    lastY = Math.max(0, window.scrollY)
+  }
+
+  const revealForInteraction = () => {
+    resetScrollIntent()
+    setHidden(false)
   }
 
   const update = () => {
@@ -48,9 +69,8 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     const delta = currentY - lastY
     const focused = header.matches(':focus-within')
 
-    // Keep the masthead visible near the top, while a menu is open, whenever
-    // keyboard focus is inside it, and whenever motion is disabled.
-    if (currentY <= topThreshold || menuOpen || !motionEnabled || focused) {
+    // Never slide the control surface away while it is being used.
+    if (currentY <= topThreshold || menuOpen || !motionEnabled || focused || pointerInside) {
       setHidden(false)
       direction = 0
       accumulated = 0
@@ -82,10 +102,38 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     frame = window.requestAnimationFrame(update)
   }
 
+  const onPointerOver = (event: PointerEvent) => {
+    // pointerover/out bubble, so ignore transitions between descendants.
+    // Touch pointers have no persistent hover state and must not pin the header.
+    if (!supportsHover || event.pointerType === 'touch') return
+    if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return
+    pointerInside = true
+    revealForInteraction()
+  }
+
+  const onPointerOut = (event: PointerEvent) => {
+    if (!supportsHover || event.pointerType === 'touch') return
+    if (event.relatedTarget instanceof Node && header.contains(event.relatedTarget)) return
+    pointerInside = false
+    resetScrollIntent()
+  }
+
+  const onFocusIn = () => revealForInteraction()
+
+  const onFocusOut = (event: FocusEvent) => {
+    const nextTarget = event.relatedTarget
+    if (nextTarget instanceof Node && header.contains(nextTarget)) return
+    resetScrollIntent()
+  }
+
   update()
   window.addEventListener('scroll', scheduleUpdate, { passive: true })
   window.addEventListener('resize', scheduleUpdate, { passive: true })
   window.visualViewport?.addEventListener('resize', scheduleUpdate, { passive: true })
+  header.addEventListener('pointerover', onPointerOver)
+  header.addEventListener('pointerout', onPointerOut)
+  header.addEventListener('focusin', onFocusIn)
+  header.addEventListener('focusout', onFocusOut)
 
   return () => {
     disposed = true
@@ -93,5 +141,9 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     window.removeEventListener('scroll', scheduleUpdate)
     window.removeEventListener('resize', scheduleUpdate)
     window.visualViewport?.removeEventListener('resize', scheduleUpdate)
+    header.removeEventListener('pointerover', onPointerOver)
+    header.removeEventListener('pointerout', onPointerOut)
+    header.removeEventListener('focusin', onFocusIn)
+    header.removeEventListener('focusout', onFocusOut)
   }
 }

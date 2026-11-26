@@ -9,19 +9,22 @@ ROOT = Path(__file__).resolve().parents[1]
 CSS = (ROOT / 'src/styles.css').read_text()
 REVEAL_SOURCE = ROOT / 'src/reveal.ts'
 MASTHEAD_SOURCE = ROOT / 'src/masthead.ts'
+MOTION_ZONES_SOURCE = ROOT / 'src/motion-zones.ts'
 INDEX = (ROOT / 'index.html').read_text()
 APP = (ROOT / 'src/App.tsx').read_text()
 
 # Compile the exact production reveal controller; no rewritten JS copy is used.
 with tempfile.TemporaryDirectory(prefix='legion-reveal-') as temp_dir:
     subprocess.run([
-        'tsc', '--ignoreConfig', str(REVEAL_SOURCE), str(MASTHEAD_SOURCE), '--target', 'ES2020', '--module', 'ES2020',
+        'tsc', '--ignoreConfig', str(REVEAL_SOURCE), str(MASTHEAD_SOURCE), str(MOTION_ZONES_SOURCE), '--target', 'ES2020', '--module', 'ES2020',
         '--lib', 'ES2020,DOM,DOM.Iterable', '--skipLibCheck', '--outDir', temp_dir,
     ], check=True, capture_output=True, text=True)
     reveal_js = (Path(temp_dir) / 'reveal.js').read_text()
     masthead_js = (Path(temp_dir) / 'masthead.js').read_text()
+    motion_zones_js = (Path(temp_dir) / 'motion-zones.js').read_text()
     reveal_js = reveal_js.replace('export function installScrollReveal', 'function installScrollReveal')
     masthead_js = masthead_js.replace('export function installMastheadScrollBehavior', 'function installMastheadScrollBehavior')
+    motion_zones_js = motion_zones_js.replace('export function installMotionZoneObserver', 'function installMotionZoneObserver')
 
 HTML = f'''<!doctype html><html data-theme="dark" data-quality="full" data-pointer="fine" data-motion="on" data-motion-override="on"><head>
 <meta name="viewport" content="width=device-width,initial-scale=1"><style>{CSS}</style><style>
@@ -101,6 +104,107 @@ with sync_playwright() as p:
     settle(820)
     returned=visible_state(target)
     assert returned['state']=='in' and float(returned['opacity']) > .95, returned
+
+    print('QA:dynamic motion-zone lifecycle', flush=True)
+    motion_page = browser.new_page(viewport={'width': 1280, 'height': 720}, reduced_motion='no-preference')
+    motion_page.set_default_timeout(8000)
+    motion_page.on('pageerror', lambda error: errors.append(str(error)))
+    motion_page.set_content('''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+      <body style="margin:0;min-height:3000px"><main id="motion-scope">
+        <div id="initial-motion-zone" data-motion-zone style="height:80px;margin-top:120px">Initial zone</div>
+        <div style="height:1320px"></div>
+        <section id="lazy-feature-root" style="min-height:220px"></section>
+      </main></body></html>''')
+    motion_page.add_script_tag(content=motion_zones_js + '\nwindow.__installMotionZoneObserver = installMotionZoneObserver;')
+    motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')}); true")
+    # Wait for the controller's first frame-based viewport reconciliation.
+    motion_page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+    initial_zone_state = motion_page.locator('#initial-motion-zone').evaluate("""element => {
+      const bounds = element.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      return {
+        active: element.classList.contains('motion-active'),
+        bounds: {top:bounds.top,bottom:bounds.bottom,height:bounds.height},
+        layoutViewport: {width:window.innerWidth,height:window.innerHeight,scrollY:window.scrollY},
+        visualViewport: viewport ? {offsetTop:viewport.offsetTop,height:viewport.height,scale:viewport.scale} : null,
+      };
+    }""")
+    assert initial_zone_state['active'], initial_zone_state
+    motion_page.evaluate("window.scrollTo({top:900,behavior:'instant'})")
+    motion_page.wait_for_function("!document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
+
+    # The observer is installed while this lazy feature root has no motion zones.
+    # Insert the late-mounted zone while it is still offscreen, then scroll into it.
+    motion_page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+    motion_page.evaluate("""() => {
+      document.querySelector('#lazy-feature-root').insertAdjacentHTML(
+        'beforeend',
+        '<div id="lazy-motion-zone" data-motion-zone style="height:90px">Lazy feature zone</div>'
+      );
+    }""")
+    motion_page.wait_for_function("document.querySelector('#lazy-motion-zone') !== null")
+    motion_page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+    lazy_zone = motion_page.locator('#lazy-motion-zone')
+    lazy_initial = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
+    assert not lazy_initial, {'offscreenLazyZoneMustRemainPaused': lazy_initial}
+    lazy_y = lazy_zone.evaluate('(element) => element.getBoundingClientRect().top + window.scrollY')
+    motion_page.evaluate('(y) => window.scrollTo({top:y - innerHeight * .5,behavior:"instant"})', lazy_y)
+    motion_page.wait_for_function("document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
+    lazy_entered = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
+    motion_page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+    motion_page.wait_for_function("!document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
+    motion_page.evaluate('(y) => window.scrollTo({top:y - innerHeight * .5,behavior:"instant"})', lazy_y)
+    motion_page.wait_for_function("document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
+    lazy_reentered = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
+
+    motion_page.evaluate("""() => {
+      window.__removedMotionZone = document.querySelector('#lazy-motion-zone');
+      window.__removedMotionZone.remove();
+    }""")
+    motion_page.wait_for_function("!window.__removedMotionZone.classList.contains('motion-active') && !window.__removedMotionZone.isConnected")
+
+    # A zone added after installation must fail open when IntersectionObserver
+    # is unavailable, rather than staying permanently paused.
+    motion_page.evaluate("""() => {
+      window.__motionCleanup();
+      const nativeObserver = window.IntersectionObserver;
+      window.IntersectionObserver = undefined;
+      window.__nativeIntersectionObserver = nativeObserver;
+      window.__motionFallbackCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')});
+    }""")
+    motion_page.evaluate("""() => {
+      document.querySelector('#lazy-feature-root').insertAdjacentHTML(
+        'beforeend',
+        '<div id="fallback-motion-zone" data-motion-zone style="height:90px">Fallback zone</div>'
+      );
+    }""")
+    motion_page.wait_for_function("document.querySelector('#fallback-motion-zone').classList.contains('motion-active')")
+    fallback_active = motion_page.locator('#fallback-motion-zone').evaluate("element => element.classList.contains('motion-active')")
+
+    # If MutationObserver is also absent, existing zones still fail open.
+    motion_page.evaluate("""() => {
+      window.__motionFallbackCleanup();
+      const nativeMutationObserver = window.MutationObserver;
+      window.MutationObserver = undefined;
+      window.__nativeMutationObserver = nativeMutationObserver;
+      window.__staticMotionFallbackCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')});
+    }""")
+    static_fallback_active = motion_page.locator('#initial-motion-zone').evaluate("element => element.classList.contains('motion-active')")
+    motion_page.evaluate("""() => {
+      window.__staticMotionFallbackCleanup();
+      window.IntersectionObserver = window.__nativeIntersectionObserver;
+      window.MutationObserver = window.__nativeMutationObserver;
+    }""")
+    motion_page.close()
+    motion_zone_results = {
+        'initialZoneObserved': initial_zone_state['active'],
+        'lazyZoneActivated': lazy_entered,
+        'lazyZoneReactivatedAfterLeaving': lazy_reentered,
+        'removedZoneReleased': True,
+        'noIntersectionObserverDynamicFallback': fallback_active,
+        'noMutationObserverStaticFallback': static_fallback_active,
+    }
+    assert all(motion_zone_results.values()), motion_zone_results
 
     print('QA:disclosure setup', flush=True)
     # Test the actual disclosure CSS in an isolated page so previous scroll/reveal
@@ -257,6 +361,73 @@ with sync_playwright() as p:
     assert not static_header['hidden'], static_header
     page.evaluate('window.__headerCleanup()')
 
+    print('QA:header hover, focus, and scroll-jitter guards', flush=True)
+    page.set_viewport_size({'width':1440,'height':900})
+    page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+    settle(100)
+    # Simulate a hybrid device: its primary pointer is coarse, but an available
+    # mouse can still hover. The controller must honor any-hover/any-pointer.
+    page.evaluate('''() => {
+      window.__nativeMatchMedia = window.matchMedia;
+      const nativeMatchMedia = window.matchMedia.bind(window);
+      window.matchMedia = query => {
+        if (query === '(any-hover: hover) and (any-pointer: fine)') return {matches:true};
+        if (query === '(hover: hover) and (pointer: fine)') return {matches:false};
+        return nativeMatchMedia(query);
+      };
+    }''')
+    # Place the pointer over the header before installing the controller. This
+    # models React's post-commit effect mounting after the pointer is already there.
+    page.mouse.move(700, 42)
+    page.evaluate('''() => {
+      const header=document.querySelector('#site-header');
+      window.__headerCleanup=window.__installMastheadScrollBehavior({
+        header,progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:false,
+        onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)
+      });
+    }''')
+
+    # A pointer hovering the floating header must pin it while the page scrolls.
+    page.mouse.move(700, 42)
+    page.evaluate("window.scrollTo({top:180,behavior:'instant'})")
+    settle(120)
+    hovered_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),hovered:element.matches(':hover')})")
+    assert hovered_header['hovered'] and not hovered_header['hidden'], hovered_header
+
+    # Once the pointer leaves, deliberate downward movement may hide it again.
+    page.mouse.move(700, 260)
+    page.evaluate("window.scrollTo({top:260,behavior:'instant'})")
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+    pointer_released = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),hovered:element.matches(':hover')})")
+    assert pointer_released['hidden'] and not pointer_released['hovered'], pointer_released
+
+    # Keyboard focus brings the header into view immediately, even when its
+    # transform had moved it outside the viewport.
+    page.locator('.command-trigger').focus()
+    page.wait_for_function("!document.querySelector('#site-header').classList.contains('header-hidden')")
+    focused_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),focused:element.matches(':focus-within'),transform:getComputedStyle(element).transform})")
+    assert focused_header['focused'] and not focused_header['hidden'], focused_header
+    page.locator('.command-trigger').evaluate("(element)=>element.blur()")
+    page.evaluate("window.scrollTo({top:340,behavior:'instant'})")
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+
+    # A short 30px movement is not enough to hide the header. The next
+    # deliberate movement accumulates past the 48px threshold.
+    page.evaluate("window.scrollTo({top:300,behavior:'instant'})")
+    page.wait_for_function("!document.querySelector('#site-header').classList.contains('header-hidden')")
+    page.evaluate("window.scrollTo({top:330,behavior:'instant'})")
+    settle(100)
+    short_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
+    assert not short_scroll_header['hidden'], short_scroll_header
+    page.evaluate("window.scrollTo({top:380,behavior:'instant'})")
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+    deliberate_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
+    assert deliberate_scroll_header['hidden'], deliberate_scroll_header
+    page.evaluate('''() => {
+      window.__headerCleanup();
+      window.matchMedia = window.__nativeMatchMedia || window.matchMedia;
+    }''')
+
     print('QA:mobile masthead', flush=True)
     # On mobile, the vertical hide transform must preserve horizontal centering.
     page.set_viewport_size({'width':390,'height':844})
@@ -293,7 +464,8 @@ with sync_playwright() as p:
 
     print('QA:preference migration', flush=True)
     # Preference migration ignores v1-v6; v7 defaults to motion-on and stores explicit visitor choices.
-    assert "localStorage.getItem('legion-portfolio-motion-v7')" in INDEX
+    assert "const savedMotion = readPreference('legion-portfolio-motion-v7')" in INDEX
+    assert "const readPreference = (key)" in INDEX and "localStorage.getItem(key)" in INDEX
     assert "localStorage.getItem('legion-portfolio-motion-v7')" in APP
     assert "localStorage.setItem('legion-portfolio-motion-v7'" in APP
     assert "legion-portfolio-motion-v6" not in INDEX + APP
@@ -343,6 +515,47 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     restored_system=pref_page.locator('html').get_attribute('data-motion')
     assert restored_system == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'system', {'restored-system-preference': restored_system}
+    # The early HTML bootstrap must select the same adaptive quality as the
+    # runtime profile for narrow/short viewports and reduced-motion preferences.
+    pref_page.evaluate("""() => {
+      Object.defineProperty(navigator, 'deviceMemory', { configurable: true, value: 8 });
+      Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, value: 8 });
+      delete window.__mockMotionStore['legion-portfolio-motion-v7'];
+    }""")
+    pref_page.emulate_media(reduced_motion='no-preference')
+    pref_page.set_viewport_size({'width':400,'height':844})
+    pref_page.add_script_tag(content=inline_scripts[0])
+    narrow_bootstrap = {
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+        'orientation': pref_page.locator('html').get_attribute('data-orientation'),
+    }
+    assert narrow_bootstrap == {'quality':'balanced','orientation':'portrait'}, narrow_bootstrap
+
+    pref_page.set_viewport_size({'width':900,'height':320})
+    pref_page.add_script_tag(content=inline_scripts[0])
+    short_bootstrap = {
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+        'orientation': pref_page.locator('html').get_attribute('data-orientation'),
+    }
+    assert short_bootstrap == {'quality':'balanced','orientation':'landscape'}, short_bootstrap
+
+    pref_page.set_viewport_size({'width':1440,'height':900})
+    pref_page.emulate_media(reduced_motion='reduce')
+    pref_page.add_script_tag(content=inline_scripts[0])
+    reduced_bootstrap = {
+        'motion': pref_page.locator('html').get_attribute('data-motion'),
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+    }
+    assert reduced_bootstrap == {'motion':'off','quality':'economy'}, reduced_bootstrap
+
+    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'on'")
+    pref_page.add_script_tag(content=inline_scripts[0])
+    explicit_motion_bootstrap = {
+        'motion': pref_page.locator('html').get_attribute('data-motion'),
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+        'override': pref_page.locator('html').get_attribute('data-motion-override'),
+    }
+    assert explicit_motion_bootstrap == {'motion':'on','quality':'full','override':'on'}, explicit_motion_bootstrap
     browser.close()
 
 print(json.dumps({
@@ -350,9 +563,11 @@ print(json.dumps({
                    'disabledMotion':disabled,'noIntersectionObserver':no_io,'noMutationObserver':no_mo,'observerTimeoutFallback':timeout_fallback,'defaultMotionOn':default_motion,'systemReducedMotion':os_motion,'restoredSystemPreference':restored_system,'explicitPause':paused_motion},
   'disclosures':disclosure_results,
   'KA_responsive':brand_metrics,
-  'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
+  'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden,'hoverGuard':hovered_header,'pointerRelease':pointer_released,'keyboardFocusGuard':focused_header,'shortScrollGuard':short_scroll_header,'deliberateScrollHide':deliberate_scroll_header},
   'preferenceMigration':'old v1-v6 keys ignored; system reduced motion is respected; v7 stores explicit visitor overrides',
-  'integration':'App uses real IntersectionObserver reveals and the separately browser-tested production masthead controller',
+  'motionZones':motion_zone_results,
+  'adaptiveBootstrap':{'narrowViewport':narrow_bootstrap,'shortLandscape':short_bootstrap,'reducedMotion':reduced_bootstrap,'explicitOverride':explicit_motion_bootstrap},
+  'integration':'App uses a mutation-aware, viewport-bounded motion-zone controller; reveal, masthead, and adaptive first-paint lifecycles are browser-tested',
   'browserErrors':errors,
   'result':'PASS'
 },indent=2))

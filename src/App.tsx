@@ -8,6 +8,7 @@ import { installInteractionSounds } from './sound'
 import { readAdaptiveProfile, observeAdaptiveProfile } from './adaptive'
 import { installScrollReveal } from './reveal'
 import { installMastheadScrollBehavior } from './masthead'
+import { installMotionZoneObserver } from './motion-zones'
 import { IntroSequence, ProjectCompare, QuickNavigator, ServiceWorkerUpdateNotice } from './PortfolioChrome'
 const PortfolioFeatures = lazy(() => import('./PortfolioFeatures').then((module) => ({ default: module.PortfolioFeatures })))
 const AdminPortal = lazy(() => import('./BackendPanels').then((module) => ({ default: module.AdminPortal })))
@@ -985,23 +986,13 @@ export default function App() {
 
   useEffect(() => {
     if (recruiterView) return
-    const motionZones = Array.from(document.querySelectorAll<HTMLElement>('[data-motion-zone]'))
-    if (motionZones.length === 0) return
+    const scope = document.getElementById('main-content')
+    if (!scope) return
 
-    if (!('IntersectionObserver' in window)) {
-      motionZones.forEach((zone) => zone.classList.add('motion-active'))
-      return
-    }
-
-    const motionObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        entry.target.classList.toggle('motion-active', entry.isIntersecting)
-      })
-    }, { rootMargin: '80px 0px', threshold: 0 })
-
-    motionZones.forEach((zone) => motionObserver.observe(zone))
-    return () => motionObserver.disconnect()
-  }, [filter, recruiterView])
+    // Keep the observer on the stable page root. Its mutation observer registers
+    // lazy-loaded feature sections and filtered project cards after they mount.
+    return installMotionZoneObserver({ scope })
+  }, [recruiterView])
 
   useEffect(() => {
     const syncRouteFromUrl = () => {
