@@ -9,19 +9,22 @@ ROOT = Path(__file__).resolve().parents[1]
 CSS = (ROOT / 'src/styles.css').read_text()
 REVEAL_SOURCE = ROOT / 'src/reveal.ts'
 MASTHEAD_SOURCE = ROOT / 'src/masthead.ts'
+MOTION_ZONES_SOURCE = ROOT / 'src/motion-zones.ts'
 INDEX = (ROOT / 'index.html').read_text()
 APP = (ROOT / 'src/App.tsx').read_text()
 
 # Compile the exact production reveal controller; no rewritten JS copy is used.
 with tempfile.TemporaryDirectory(prefix='legion-reveal-') as temp_dir:
     subprocess.run([
-        'tsc', '--ignoreConfig', str(REVEAL_SOURCE), str(MASTHEAD_SOURCE), '--target', 'ES2020', '--module', 'ES2020',
+        'tsc', '--ignoreConfig', str(REVEAL_SOURCE), str(MASTHEAD_SOURCE), str(MOTION_ZONES_SOURCE), '--target', 'ES2020', '--module', 'ES2020',
         '--lib', 'ES2020,DOM,DOM.Iterable', '--skipLibCheck', '--outDir', temp_dir,
     ], check=True, capture_output=True, text=True)
     reveal_js = (Path(temp_dir) / 'reveal.js').read_text()
     masthead_js = (Path(temp_dir) / 'masthead.js').read_text()
+    motion_zones_js = (Path(temp_dir) / 'motion-zones.js').read_text()
     reveal_js = reveal_js.replace('export function installScrollReveal', 'function installScrollReveal')
     masthead_js = masthead_js.replace('export function installMastheadScrollBehavior', 'function installMastheadScrollBehavior')
+    motion_zones_js = motion_zones_js.replace('export function installMotionZoneObserver', 'function installMotionZoneObserver')
 
 HTML = f'''<!doctype html><html data-theme="dark" data-quality="full" data-pointer="fine" data-motion="on" data-motion-override="on"><head>
 <meta name="viewport" content="width=device-width,initial-scale=1"><style>{CSS}</style><style>
@@ -101,6 +104,89 @@ with sync_playwright() as p:
     settle(820)
     returned=visible_state(target)
     assert returned['state']=='in' and float(returned['opacity']) > .95, returned
+
+    print('QA:dynamic motion-zone lifecycle', flush=True)
+    motion_page = browser.new_page(viewport={'width': 1280, 'height': 720}, reduced_motion='no-preference')
+    motion_page.set_default_timeout(8000)
+    motion_page.on('pageerror', lambda error: errors.append(str(error)))
+    motion_page.set_content('''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+      <body style="margin:0;min-height:3000px"><main id="motion-scope">
+        <div id="initial-motion-zone" data-motion-zone style="height:80px">Initial zone</div>
+        <div style="height:1320px"></div>
+        <section id="lazy-feature-root" style="min-height:220px"></section>
+      </main></body></html>''')
+    motion_page.add_script_tag(content=motion_zones_js + '\nwindow.__installMotionZoneObserver = installMotionZoneObserver;')
+    motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')})")
+    motion_page.wait_for_function("document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
+    motion_page.evaluate("window.scrollTo({top:900,behavior:'instant'})")
+    motion_page.wait_for_function("!document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
+
+    # The observer is installed while this lazy feature root has no motion zones.
+    motion_page.evaluate("""() => {
+      document.querySelector('#lazy-feature-root').insertAdjacentHTML(
+        'beforeend',
+        '<div id="lazy-motion-zone" data-motion-zone style="height:90px">Lazy feature zone</div>'
+      );
+    }""")
+    lazy_zone = motion_page.locator('#lazy-motion-zone')
+    lazy_y = lazy_zone.evaluate('(element) => element.getBoundingClientRect().top + window.scrollY')
+    motion_page.evaluate('(y) => window.scrollTo({top:y - innerHeight * .5,behavior:"instant"})', lazy_y)
+    motion_page.wait_for_function("document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
+    lazy_entered = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
+    motion_page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+    motion_page.wait_for_function("!document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
+    motion_page.evaluate('(y) => window.scrollTo({top:y - innerHeight * .5,behavior:"instant"})', lazy_y)
+    motion_page.wait_for_function("document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
+    lazy_reentered = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
+
+    motion_page.evaluate("""() => {
+      window.__removedMotionZone = document.querySelector('#lazy-motion-zone');
+      window.__removedMotionZone.remove();
+    }""")
+    motion_page.wait_for_function("!window.__removedMotionZone.classList.contains('motion-active') && !window.__removedMotionZone.isConnected")
+
+    # A zone added after installation must fail open when IntersectionObserver
+    # is unavailable, rather than staying permanently paused.
+    motion_page.evaluate("""() => {
+      window.__motionCleanup();
+      const nativeObserver = window.IntersectionObserver;
+      window.IntersectionObserver = undefined;
+      window.__nativeIntersectionObserver = nativeObserver;
+      window.__motionFallbackCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')});
+    }""")
+    motion_page.evaluate("""() => {
+      document.querySelector('#lazy-feature-root').insertAdjacentHTML(
+        'beforeend',
+        '<div id="fallback-motion-zone" data-motion-zone style="height:90px">Fallback zone</div>'
+      );
+    }""")
+    motion_page.wait_for_function("document.querySelector('#fallback-motion-zone').classList.contains('motion-active')")
+    fallback_active = motion_page.locator('#fallback-motion-zone').evaluate("element => element.classList.contains('motion-active')")
+
+    # If MutationObserver is also absent, existing zones still fail open.
+    motion_page.evaluate("""() => {
+      window.__motionFallbackCleanup();
+      const nativeMutationObserver = window.MutationObserver;
+      window.MutationObserver = undefined;
+      window.__nativeMutationObserver = nativeMutationObserver;
+      window.__staticMotionFallbackCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')});
+    }""")
+    static_fallback_active = motion_page.locator('#initial-motion-zone').evaluate("element => element.classList.contains('motion-active')")
+    motion_page.evaluate("""() => {
+      window.__staticMotionFallbackCleanup();
+      window.IntersectionObserver = window.__nativeIntersectionObserver;
+      window.MutationObserver = window.__nativeMutationObserver;
+    }""")
+    motion_page.close()
+    motion_zone_results = {
+        'initialZoneObserved': True,
+        'lazyZoneActivated': lazy_entered,
+        'lazyZoneReactivatedAfterLeaving': lazy_reentered,
+        'removedZoneReleased': True,
+        'noIntersectionObserverDynamicFallback': fallback_active,
+        'noMutationObserverStaticFallback': static_fallback_active,
+    }
+    assert all(motion_zone_results.values()), motion_zone_results
 
     print('QA:disclosure setup', flush=True)
     # Test the actual disclosure CSS in an isolated page so previous scroll/reveal
@@ -352,7 +438,8 @@ print(json.dumps({
   'KA_responsive':brand_metrics,
   'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
   'preferenceMigration':'old v1-v6 keys ignored; system reduced motion is respected; v7 stores explicit visitor overrides',
-  'integration':'App uses real IntersectionObserver reveals and the separately browser-tested production masthead controller',
+  'motionZones':motion_zone_results,
+  'integration':'App uses a mutation-aware, viewport-bounded motion-zone controller; reveal and masthead lifecycles are independently browser-tested',
   'browserErrors':errors,
   'result':'PASS'
 },indent=2))

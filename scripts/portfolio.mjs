@@ -13,7 +13,7 @@ const expectedFiles = [
   'index.html', 'package.json', 'vite.config.ts', '.lighthouserc.json', '.env.example', '.gitignore',
   'tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json', 'requirements-test.txt', 'START-PORTFOLIO.cmd',
   'src/App.tsx', 'src/BackendPanels.tsx', 'src/PrivacyNotice.tsx', 'src/ErrorBoundary.tsx', 'src/PortfolioChrome.tsx', 'src/PortfolioFeatures.tsx', 'src/RecruiterView.tsx',
-  'src/adaptive.ts', 'src/backend.ts', 'src/config.ts', 'src/data.ts', 'src/main.tsx', 'src/masthead.ts', 'src/reveal.ts',
+  'src/adaptive.ts', 'src/backend.ts', 'src/config.ts', 'src/data.ts', 'src/main.tsx', 'src/masthead.ts', 'src/motion-zones.ts', 'src/reveal.ts',
   'src/serviceWorker.ts', 'src/sound.ts', 'src/styles.css', 'src/layout-integrity.css',
   'public/sw.js', 'public/favicon.svg', 'public/favicon-32.png', 'public/favicon.ico', 'public/og-card.png', 'public/robots.txt', 'public/sitemap.xml', 'public/llms.txt', 'public/profile.md', 'public/projects.md', 'public/experience.md',
   'public/site.webmanifest', 'public/BACKEND-SETUP.md',
@@ -141,15 +141,18 @@ async function check() {
   const app = await read('src/App.tsx')
   log(app.includes('ErrorBoundary') === false, 'App module is independent from the application-level error boundary')
   log(app.includes("url.searchParams.set('project', project.id)") && app.includes("new URLSearchParams(window.location.search).get('project')") && app.includes('syncRouteFromUrl') && app.includes("window.addEventListener('popstate', syncRouteFromUrl)"), 'Project case studies support shareable URLs and browser history navigation')
-  log(app.includes('if (recruiterView) return') && app.includes('}, [filter, recruiterView])'), 'Motion-zone observer skips recruiter DOM and reattaches to the full portfolio after a view switch')
+  log(app.includes('if (recruiterView) return') && app.includes('installMotionZoneObserver') && app.includes('}, [recruiterView])'), 'Full-view motion observer binds to a stable scope and reattaches after recruiter navigation')
   log(app.includes('}, [recruiterView])') && app.includes("setActiveSection('home')"), 'Section observer is recreated when the full portfolio mounts, with a safe no-observer fallback')
   log(app.includes('}, [recruiterView, mobileOpen, motionEnabled])'), 'Masthead scroll controller detaches in recruiter mode and binds to the new full-view header')
   log(app.includes('previousRecruiterView !== nextRecruiterView') && app.includes('window.requestAnimationFrame(() => window.scrollTo(0, 0))'), 'History navigation resets scroll when switching between distinct page layouts')
   log(app.includes('observeAdaptiveProfile') && app.includes('readAdaptiveProfile'), 'Adaptive runtime profile is connected to the UI and Canvas layer')
-  log(app.includes('data-motion-zone') && app.includes('IntersectionObserver'), 'Off-screen motion zones have an observer and fallback path')
+  const motionZones = await read('src/motion-zones.ts')
+  log(motionZones.includes('new IntersectionObserver') && motionZones.includes('new MutationObserver') && motionZones.includes('rootMargin: ROOT_MARGIN'), 'Motion zones are viewport-bounded and dynamically registered by the shared controller')
+  log(motionZones.includes('record.addedNodes') && motionZones.includes('record.removedNodes') && motionZones.includes('attributeFilter'), 'Motion-zone observer registers inserted nodes, releases removed nodes, and tracks attribute changes')
   log(app.includes('headerHidden') && app.includes('headerRef') && app.includes('installMastheadScrollBehavior'), 'Direction-aware auto-hiding masthead is connected to the React header')
   const masthead = await read('src/masthead.ts')
   log(app.includes('installMastheadScrollBehavior') && masthead.includes('requestAnimationFrame') && masthead.includes('HIDE_AFTER') && masthead.includes('REVEAL_AFTER'), 'Direction-aware masthead behavior is isolated, testable, and frame-batched')
+  log(chrome.includes("window.addEventListener('resize', update") && chrome.includes("window.visualViewport?.addEventListener('resize', update") && chrome.includes("window.removeEventListener('orientationchange', update"), 'Quick navigator recalculates its scroll threshold after resize, zoom, and orientation changes')
   log((app.match(/data-reveal(?:=|\s|>)/g) || []).length >= 15 && app.includes('data-hero-line') && app.includes('data-hero-sequence'), 'Main sections retain scroll reveals while first-screen hero content uses its independent fail-open sequence')
   const reveal = await read('src/reveal.ts')
   const revealEffect = app.match(/useLayoutEffect\(\(\) => \{[\s\S]*?installScrollReveal[\s\S]*?\}, \[(.*?)\]\)/)
