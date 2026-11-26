@@ -117,6 +117,8 @@ with sync_playwright() as p:
       </main></body></html>''')
     motion_page.add_script_tag(content=motion_zones_js + '\nwindow.__installMotionZoneObserver = installMotionZoneObserver;')
     motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')})")
+    # Wait for the controller's first frame-based viewport reconciliation.
+    motion_page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
     initial_zone_state = motion_page.locator('#initial-motion-zone').evaluate("""element => {
       const bounds = element.getBoundingClientRect();
       const viewport = window.visualViewport;
@@ -141,6 +143,7 @@ with sync_playwright() as p:
       );
     }""")
     motion_page.wait_for_function("document.querySelector('#lazy-motion-zone') !== null")
+    motion_page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
     lazy_zone = motion_page.locator('#lazy-motion-zone')
     lazy_initial = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
     assert not lazy_initial, {'offscreenLazyZoneMustRemainPaused': lazy_initial}

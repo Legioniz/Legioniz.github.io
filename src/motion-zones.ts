@@ -32,6 +32,27 @@ export function installMotionZoneObserver(options: MotionZoneObserverOptions = {
   const activeClass = options.activeClass ?? 'motion-active'
   const tracked = new Set<HTMLElement>()
   let disposed = false
+  let reconciliationFrame = 0
+
+  // The first observer delivery is asynchronous and can race the browser's
+  // initial layout. Reconcile from a frame with current, settled geometry.
+  function reconcileTrackedZones(): void {
+    reconciliationFrame = 0
+    if (disposed) return
+
+    tracked.forEach((element) => {
+      if (!element.isConnected) {
+        unregister(element)
+        return
+      }
+      element.classList.toggle(activeClass, isNearViewport(element))
+    })
+  }
+
+  function scheduleReconciliation(): void {
+    if (disposed || reconciliationFrame) return
+    reconciliationFrame = window.requestAnimationFrame(reconcileTrackedZones)
+  }
 
   // IntersectionObserver and MutationObserver are treated as a pair. If either
   // is unavailable, current zones fail open; when MutationObserver exists,
@@ -64,10 +85,12 @@ export function installMotionZoneObserver(options: MotionZoneObserverOptions = {
       return
     }
 
-    // Apply the initial viewport state synchronously so first paint does not
-    // wait for IntersectionObserver's asynchronous first callback.
-    element.classList.toggle(activeClass, isNearViewport(element))
+    // Fail open while the browser's first intersection delivery is pending.
+    // The next animation frame applies the real viewport state, so a visible
+    // motion zone cannot remain paused because of an early/stale IO callback.
+    element.classList.add(activeClass)
     observer.observe(element)
+    scheduleReconciliation()
   }
 
   function unregister(element: HTMLElement): void {
@@ -98,6 +121,7 @@ export function installMotionZoneObserver(options: MotionZoneObserverOptions = {
       record.addedNodes.forEach(scanAddedNode)
       record.removedNodes.forEach(releaseRemovedNode)
     })
+    scheduleReconciliation()
   }
 
   // Observe the scope even when it initially contains no motion zones. This is
@@ -119,6 +143,8 @@ export function installMotionZoneObserver(options: MotionZoneObserverOptions = {
     disposed = true
     mutationObserver?.disconnect()
     observer?.disconnect()
+    if (reconciliationFrame) window.cancelAnimationFrame(reconciliationFrame)
+    reconciliationFrame = 0
     tracked.forEach((element) => element.classList.remove(activeClass))
     tracked.clear()
   }
