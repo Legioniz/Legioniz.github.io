@@ -464,7 +464,8 @@ with sync_playwright() as p:
 
     print('QA:preference migration', flush=True)
     # Preference migration ignores v1-v6; v7 defaults to motion-on and stores explicit visitor choices.
-    assert "localStorage.getItem('legion-portfolio-motion-v7')" in INDEX
+    assert "const savedMotion = readPreference('legion-portfolio-motion-v7')" in INDEX
+    assert "const readPreference = (key)" in INDEX and "localStorage.getItem(key)" in INDEX
     assert "localStorage.getItem('legion-portfolio-motion-v7')" in APP
     assert "localStorage.setItem('legion-portfolio-motion-v7'" in APP
     assert "legion-portfolio-motion-v6" not in INDEX + APP
