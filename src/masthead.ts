@@ -1,8 +1,8 @@
 /**
  * Direction-aware masthead scroll behavior.
- * One passive scroll listener is batched through requestAnimationFrame.
- * The React component owns rendering; this module only reports hidden state
- * and updates the decorative reading-progress bar.
+ *
+ * Scroll input is frame-batched. The header stays available while the visitor
+ * is interacting with it, and only hides after deliberate downward movement.
  */
 interface MastheadScrollOptions {
   header: HTMLElement
@@ -13,9 +13,9 @@ interface MastheadScrollOptions {
   topThreshold?: number
 }
 
-const HIDE_AFTER = 18
-const REVEAL_AFTER = 8
-const DEFAULT_TOP_THRESHOLD = 76
+const HIDE_AFTER = 48
+const REVEAL_AFTER = 10
+const DEFAULT_TOP_THRESHOLD = 88
 
 export function installMastheadScrollBehavior(options: MastheadScrollOptions): () => void {
   const {
@@ -32,12 +32,26 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
   let direction = 0
   let accumulated = 0
   let hiddenState: boolean | null = null
+  let pointerInside = false
   let disposed = false
 
   const setHidden = (hidden: boolean) => {
     if (hiddenState === hidden) return
     hiddenState = hidden
     onHiddenChange(hidden)
+  }
+
+  const resetScrollIntent = () => {
+    direction = 0
+    accumulated = 0
+    // Do not count scrolling that happened while the visitor was interacting
+    // with the header toward the next hide/reveal threshold.
+    lastY = Math.max(0, window.scrollY)
+  }
+
+  const revealForInteraction = () => {
+    resetScrollIntent()
+    setHidden(false)
   }
 
   const update = () => {
@@ -48,9 +62,8 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     const delta = currentY - lastY
     const focused = header.matches(':focus-within')
 
-    // Keep the masthead visible near the top, while a menu is open, whenever
-    // keyboard focus is inside it, and whenever motion is disabled.
-    if (currentY <= topThreshold || menuOpen || !motionEnabled || focused) {
+    // Never slide the control surface away while it is being used.
+    if (currentY <= topThreshold || menuOpen || !motionEnabled || focused || pointerInside) {
       setHidden(false)
       direction = 0
       accumulated = 0
@@ -82,10 +95,35 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     frame = window.requestAnimationFrame(update)
   }
 
+  const onPointerEnter = (event: PointerEvent) => {
+    // Touch has no persistent hover state. Do not pin the masthead after a tap.
+    if (event.pointerType === 'touch') return
+    pointerInside = true
+    revealForInteraction()
+  }
+
+  const onPointerLeave = (event: PointerEvent) => {
+    if (event.pointerType === 'touch') return
+    pointerInside = false
+    resetScrollIntent()
+  }
+
+  const onFocusIn = () => revealForInteraction()
+
+  const onFocusOut = (event: FocusEvent) => {
+    const nextTarget = event.relatedTarget
+    if (nextTarget instanceof Node && header.contains(nextTarget)) return
+    resetScrollIntent()
+  }
+
   update()
   window.addEventListener('scroll', scheduleUpdate, { passive: true })
   window.addEventListener('resize', scheduleUpdate, { passive: true })
   window.visualViewport?.addEventListener('resize', scheduleUpdate, { passive: true })
+  header.addEventListener('pointerenter', onPointerEnter)
+  header.addEventListener('pointerleave', onPointerLeave)
+  header.addEventListener('focusin', onFocusIn)
+  header.addEventListener('focusout', onFocusOut)
 
   return () => {
     disposed = true
@@ -93,5 +131,9 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     window.removeEventListener('scroll', scheduleUpdate)
     window.removeEventListener('resize', scheduleUpdate)
     window.visualViewport?.removeEventListener('resize', scheduleUpdate)
+    header.removeEventListener('pointerenter', onPointerEnter)
+    header.removeEventListener('pointerleave', onPointerLeave)
+    header.removeEventListener('focusin', onFocusIn)
+    header.removeEventListener('focusout', onFocusOut)
   }
 }

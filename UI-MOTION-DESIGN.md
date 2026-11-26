@@ -61,7 +61,7 @@ Audio is a progressive enhancement only. Browsers that do not support Web Audio 
 
 ## Scroll-direction masthead
 
-The floating masthead follows scroll intent. It stays visible near the top of the document, slides upward after a deliberate downward gesture, and returns after a shorter upward gesture. The current thresholds are 18 CSS pixels downward and 8 CSS pixels upward, with accumulated direction travel so small trackpad noise does not flicker the header. The scroll listener is passive and updates at most once per animation frame. The floating section navigator uses the same frame-coalesced approach and recalculates its reveal threshold after viewport resize, orientation change, and visual-viewport zoom.
+The floating masthead follows scroll intent. It stays visible within the top 88 CSS pixels, slides upward after 48 CSS pixels of accumulated downward travel, and returns after 10 CSS pixels of upward travel. Direction changes reset the accumulator so small trackpad noise does not flicker the header. Hover and keyboard focus pin the header in place; leaving the header resets the scroll baseline before auto-hide can resume. Scroll and viewport updates are passive and frame-batched. The floating section navigator uses the same frame-coalesced approach and recalculates its reveal threshold after viewport resize, orientation change, and visual-viewport zoom.
 
 The masthead remains visible while the mobile menu is open or when keyboard focus is inside it. The mobile menu exposes `aria-expanded` and `aria-controls`. The header is translated with CSS rather than removed from the document, preserving its semantics and allowing `:focus-within` to recover it when keyboard users tab to a masthead control.
 

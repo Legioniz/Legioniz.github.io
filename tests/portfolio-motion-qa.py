@@ -348,6 +348,56 @@ with sync_playwright() as p:
     assert not static_header['hidden'], static_header
     page.evaluate('window.__headerCleanup()')
 
+    print('QA:header hover, focus, and scroll-jitter guards', flush=True)
+    page.set_viewport_size({'width':1440,'height':900})
+    page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
+    settle(100)
+    page.evaluate('''() => {
+      const header=document.querySelector('#site-header');
+      window.__headerCleanup=window.__installMastheadScrollBehavior({
+        header,progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:false,
+        onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)
+      });
+    }''')
+
+    # A pointer hovering the floating header must pin it while the page scrolls.
+    page.mouse.move(700, 42)
+    page.evaluate("window.scrollTo({top:180,behavior:'instant'})")
+    settle(120)
+    hovered_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),hovered:element.matches(':hover')})")
+    assert hovered_header['hovered'] and not hovered_header['hidden'], hovered_header
+
+    # Once the pointer leaves, deliberate downward movement may hide it again.
+    page.mouse.move(700, 260)
+    page.evaluate("window.scrollTo({top:260,behavior:'instant'})")
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+    pointer_released = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),hovered:element.matches(':hover')})")
+    assert pointer_released['hidden'] and not pointer_released['hovered'], pointer_released
+
+    # Keyboard focus brings the header into view immediately, even when its
+    # transform had moved it outside the viewport.
+    page.locator('.command-trigger').focus()
+    page.wait_for_function("!document.querySelector('#site-header').classList.contains('header-hidden')")
+    focused_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),focused:element.matches(':focus-within'),transform:getComputedStyle(element).transform})")
+    assert focused_header['focused'] and not focused_header['hidden'], focused_header
+    page.locator('.command-trigger').evaluate("(element)=>element.blur()")
+    page.evaluate("window.scrollTo({top:340,behavior:'instant'})")
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+
+    # A short 30px movement is not enough to hide the header. The next
+    # deliberate movement accumulates past the 48px threshold.
+    page.evaluate("window.scrollTo({top:300,behavior:'instant'})")
+    page.wait_for_function("!document.querySelector('#site-header').classList.contains('header-hidden')")
+    page.evaluate("window.scrollTo({top:330,behavior:'instant'})")
+    settle(100)
+    short_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
+    assert not short_scroll_header['hidden'], short_scroll_header
+    page.evaluate("window.scrollTo({top:380,behavior:'instant'})")
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+    deliberate_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
+    assert deliberate_scroll_header['hidden'], deliberate_scroll_header
+    page.evaluate('window.__headerCleanup()')
+
     print('QA:mobile masthead', flush=True)
     # On mobile, the vertical hide transform must preserve horizontal centering.
     page.set_viewport_size({'width':390,'height':844})
@@ -482,7 +532,7 @@ print(json.dumps({
                    'disabledMotion':disabled,'noIntersectionObserver':no_io,'noMutationObserver':no_mo,'observerTimeoutFallback':timeout_fallback,'defaultMotionOn':default_motion,'systemReducedMotion':os_motion,'restoredSystemPreference':restored_system,'explicitPause':paused_motion},
   'disclosures':disclosure_results,
   'KA_responsive':brand_metrics,
-  'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
+  'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden,'hoverGuard':hovered_header,'pointerRelease':pointer_released,'keyboardFocusGuard':focused_header,'shortScrollGuard':short_scroll_header,'deliberateScrollHide':deliberate_scroll_header},
   'preferenceMigration':'old v1-v6 keys ignored; system reduced motion is respected; v7 stores explicit visitor overrides',
   'motionZones':motion_zone_results,
   'adaptiveBootstrap':{'narrowViewport':narrow_bootstrap,'shortLandscape':short_bootstrap,'reducedMotion':reduced_bootstrap,'explicitOverride':explicit_motion_bootstrap},
