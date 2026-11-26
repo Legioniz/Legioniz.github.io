@@ -1,5 +1,5 @@
 /* Versioned, same-origin shell/static cache. Never caches form, auth, or database traffic. */
-const CACHE_NAME = 'legion-portfolio-shell-v19';
+const CACHE_NAME = 'legion-portfolio-shell-v20';
 const SHELL_URLS = [
   '/',
   '/robots.txt',

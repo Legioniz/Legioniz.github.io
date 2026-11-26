@@ -944,6 +944,7 @@ export default function App() {
 
     return installMastheadScrollBehavior({
       header,
+      hero: document.getElementById('home'),
       progress: progressRef.current,
       motionEnabled,
       menuOpen: mobileOpen,
