@@ -32,7 +32,11 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
   let direction = 0
   let accumulated = 0
   let hiddenState: boolean | null = null
-  const supportsHover = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false
+  const supportsHover = typeof window.matchMedia === 'function'
+    && (
+      window.matchMedia('(any-hover: hover) and (any-pointer: fine)').matches
+      || window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    )
   // React effects may mount after the pointer has already entered the header.
   // Read the initial hover state so the first scroll cannot hide an in-use header.
   let pointerInside = supportsHover && header.matches(':hover')

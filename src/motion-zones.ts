@@ -16,8 +16,11 @@ const ROOT_MARGIN = `${ACTIVATION_MARGIN}px 0px`
 
 function isNearViewport(element: HTMLElement): boolean {
   const bounds = element.getBoundingClientRect()
-  const viewportHeight = window.visualViewport?.height || window.innerHeight || 0
-  return bounds.bottom >= -ACTIVATION_MARGIN && bounds.top <= viewportHeight + ACTIVATION_MARGIN
+  const visualViewport = window.visualViewport
+  const viewportTop = visualViewport?.offsetTop ?? 0
+  const viewportBottom = viewportTop + (visualViewport?.height || window.innerHeight || 0)
+  return bounds.bottom >= viewportTop - ACTIVATION_MARGIN
+    && bounds.top <= viewportBottom + ACTIVATION_MARGIN
 }
 
 export function installMotionZoneObserver(options: MotionZoneObserverOptions = {}): () => void {

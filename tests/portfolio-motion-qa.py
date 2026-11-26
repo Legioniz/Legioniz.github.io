@@ -111,13 +111,14 @@ with sync_playwright() as p:
     motion_page.on('pageerror', lambda error: errors.append(str(error)))
     motion_page.set_content('''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
       <body style="margin:0;min-height:3000px"><main id="motion-scope">
-        <div id="initial-motion-zone" data-motion-zone style="height:80px">Initial zone</div>
+        <div id="initial-motion-zone" data-motion-zone style="height:80px;margin-top:120px">Initial zone</div>
         <div style="height:1320px"></div>
         <section id="lazy-feature-root" style="min-height:220px"></section>
       </main></body></html>''')
     motion_page.add_script_tag(content=motion_zones_js + '\nwindow.__installMotionZoneObserver = installMotionZoneObserver;')
     motion_page.evaluate("window.__motionCleanup = window.__installMotionZoneObserver({scope:document.getElementById('motion-scope')})")
-    motion_page.wait_for_function("document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
+    initial_zone_active = motion_page.locator('#initial-motion-zone').evaluate("element => element.classList.contains('motion-active')")
+    assert initial_zone_active, {'initialZoneMustStartActive': initial_zone_active}
     motion_page.evaluate("window.scrollTo({top:900,behavior:'instant'})")
     motion_page.wait_for_function("!document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
 
@@ -184,7 +185,7 @@ with sync_playwright() as p:
     }""")
     motion_page.close()
     motion_zone_results = {
-        'initialZoneObserved': True,
+        'initialZoneObserved': initial_zone_active,
         'lazyZoneActivated': lazy_entered,
         'lazyZoneReactivatedAfterLeaving': lazy_reentered,
         'removedZoneReleased': True,
@@ -352,6 +353,17 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':1440,'height':900})
     page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
     settle(100)
+    # Simulate a hybrid device: its primary pointer is coarse, but an available
+    # mouse can still hover. The controller must honor any-hover/any-pointer.
+    page.evaluate('''() => {
+      window.__nativeMatchMedia = window.matchMedia;
+      const nativeMatchMedia = window.matchMedia.bind(window);
+      window.matchMedia = query => {
+        if (query === '(any-hover: hover) and (any-pointer: fine)') return {matches:true};
+        if (query === '(hover: hover) and (pointer: fine)') return {matches:false};
+        return nativeMatchMedia(query);
+      };
+    }''')
     # Place the pointer over the header before installing the controller. This
     # models React's post-commit effect mounting after the pointer is already there.
     page.mouse.move(700, 42)
@@ -399,7 +411,10 @@ with sync_playwright() as p:
     page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
     deliberate_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
     assert deliberate_scroll_header['hidden'], deliberate_scroll_header
-    page.evaluate('window.__headerCleanup()')
+    page.evaluate('''() => {
+      window.__headerCleanup();
+      window.matchMedia = window.__nativeMatchMedia || window.matchMedia;
+    }''')
 
     print('QA:mobile masthead', flush=True)
     # On mobile, the vertical hide transform must preserve horizontal centering.
