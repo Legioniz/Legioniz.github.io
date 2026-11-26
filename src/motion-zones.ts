@@ -31,8 +31,8 @@ export function installMotionZoneObserver(options: MotionZoneObserverOptions = {
   let disposed = false
 
   // IntersectionObserver and MutationObserver are treated as a pair. If either
-  // is unavailable, existing and subsequently inserted zones fail open rather
-  // than being left permanently paused.
+  // is unavailable, current zones fail open; when MutationObserver exists,
+  // subsequently inserted zones also receive the safe active fallback.
   const canTrackDynamicNodes = typeof MutationObserver !== 'undefined'
   const canTrackViewport = typeof IntersectionObserver !== 'undefined'
   const observer = canTrackDynamicNodes && canTrackViewport

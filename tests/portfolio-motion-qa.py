@@ -429,6 +429,47 @@ with sync_playwright() as p:
     pref_page.add_script_tag(content=inline_scripts[0])
     restored_system=pref_page.locator('html').get_attribute('data-motion')
     assert restored_system == 'off' and pref_page.locator('html').get_attribute('data-motion-override') == 'system', {'restored-system-preference': restored_system}
+    # The early HTML bootstrap must select the same adaptive quality as the
+    # runtime profile for narrow/short viewports and reduced-motion preferences.
+    pref_page.evaluate("""() => {
+      Object.defineProperty(navigator, 'deviceMemory', { configurable: true, value: 8 });
+      Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, value: 8 });
+      delete window.__mockMotionStore['legion-portfolio-motion-v7'];
+    }""")
+    pref_page.emulate_media(reduced_motion='no-preference')
+    pref_page.set_viewport_size({'width':400,'height':844})
+    pref_page.add_script_tag(content=inline_scripts[0])
+    narrow_bootstrap = {
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+        'orientation': pref_page.locator('html').get_attribute('data-orientation'),
+    }
+    assert narrow_bootstrap == {'quality':'balanced','orientation':'portrait'}, narrow_bootstrap
+
+    pref_page.set_viewport_size({'width':900,'height':320})
+    pref_page.add_script_tag(content=inline_scripts[0])
+    short_bootstrap = {
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+        'orientation': pref_page.locator('html').get_attribute('data-orientation'),
+    }
+    assert short_bootstrap == {'quality':'balanced','orientation':'landscape'}, short_bootstrap
+
+    pref_page.set_viewport_size({'width':1440,'height':900})
+    pref_page.emulate_media(reduced_motion='reduce')
+    pref_page.add_script_tag(content=inline_scripts[0])
+    reduced_bootstrap = {
+        'motion': pref_page.locator('html').get_attribute('data-motion'),
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+    }
+    assert reduced_bootstrap == {'motion':'off','quality':'economy'}, reduced_bootstrap
+
+    pref_page.evaluate("window.__mockMotionStore['legion-portfolio-motion-v7'] = 'on'")
+    pref_page.add_script_tag(content=inline_scripts[0])
+    explicit_motion_bootstrap = {
+        'motion': pref_page.locator('html').get_attribute('data-motion'),
+        'quality': pref_page.locator('html').get_attribute('data-quality'),
+        'override': pref_page.locator('html').get_attribute('data-motion-override'),
+    }
+    assert explicit_motion_bootstrap == {'motion':'on','quality':'full','override':'on'}, explicit_motion_bootstrap
     browser.close()
 
 print(json.dumps({
@@ -439,7 +480,8 @@ print(json.dumps({
   'masthead':{'downScroll':header_hidden,'upScroll':header_revealed,'topGuard':top_header,'mobileMenuGuard':menu_header,'motionOffGuard':static_header,'mobileDownScroll':mobile_header_hidden},
   'preferenceMigration':'old v1-v6 keys ignored; system reduced motion is respected; v7 stores explicit visitor overrides',
   'motionZones':motion_zone_results,
-  'integration':'App uses a mutation-aware, viewport-bounded motion-zone controller; reveal and masthead lifecycles are independently browser-tested',
+  'adaptiveBootstrap':{'narrowViewport':narrow_bootstrap,'shortLandscape':short_bootstrap,'reducedMotion':reduced_bootstrap,'explicitOverride':explicit_motion_bootstrap},
+  'integration':'App uses a mutation-aware, viewport-bounded motion-zone controller; reveal, masthead, and adaptive first-paint lifecycles are browser-tested',
   'browserErrors':errors,
   'result':'PASS'
 },indent=2))
