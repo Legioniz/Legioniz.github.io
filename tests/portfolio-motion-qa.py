@@ -122,13 +122,18 @@ with sync_playwright() as p:
     motion_page.wait_for_function("!document.querySelector('#initial-motion-zone').classList.contains('motion-active')")
 
     # The observer is installed while this lazy feature root has no motion zones.
+    # Insert the late-mounted zone while it is still offscreen, then scroll into it.
+    motion_page.evaluate("window.scrollTo({top:0,behavior:'instant'})")
     motion_page.evaluate("""() => {
       document.querySelector('#lazy-feature-root').insertAdjacentHTML(
         'beforeend',
         '<div id="lazy-motion-zone" data-motion-zone style="height:90px">Lazy feature zone</div>'
       );
     }""")
+    motion_page.wait_for_function("document.querySelector('#lazy-motion-zone') !== null")
     lazy_zone = motion_page.locator('#lazy-motion-zone')
+    lazy_initial = lazy_zone.evaluate("element => element.classList.contains('motion-active')")
+    assert not lazy_initial, {'offscreenLazyZoneMustRemainPaused': lazy_initial}
     lazy_y = lazy_zone.evaluate('(element) => element.getBoundingClientRect().top + window.scrollY')
     motion_page.evaluate('(y) => window.scrollTo({top:y - innerHeight * .5,behavior:"instant"})', lazy_y)
     motion_page.wait_for_function("document.querySelector('#lazy-motion-zone').classList.contains('motion-active')")
