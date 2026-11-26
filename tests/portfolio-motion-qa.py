@@ -12,6 +12,7 @@ MASTHEAD_SOURCE = ROOT / 'src/masthead.ts'
 MOTION_ZONES_SOURCE = ROOT / 'src/motion-zones.ts'
 INDEX = (ROOT / 'index.html').read_text()
 APP = (ROOT / 'src/App.tsx').read_text()
+assert "hero: document.getElementById('home')" in APP, 'App passes the live hero element to the masthead controller'
 
 # Compile the exact production reveal controller; no rewritten JS copy is used.
 with tempfile.TemporaryDirectory(prefix='legion-reveal-') as temp_dir:
@@ -42,6 +43,7 @@ main{{width:min(1200px,calc(100% - 36px));margin:auto}}
 <div class="header-tools"><button class="command-trigger"><span>Search</span><kbd>⌘ K</kbd></button><button class="icon-button sound-toggle">S</button><button class="icon-button motion-toggle">M</button><button class="icon-button theme-toggle">T</button><button class="icon-button mobile-menu-button">☰</button></div>
 </header>
 <main id="main-content">
+<section class="test-section" id="home"><h1>Hero boundary</h1></section>
 <section class="test-section" id="about"><h1 data-reveal>About the work</h1><p data-reveal="left">Test reveal entrance and exit.</p></section>
 <section class="test-section" id="projects"><h1 data-reveal>Projects</h1><div id="reveal-target" data-reveal="scale">Scroll reveal target</div></section>
 <section class="test-section" id="contact"><h1 data-reveal>Contact</h1></section>
@@ -317,7 +319,7 @@ with sync_playwright() as p:
       const progress = document.querySelector('#scroll-progress');
       window.__headerChanges = [];
       window.__headerCleanup = window.__installMastheadScrollBehavior({
-        header, progress, motionEnabled: true, menuOpen: false,
+        header, hero: document.querySelector('#home'), progress, motionEnabled: true, menuOpen: false,
         onHiddenChange: (hidden) => {
           window.__headerChanges.push(hidden);
           header.classList.toggle('header-hidden', hidden);
@@ -330,11 +332,26 @@ with sync_playwright() as p:
     header_hidden = page.locator('#site-header').evaluate("e=>({hidden:e.classList.contains('header-hidden'),transform:getComputedStyle(e).transform,opacity:getComputedStyle(e).opacity,focusWithin:e.matches(':focus-within'),active:document.activeElement.outerHTML.slice(0,120)})")
     assert header_hidden['hidden'] and header_hidden['transform'].startswith('matrix') and float(header_hidden['transform'].split(',')[-1].rstrip(')')) < -40, header_hidden
 
+    hero_bottom = page.locator('#home').evaluate("(element) => element.getBoundingClientRect().bottom + window.scrollY")
     page.evaluate("window.scrollTo({top:360,behavior:'instant'})")
+    settle(120)
+    hero_reversal_header = page.locator('#site-header').evaluate("element => ({hidden:element.classList.contains('header-hidden')})")
+    assert hero_reversal_header['hidden'], hero_reversal_header
+
+    # Direction-aware behavior resumes only after the complete hero has left the viewport.
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom + 320)
+    settle(120)
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom + 260)
     page.wait_for_function("!document.querySelector('#site-header').classList.contains('header-hidden')")
     settle(500)
-    header_revealed = page.locator('#site-header').evaluate("e=>({hidden:e.classList.contains('header-hidden'),transform:getComputedStyle(e).transform,focusWithin:e.matches(':focus-within')})")
+    header_revealed = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),transform:getComputedStyle(element).transform,focusWithin:element.matches(':focus-within')})")
     assert not header_revealed['hidden'], header_revealed
+
+    # Re-entering the hero on a fast upward reversal tucks the header away again.
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom - 40)
+    page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
+    hero_reentry_header = page.locator('#site-header').evaluate("element => ({hidden:element.classList.contains('header-hidden')})")
+    assert hero_reentry_header['hidden'], hero_reentry_header
 
     # Near the top, an open mobile menu, and disabled motion must keep it available.
     page.evaluate("window.scrollTo({top:30,behavior:'instant'})")
@@ -344,7 +361,7 @@ with sync_playwright() as p:
     page.evaluate('''() => {
       window.__headerCleanup();
       const header=document.querySelector('#site-header');
-      window.__headerCleanup=window.__installMastheadScrollBehavior({header,progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:true,onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)});
+      window.__headerCleanup=window.__installMastheadScrollBehavior({header,hero:document.querySelector('#home'),progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:true,onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)});
     }''')
     page.evaluate("window.scrollTo({top:420,behavior:'instant'})")
     settle(120)
@@ -353,7 +370,7 @@ with sync_playwright() as p:
     page.evaluate('''() => {
       window.__headerCleanup();
       const header=document.querySelector('#site-header');
-      window.__headerCleanup=window.__installMastheadScrollBehavior({header,progress:document.querySelector('#scroll-progress'),motionEnabled:false,menuOpen:false,onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)});
+      window.__headerCleanup=window.__installMastheadScrollBehavior({header,hero:document.querySelector('#home'),progress:document.querySelector('#scroll-progress'),motionEnabled:false,menuOpen:false,onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)});
     }''')
     page.evaluate("window.scrollTo({top:640,behavior:'instant'})")
     settle(120)
@@ -382,7 +399,7 @@ with sync_playwright() as p:
     page.evaluate('''() => {
       const header=document.querySelector('#site-header');
       window.__headerCleanup=window.__installMastheadScrollBehavior({
-        header,progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:false,
+        header,hero:document.querySelector('#home'),progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:false,
         onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)
       });
     }''')
@@ -408,18 +425,17 @@ with sync_playwright() as p:
     focused_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden'),focused:element.matches(':focus-within'),transform:getComputedStyle(element).transform})")
     assert focused_header['focused'] and not focused_header['hidden'], focused_header
     page.locator('.command-trigger').evaluate("(element)=>element.blur()")
-    page.evaluate("window.scrollTo({top:340,behavior:'instant'})")
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom + 340)
     page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
 
-    # A short 30px movement is not enough to hide the header. The next
-    # deliberate movement accumulates past the 48px threshold.
-    page.evaluate("window.scrollTo({top:300,behavior:'instant'})")
+    # Outside the hero, a short 30px movement does not hide the header.
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom + 300)
     page.wait_for_function("!document.querySelector('#site-header').classList.contains('header-hidden')")
-    page.evaluate("window.scrollTo({top:330,behavior:'instant'})")
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom + 330)
     settle(100)
     short_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
     assert not short_scroll_header['hidden'], short_scroll_header
-    page.evaluate("window.scrollTo({top:380,behavior:'instant'})")
+    page.evaluate("(y) => window.scrollTo({top:y,behavior:'instant'})", hero_bottom + 380)
     page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")
     deliberate_scroll_header = page.locator('#site-header').evaluate("element=>({hidden:element.classList.contains('header-hidden')})")
     assert deliberate_scroll_header['hidden'], deliberate_scroll_header
@@ -435,7 +451,7 @@ with sync_playwright() as p:
     settle(100)
     page.evaluate('''() => {
       const header=document.querySelector('#site-header');
-      window.__headerCleanup=window.__installMastheadScrollBehavior({header,progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:false,onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)});
+      window.__headerCleanup=window.__installMastheadScrollBehavior({header,hero:document.querySelector('#home'),progress:document.querySelector('#scroll-progress'),motionEnabled:true,menuOpen:false,onHiddenChange:hidden=>header.classList.toggle('header-hidden',hidden)});
     }''')
     page.evaluate("window.scrollTo({top:420,behavior:'instant'})")
     page.wait_for_function("document.querySelector('#site-header').classList.contains('header-hidden')")

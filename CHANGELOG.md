@@ -1,3 +1,11 @@
+## 2026-11-26 — Hero-safe masthead scroll behavior
+
+- Keep the shared Full Portfolio masthead tucked away while any part of the hero remains in view after the initial top guard; fast scroll reversals can no longer reveal it over the opening content.
+- Resolve the hero boundary from live section geometry so responsive section height and viewport changes do not depend on a hard-coded value.
+- Preserve normal direction-aware behavior after the hero, plus pointer, keyboard-focus, mobile-menu, and reduced-motion overrides.
+- Extend the Chromium regression fixture to cover hero entry and exit, rapid upward reversals, and the existing non-hero scroll thresholds.
+- Bump the versioned service-worker shell cache to v20 so returning visitors replace stale cached shell assets.
+
 ## 2026-11-11 — Deferred noncritical contact loading
 
 - Split the small privacy notice from the heavier backend panel module, and mount the admin portal only when opened.

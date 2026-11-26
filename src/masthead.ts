@@ -6,6 +6,7 @@
  */
 interface MastheadScrollOptions {
   header: HTMLElement
+  hero?: HTMLElement | null
   progress?: HTMLElement | null
   motionEnabled?: boolean
   menuOpen?: boolean
@@ -20,6 +21,7 @@ const DEFAULT_TOP_THRESHOLD = 88
 export function installMastheadScrollBehavior(options: MastheadScrollOptions): () => void {
   const {
     header,
+    hero = null,
     progress = null,
     motionEnabled = true,
     menuOpen = false,
@@ -68,10 +70,20 @@ export function installMastheadScrollBehavior(options: MastheadScrollOptions): (
     const currentY = Math.max(0, window.scrollY)
     const delta = currentY - lastY
     const focused = header.matches(':focus-within')
+    // Resolve the live hero edge every frame; its responsive height is not fixed.
+    const heroBottom = hero?.isConnected
+      ? hero.getBoundingClientRect().bottom + currentY
+      : Number.NEGATIVE_INFINITY
+    const insideHero = currentY > topThreshold && currentY < heroBottom
 
     // Never slide the control surface away while it is being used.
     if (currentY <= topThreshold || menuOpen || !motionEnabled || focused || pointerInside) {
       setHidden(false)
+      direction = 0
+      accumulated = 0
+    } else if (insideHero) {
+      // A quick upward fling must not reveal the masthead over the opening hero.
+      setHidden(true)
       direction = 0
       accumulated = 0
     } else if (Math.abs(delta) >= 1) {
